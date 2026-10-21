@@ -1,0 +1,100 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    padding: 20px;
+}
+
+/* --- BORDES PARA TODAS LAS CAJAS --- */
+header, 
+.agregar-paciente, 
+.lista-pacientes, 
+.acciones-rapidas, 
+aside, 
+footer {
+    border: 1px solid #000;
+    padding: 15px;
+}
+
+/* --- HEADER --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* --- MAIN LAYOUT --- */
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+/* Grilla de 2 columnas para el nivel superior */
+.contenedor-pacientes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* --- FORMULARIO & LISTA --- */
+.agregar-paciente h2, 
+.lista-pacientes h2, 
+.acciones-rapidas h2, 
+aside h2 {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+#form-paciente {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.campo {
+    display: flex;
+    justify-content: space-between;
+}
+
+.campo input {
+    border: none;
+    border-bottom: 1px solid #000;
+    width: 50%;
+}
+
+#form-paciente button {
+    align-self: center;
+    margin-top: 10px;
+}
+
+.lista-pacientes ul, 
+.lista-turnos {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* --- ACCIONES RÁPIDAS --- */
+.acciones-rapidas .botones-acciones {
+    display: flex;
+    justify-content: space-around;
+}
+
+/* --- ASIDE --- */
+aside {
+    margin-bottom: 15px;
+}
+
+/* --- FOOTER --- */
+footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

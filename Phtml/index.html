@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión Clínica - EPET N°20</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <!-- Encabezado con perfil de usuario (Secretaria / Doctora) -->
+    <header>
+        <div class="logo">
+            <span>🩺</span> GESTIÓN MÉDICA - CLÍNICA
+        </div>
+        <nav>
+            <a href="#">Inicio</a> | 
+            <a href="#">Pacientes</a> |
+            <span class="perfil-usuario">Usuario: <strong>Doctora</strong></span>
+        </nav>
+    </header>
+
+    <main>
+        <div class="contenedor-pacientes">
+            
+            <!-- Formulario de Alta y Modificación de Pacientes (5.1) -->
+            <section class="tarjeta agregar-paciente">
+                <h2>AGREGAR PACIENTE</h2>
+                <form id="form-paciente">
+                    <div class="campo">
+                        <label for="nombre">Nombre:</label>
+                        <input type="text" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="campo">
+                        <label for="apellido">Apellido:</label>
+                        <input type="text" id="apellido" name="apellido" required>
+                    </div>
+                    <div class="campo">
+                        <label for="dni">DNI (Único):</label>
+                        <input type="text" id="dni" name="dni" required>
+                    </div>
+                    <div class="campo">
+                        <label for="telefono">Teléfono:</label>
+                        <input type="tel" id="telefono" name="telefono">
+                    </div>
+
+                    <!-- Datos Laborales y Exposiciones (5.2 y 5.3) -->
+                    <div class="campo">
+                        <label for="empresa">Empresa / Trabajo:</label>
+                        <input type="text" id="empresa" name="empresa">
+                    </div>
+                    <div class="campo">
+                        <label for="exposiciones">Exposiciones Laborales:</label>
+                        <select id="exposiciones" name="exposiciones" multiple>
+                            <option value="ruido">Ruidos Molestos (Genera Audiometría)</option>
+                            <option value="quimicos">Sustancias Químicas (Genera Análisis de Sangre)</option>
+                            <option value="polvo">Polvo / Partículas (Genera Placa de Tórax)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit">[ AGREGAR PACIENTE ]</button>
+                </form>
+            </section>
+
+            <!-- Lista general de pacientes desde la Base de Datos (5.1) -->
+            <section class="tarjeta lista-pacientes">
+                <h2>PACIENTES</h2>
+                <ul id="lista-pacientes-db">
+                    <!-- Los datos se cargarán dinámicamente vía JS -->
+                </ul>
+            </section>
+
+        </div>
+
+        <!-- Acciones Rápidas (Búsqueda, Estudios Manuales y Carga de Archivos) -->
+        <section class="tarjeta acciones-rapidas">
+            <h2>ACCIONES RÁPIDAS Y ESTUDIOS</h2>
+            
+            <!-- Buscador general de pacientes por DNI o Apellido -->
+            <div class="bloque-buscador">
+                <label for="buscar-paciente">Buscar Paciente:</label>
+                <input type="text" id="buscar-paciente" placeholder="Ingrese DNI o Apellido...">
+                <button type="button" id="btn-buscar">[ BUSCAR ]</button>
+            </div>
+
+            <div class="separador-bloque"></div>
+
+            <!-- Carga de Estudios Manuales (Solo Doctora - 5.5) -->
+            <div class="bloque-estudio-manual">
+                <h3>Agregar Estudio Manual (Solo Doctora)</h3>
+                <form id="form-estudio-manual">
+                    <div class="campo">
+                        <label for="dni-paciente-estudio">DNI Paciente:</label>
+                        <input type="text" id="dni-paciente-estudio" required>
+                    </div>
+                    <div class="campo">
+                        <label for="nombre-estudio">Estudio:</label>
+                        <input type="text" id="nombre-estudio" placeholder="Ej: Ecografía abdominal" required>
+                    </div>
+                    <button type="submit">[ AGREGAR ESTUDIO MANUAL ]</button>
+                </form>
+            </div>
+
+            <div class="separador-bloque"></div>
+
+            <!-- Registro de Estudio Realizado con Archivo PDF/Imagen (5.6) -->
+            <div class="bloque-completar-estudio">
+                <h3>Completar Estudio Pendiente</h3>
+                <form id="form-completar-estudio" enctype="multipart/form-data">
+                    <div class="campo">
+                        <label for="id-estudio">ID Estudio:</label>
+                        <input type="number" id="id-estudio" required>
+                    </div>
+                    <div class="campo">
+                        <label for="fecha-realizado">Fecha Realizado:</label>
+                        <input type="date" id="fecha-realizado" required>
+                    </div>
+                    <div class="campo">
+                        <label for="observaciones">Observaciones:</label>
+                        <input type="text" id="observaciones">
+                    </div>
+                    <div class="campo">
+                        <label for="archivo-estudio">Adjuntar Archivo (PDF/Imagen):</label>
+                        <input type="file" id="archivo-estudio" accept=".pdf, image/*" required>
+                    </div>
+                    <button type="submit">[ GUARDAR RESULTADO ]</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Barra Lateral: Seguimiento de Estudios y Estado Pendiente/Realizado (5.6) -->
+    <aside>
+        <h2>📅 PRÓXIMOS TURNOS / ESTUDIOS</h2>
+        <ul class="lista-turnos" id="lista-turnos-db">
+            <!-- Carga dinámica del estado de los estudios -->
+            <li>
+                <time>10:30</time> <strong>Juan Pérez</strong> - Audiometría
+                <span>[ Pendiente (Automático) ]</span>
+            </li>
+            <li>
+                <time>11:30</time> <strong>Ana López</strong> - Placa de Tórax
+                <span>[ Pendiente (Manual) ]</span>
+            </li>
+            <li>
+                <time>12:30</time> <strong>Pedro Gómez</strong> - Análisis Sangre
+                <span>[ Realizado - Ver PDF ]</span>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Pie de página -->
+    <footer>
+        <p>Proyecto Web Clínica - EPET N°20 (2026)</p>
+        <button class="btn-scroll-down" aria-label="Ir abajo">↓</button>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
