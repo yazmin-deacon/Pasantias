@@ -145,3 +145,22 @@ FROM paciente
 LEFT JOIN trabajo
     ON paciente.id_trabajo = trabajo.id_trabajo
 ORDER BY paciente.dni_p;
+
+CREATE TABLE IF NOT EXISTS historial_medico (
+    id_historial INT AUTO_INCREMENT PRIMARY KEY,
+    dni_paciente INT NOT NULL,
+    id_estudio INT NOT NULL,
+    fecha DATE NOT NULL,
+    estado ENUM('Pendiente', 'Realizado') NOT NULL DEFAULT 'Pendiente',
+    observaciones TEXT NULL,
+    archivo VARCHAR(255) NULL,
+    fecha_carga TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (dni_paciente)
+        REFERENCES paciente(dni_p),
+
+    FOREIGN KEY (id_estudio)
+        REFERENCES estudio(id_estudio)
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_general_ci;s
