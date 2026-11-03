@@ -1,12 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestión Clínica - EPET N°20</title>
-    <link rel="stylesheet" href="css/estilos.css">
+    <link rel="stylesheet" href="estilos.css">
 </head>
+
 <body>
 
     <!-- Encabezado con perfil de usuario -->
@@ -36,7 +37,7 @@
 
                 <h2>AGREGAR PACIENTE</h2>
 
-                <form id="form-paciente" action="agregar_paciente.php" method="POST">
+                <form id="form-paciente" action="alta.php" method="POST">
 
                     <div class="campo">
                         <label for="nombre">Nombre:</label>
@@ -50,17 +51,39 @@
 
                     <div class="campo">
                         <label for="dni">DNI (Único):</label>
-                        <input type="text" id="dni" name="dni" required>
+                        <input type="number" id="dni" name="dni" required>
                     </div>
 
+                    <div class="campo">
+                        <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
+                        <input type="date" id="fecha-nacimiento" name="fechaNacimiento" required>
+                    </div>
+
+                    <div class="campo">
+                        <label for="direccion">Dirección:</label>
+                        <input type="text" id="direccion" name="direccion">
+                    </div>
+
+                    <div class="campo">
+                        <label for="obra-social">Obra social:</label>
+                        <input type="text" id="obra-social" name="obraSocial" required>
+                    </div>
+                    
                     <div class="campo">
                         <label for="telefono">Teléfono:</label>
                         <input type="tel" id="telefono" name="telefono">
                     </div>
+                    
+                    <div class="campo">
+                        <label for="correo">Correo electrónico:</label>
+                        <input type="email" id="correo" name="correo" required>
+                    </div>
+
+
 
                     <!-- Datos laborales y exposiciones -->
                     <div class="campo">
-                        <label for="empresa">Empresa / Trabajo:</label>
+                        <label for="empresa">Trabajo:</label>
                         <input type="text" id="empresa" name="empresa">
                     </div>
 
@@ -105,11 +128,7 @@
 
                 <label for="buscar-paciente">Buscar Paciente:</label>
 
-                <input
-                    type="text"
-                    id="buscar-paciente"
-                    placeholder="Ingrese DNI o Apellido..."
-                >
+                <input type="text" id="buscar-paciente" placeholder="Ingrese DNI o Apellido...">
 
                 <button type="button" id="btn-buscar">[ BUSCAR ]</button>
 
@@ -132,7 +151,8 @@
 
                     <div class="campo">
                         <label for="nombre-estudio">Estudio:</label>
-                        <input type="text" id="nombre-estudio" name="nombreEstudio" placeholder="Ej: Ecografía abdominal" required>
+                        <input type="text" id="nombre-estudio" name="nombreEstudio"
+                            placeholder="Ej: Ecografía abdominal" required>
                     </div>
 
                     <button type="submit">[ AGREGAR ESTUDIO MANUAL ]</button>
@@ -149,7 +169,8 @@
 
                 <h3>Completar Estudio Pendiente</h3>
 
-                <form id="form-completar-estudio" action="completar_estudio.php" method="POST" enctype="multipart/form-data">
+                <form id="form-completar-estudio" action="completar_estudio.php" method="POST"
+                    enctype="multipart/form-data">
 
                     <div class="campo">
                         <label for="id-estudio">ID Estudio:</label>
@@ -205,9 +226,10 @@
 
 
     <!-- Archivos JavaScript -->
-    <script src="JS/script.js"></script>
-    <script src="JS/animaciones.js"></script>
-    <script src="JS/modooscuro.js"></script>
+    <script src="script.js"></script>
+    <script src="animaciones.js"></script>
+    <script src="modooscuro.js"></script>
 
 </body>
+
 </html>
