@@ -1,0 +1,929 @@
+
+/* --- CONFIGURACIÓN GENERAL --- */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #edf5f7;
+    color: #263d4a;
+    padding: 25px;
+    transition: background-color 0.7s ease, color 0.7s ease;
+}
+
+/* --- ENCABEZADO --- */
+
+header {
+    background: linear-gradient(120deg, #123f55, #167d89);
+    color: white;
+    padding: 22px 30px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 18px rgba(20, 65, 80, 0.15);
+    transition: background-color 0.7s ease, color 0.7s ease;
+}
+
+.logo {
+    font-size: 21px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.logo span {
+    font-size: 27px;
+    margin-right: 8px;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.7s ease;
+}
+
+nav a:hover {
+    color: #a8eeee;
+}
+
+.perfil-usuario {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 9px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+/* --- DISTRIBUCIÓN PRINCIPAL --- */
+
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    margin-bottom: 22px;
+}
+
+.contenedor-pacientes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+}
+
+/* --- TARJETAS --- */
+
+.tarjeta,
+aside {
+    background: white;
+    border: 1px solid #dce9ed;
+    border-radius: 14px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(30, 75, 90, 0.06);
+    transition: background-color 0.7s ease, color 0.7s ease, border-color 0.7s ease;
+}
+
+.tarjeta h2,
+aside h2 {
+    color: #14566b;
+    font-size: 19px;
+    margin-bottom: 22px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #d8eff0;
+    transition: color 0.7s ease, border-color 0.7s ease;
+}
+
+/* --- FORMULARIOS --- */
+
+#form-paciente,
+#form-estudio-manual,
+#form-completar-estudio {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.campo label,
+.bloque-buscador label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #365563;
+    transition: color 0.7s ease;
+}
+
+.campo input,
+.campo select,
+.bloque-buscador input {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid #cbdde2;
+    border-radius: 8px;
+    background: #f8fbfc;
+    color: #263d4a;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: background-color 0.7s ease, color 0.7s ease, border-color 0.7s ease;
+}
+
+.campo input:focus,
+.campo select:focus,
+.bloque-buscador input:focus {
+    border-color: #168c9b;
+    box-shadow: 0 0 0 3px rgba(22, 140, 155, 0.12);
+    background: white;
+}
+
+.campo select[multiple] {
+    min-height: 105px;
+}
+
+.campo input[type="file"] {
+    background: #f0f8fa;
+}
+
+/* --- BOTONES --- */
+
+button {
+    background: linear-gradient(120deg, #176d82, #15999b);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-weight: bold;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.25s, box-shadow 0.25s, background-color 0.7s ease, color 0.7s ease;
+    align-self: flex-start;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(20, 120, 135, 0.25);
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+#form-paciente button {
+    align-self: center;
+    margin-top: 8px;
+}
+
+/* --- BOTÓN CAMBIAR TEMA --- */
+
+#btn-tema {
+    background: #244b5a69;
+    color: white;
+    border: 1px solid #b8cbd3;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#btn-tema:hover {
+    background: #e4eef2;
+}
+
+/* --- LISTA DE PACIENTES --- */
+
+#lista-pacientes-db,
+.lista-turnos {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#lista-pacientes-db li {
+    background: #f3f9fa;
+    border: 1px solid #e0edef;
+    border-left: 4px solid #1995a0;
+    border-radius: 8px;
+    padding: 15px;
+    transition: background-color 0.7s ease, color 0.7s ease, border-color 0.7s ease;
+}
+
+#lista-pacientes-db li:hover {
+    background: #eaf5f6;
+    transform: translateX(4px);
+}
+
+#lista-pacientes-db li strong {
+    color: #14566b;
+    transition: color 0.7s ease;
+}
+
+#lista-pacientes-db li p {
+    font-size: 13px;
+    color: #6c818b;
+    margin-top: 6px;
+    transition: color 0.7s ease;
+}
+
+/* --- ACCIONES RÁPIDAS --- */
+
+.acciones-rapidas {
+    display: flex;
+    flex-direction: column;
+}
+
+.bloque-buscador {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bloque-buscador button {
+    align-self: flex-start;
+}
+
+.separador-bloque {
+    height: 1px;
+    background: #e1ebed;
+    margin: 25px 0;
+    transition: background-color 0.7s ease;
+}
+
+.bloque-estudio-manual,
+.bloque-completar-estudio {
+    padding: 5px;
+}
+
+.bloque-estudio-manual h3,
+.bloque-completar-estudio h3 {
+    color: #17677a;
+    font-size: 16px;
+    margin-bottom: 17px;
+    transition: color 0.7s ease;
+}
+
+/* --- PRÓXIMOS TURNOS --- */
+
+aside {
+    margin-bottom: 22px;
+}
+
+.lista-turnos li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px;
+    background: #f4f9fa;
+    border: 1px solid #e0edef;
+    border-radius: 9px;
+    transition: background-color 0.7s ease, color 0.7s ease, border-color 0.7s ease;
+}
+
+.lista-turnos li:hover {
+    background: #eaf5f6;
+    transform: translateX(4px);
+}
+
+.lista-turnos time {
+    background: #d9f0f0;
+    color: #126678;
+    font-weight: bold;
+    padding: 7px 11px;
+    border-radius: 7px;
+    transition: background-color 0.7s ease, color 0.7s ease;
+}
+
+.lista-turnos strong {
+    color: #24566a;
+    transition: color 0.7s ease;
+}
+
+.lista-turnos span {
+    color: #a56c20;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color 0.7s ease;
+}
+
+.lista-turnos a {
+    color: #168b78;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 13px;
+    transition: color 0.7s ease;
+}
+
+/* --- PIE DE PÁGINA --- */
+
+footer {
+    background: #123f55;
+    color: #e5f3f5;
+    padding: 18px 25px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    transition: background-color 0.7s ease, color 0.7s ease;
+}
+
+.btn-scroll-down {
+    background: #15999b;
+    font-size: 20px;
+    padding: 5px 13px;
+    border-radius: 7px;
+}
+
+/* --- ANIMACIONES --- */
+
+.animar-entrada {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animar-entrada.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.lista-animada {
+    animation: aparecer 0.35s ease;
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- MODO OSCURO --- */
+
+body.modo-oscuro {
+    background: #17232c;
+    color: #eeeeee;
+}
+
+/* Encabezado */
+
+body.modo-oscuro header {
+    background: linear-gradient(120deg, #101a22, #193c49);
+    color: #ffffff;
+}
+
+/* Tarjetas y sectores */
+
+body.modo-oscuro .tarjeta,
+body.modo-oscuro aside {
+    background: #24343f;
+    color: #eeeeee;
+    border-color: #40535e;
+}
+
+/* Títulos */
+
+body.modo-oscuro .tarjeta h2,
+body.modo-oscuro aside h2,
+body.modo-oscuro h3 {
+    color: #e5edf2;
+    border-color: #40535e;
+}
+
+/* Etiquetas de formularios */
+
+body.modo-oscuro .campo label,
+body.modo-oscuro .bloque-buscador label {
+    color: #e0eaf0;
+}
+
+/* Campos de texto */
+
+body.modo-oscuro .campo input,
+body.modo-oscuro .campo select,
+body.modo-oscuro .bloque-buscador input {
+    background: #30434f;
+    color: #ffffff;
+    border-color: #607783;
+}
+
+body.modo-oscuro .campo input:focus,
+body.modo-oscuro .campo select:focus,
+body.modo-oscuro .bloque-buscador input:focus {
+    background: #38515e;
+    border-color: #48b9c4;
+}
+
+/* Texto de ayuda y placeholders */
+
+body.modo-oscuro input::placeholder,
+body.modo-oscuro textarea::placeholder {
+    color: #bdcbd3;
+    opacity: 1;
+}
+
+/* Separadores */
+
+body.modo-oscuro .separador-bloque {
+    background: #40535e;
+}
+
+/* Lista de pacientes */
+
+body.modo-oscuro #lista-pacientes-db li {
+    background: #30434f;
+    border-color: #405763;
+    border-left-color: #48b9c4;
+}
+
+body.modo-oscuro #lista-pacientes-db li:hover {
+    background: #38515e;
+}
+
+body.modo-oscuro #lista-pacientes-db li strong {
+    color: #b8e5ec;
+}
+
+body.modo-oscuro #lista-pacientes-db li p {
+    color: #c0d0d8;
+}
+
+/* Lista de turnos */
+
+body.modo-oscuro .lista-turnos li {
+    background: #30434f;
+    border-color: #405763;
+}
+
+body.modo-oscuro .lista-turnos li:hover {
+    background: #38515e;
+}
+
+body.modo-oscuro .lista-turnos time {
+    background: #244f59;
+    color: #c3f0f0;
+}
+
+body.modo-oscuro .lista-turnos strong {
+    color: #d7eaf0;
+}
+
+body.modo-oscuro .lista-turnos span {
+    color: #f0c47d;
+}
+
+body.modo-oscuro .lista-turnos a {
+    color: #72d6c3;
+}
+
+/* Botón de cambiar tema */
+
+body.modo-oscuro #btn-tema {
+    background: #30434f;
+    color: #ffffff;
+    border-color: #607783;
+}
+
+body.modo-oscuro #btn-tema:hover {
+    background: #405763;
+}
+
+/* Pie de página */
+
+body.modo-oscuro footer {
+    background: #101a22;
+    color: #eeeeee;
+}
+
+/* --- DISEÑO RESPONSIVE --- */
+
+@media (max-width: 850px) {
+    .contenedor-pacientes {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        flex-direction: column;
+        gap: 18px;
+        text-align: center;
+    }
+
+    nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 550px) {
+    body {
+        padding: 12px;
+    }
+
+    header,
+    .tarjeta,
+    aside {
+        padding: 17px;
+    }
+
+    .logo {
+        font-size: 17px;
+    }
+
+    nav {
+        gap: 9px;
+        font-size: 13px;
+    }
+
+    .lista-turnos li {
+        align-items: flex-start;
+    }
+
+    footer {
+        gap: 10px;
+    }
+}
+
+/* --- RESPETAR PREFERENCIAS DE MOVIMIENTO --- */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+
+
+
+/* =====================================
+   --- INICIO DE SESIÓN ---
+===================================== */
+
+body.login-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 25px;
+    background: linear-gradient(135deg, #edf5f7, #d9eef0);
+}
+
+/* Contenedor principal */
+
+.login-container {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    justify-content: center;
+    margin: auto;
+}
+
+/* Tarjeta de inicio de sesión */
+
+.login {
+    width: 100%;
+    padding: 35px;
+    text-align: center;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(20, 65, 80, 0.12);
+}
+
+/* Logo */
+
+.login-logo {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+/* Título principal */
+
+.login h1 {
+    color: #14566b;
+    font-size: 23px;
+    letter-spacing: 1px;
+    margin-bottom: 7px;
+}
+
+/* Subtítulo */
+
+.login-subtitulo {
+    color: #6c818b;
+    font-size: 14px;
+}
+
+/* Separador */
+
+.login-separador {
+    height: 2px;
+    background: #d8eff0;
+    margin: 15px 0;
+}
+
+/* Título del formulario */
+
+.login h2 {
+    margin-bottom: 10px;
+    margin-top: 10px;
+    font-size: 18px;
+    
+}
+
+/* Descripción */
+
+.login-descripcion {
+    color: #6c818b;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+/* Formulario */
+
+.login form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    text-align: left;
+}
+
+/* Campos */
+
+.login .campo {
+    gap: 8px;
+}
+
+/* Botón */
+
+.login button {
+    width: 100%;
+    align-self: center;
+    margin-top: 8px;
+    padding: 14px;
+}
+
+/* Mensaje de seguridad */
+
+.login-seguridad {
+    margin-top: 25px;
+    color: #6c818b;
+    font-size: 12px;
+}
+
+/* Pie de página */
+
+.login-footer {
+    width: 100%;
+    max-width: 450px;
+    background: transparent;
+    color: #6c818b;
+    text-align: center;
+    padding: 15px;
+    font-size: 12px;
+    box-shadow: none;
+}
+
+/* =====================================
+   --- MODO OSCURO LOGIN ---
+===================================== */
+
+body.modo-oscuro.login-page {
+    background: linear-gradient(135deg, #17232c, #243b47);
+}
+
+body.modo-oscuro .login h1 {
+    color: #b8e5ec;
+}
+
+body.modo-oscuro .login-subtitulo,
+body.modo-oscuro .login-descripcion,
+body.modo-oscuro .login-seguridad {
+    color: #c0d0d8;
+}
+
+body.modo-oscuro .login-separador {
+    background: #40535e;
+}
+
+body.modo-oscuro .login-footer {
+    background: transparent;
+    color: #c0d0d8;
+}
+
+/* =====================================
+   --- RESPONSIVE LOGIN ---
+===================================== */
+
+@media (max-width: 550px) {
+
+    body.login-page {
+        padding: 15px;
+    }
+
+    .login {
+        padding: 25px 20px;
+    }
+
+    .login h1 {
+        font-size: 20px;
+    }
+
+}
+
+#logo {
+    transition: filter 1s ease;
+}
+
+body.modo-oscuro #logo {
+    filter: brightness(0) invert(1);
+}
+
+/* Logo siempre blanco en el menú */
+body:not(.login-page) #logo {
+    filter: brightness(0) invert(1);
+}
+
+
+/* =====================================
+   --- MENU PRINCIPAL ---
+===================================== */
+.menu-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 25px;
+    align-items: stretch;
+}
+
+/* --- BARRA LATERAL --- */
+
+.barra-lateral {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+    min-height: 0;
+}
+
+.barra-lateral > .tarjeta,
+.barra-lateral > aside {
+    flex: 1;
+    min-height: 0;
+}
+
+.contenido-menu {
+    height: 100%;
+    min-height: 0;
+}
+
+.bienvenida {
+    padding: 25px;
+    background: linear-gradient(120deg, #123f55, #167d89);
+    color: white;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(30, 75, 90, 0.08);
+}
+
+.bienvenida h1 {
+    font-size: 25px;
+    margin-bottom: 10px;
+}
+
+.bienvenida p {
+    font-size: 14px;
+    color: #e5f3f5;
+    line-height: 1.6;
+}
+
+/* --- OPCIONES DEL MENU --- */
+
+.opciones-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.opcion-menu {
+    display: flex;
+    flex-direction: column;
+    min-height: 230px;
+    padding: 25px;
+    text-decoration: none;
+    color: #263d4a;
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.opcion-menu:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(30, 75, 90, 0.13);
+}
+
+.icono-menu {
+    font-size: 35px;
+    margin-bottom: 18px;
+}
+
+.opcion-menu h2 {
+    color: #14566b;
+    font-size: 17px;
+    margin-bottom: 12px;
+}
+
+.opcion-menu p {
+    color: #6c818b;
+    font-size: 14px;
+    line-height: 1.6;
+    flex: 1;
+}
+
+.opcion-menu span {
+    color: #168b78;
+    font-size: 13px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+/* --- MODO OSCURO --- */
+
+body.modo-oscuro .bienvenida {
+    background: linear-gradient(120deg, #101a22, #193c49);
+}
+
+body.modo-oscuro .opcion-menu {
+    color: #eeeeee;
+}
+
+body.modo-oscuro .opcion-menu h2 {
+    color: #b8e5ec;
+}
+
+body.modo-oscuro .opcion-menu p {
+    color: #c0d0d8;
+}
+
+body.modo-oscuro .bloque-buscador label {
+    color: #e0eaf0;
+}
+
+body.modo-oscuro .ver-turnos {
+    color: #72d6c3;
+}
+
+/* --- RESPONSIVE --- */
+
+@media (max-width: 850px) {
+
+    .menu-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .opciones-menu {
+        grid-template-columns: 1fr;
+    }
+
+    .barra-lateral {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+}
+
+@media (max-width: 550px) {
+
+    .barra-lateral {
+        grid-template-columns: 1fr;
+    }
+
+    .bienvenida {
+        padding: 20px;
+    }
+
+    .bienvenida h1 {
+        font-size: 21px;
+    }
+
+    .opcion-menu {
+        min-height: 200px;
+    }
+
+}
