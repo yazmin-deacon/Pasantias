@@ -44,8 +44,7 @@ CREATE TABLE usuario (
     apellido VARCHAR(30) NOT NULL,
     mail VARCHAR(100) NOT NULL,
     contrasena VARCHAR(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-  COLLATE=utf8mb4_general_ci;
+);
 
 -- Tabla de exposiciones
 CREATE TABLE exposicion (
@@ -163,4 +162,4 @@ CREATE TABLE IF NOT EXISTS historial_medico (
         REFERENCES estudio(id_estudio)
 ) ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;s
+COLLATE=utf8mb4_general_ci;

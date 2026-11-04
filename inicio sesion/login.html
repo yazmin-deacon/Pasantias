@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Inicio de Sesión - Clínica</title>
+
+    <link rel="stylesheet" href="../general/estilos.css">
+</head>
+
+<body class="login-page">
+
+    <button type="button" id="btn-tema">
+        Modo oscuro
+    </button>
+
+    <main class="login-container">
+
+        <section class="tarjeta login">
+
+            <div class="login-logo">
+
+                <img id="logo" src="../general/Logo minimalista DUCCA con hojas orgánicas.png" alt="" height="200"
+                    width="225">
+
+            </div>
+
+            <div class="login-separador"></div>
+
+            <h2>INICIO DE SESIÓN</h2>
+
+            <p id="mensaje-error" class="login-descripcion"></p>
+
+            <form action="login.php" method="POST">
+
+                <div class="campo">
+
+                    <label for="nombre">Usuario:</label>
+
+                    <input type="text" id="nombre" name="nombre" placeholder="Ingrese Pasantias" autocomplete="username"
+                        required>
+
+                </div>
+
+
+                <div class="campo">
+
+                    <label for="dni">DNI:</label>
+
+                    <input type="text" id="dni" name="dni" placeholder="Ingrese su DNI" autocomplete="off" maxlength="8"
+                        minlength="7" pattern="[0-9]{7,8}" inputmode="numeric" required>
+
+                </div>
+
+
+                <div class="campo">
+
+                    <label for="correo">Correo electrónico:</label>
+
+                    <input type="email" id="correo" name="correo" placeholder="Ingrese su correo" autocomplete="email"
+                        required>
+
+                </div>
+
+
+                <div class="campo">
+
+                    <label for="contrasena">Contraseña:</label>
+
+                    <input type="password" id="contrasena" name="contrasena" placeholder="Ingrese su contraseña"
+                        autocomplete="current-password" required>
+
+                </div>
+
+
+                <button type="submit">
+                    INICIAR SESIÓN
+                </button>
+
+            </form>
+
+            <p class="login-seguridad"></p>
+
+        </section>
+
+    </main>
+
+
+    <footer class="login-footer">
+        <p>Proyecto Web Clínica - EPET N°20 (2026)</p>
+    </footer>
+
+
+    <script>
+        const parametros = new URLSearchParams(window.location.search);
+
+        if (parametros.has("error")) {
+            document.getElementById("mensaje-error").textContent =
+                "Los datos ingresados son incorrectos. Intente nuevamente.";
+        }
+    </script>
+
+    <script src="../general/modooscuro.js"></script>
+    <script src="../general/script.js"></script>
+    <script src="../general/animaciones.js"></script>
+
+</body>
+
+</html>

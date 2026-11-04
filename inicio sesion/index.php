@@ -1,4 +1,8 @@
 
+<?php
+require_once "sesion.php";
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,20 +11,28 @@
 
     <title>Menú Principal - Clínica</title>
 
-    <link rel="stylesheet" href="estilos.css">
+    <link rel="stylesheet" href="../general/estilos.css">
 </head>
 
 <body>
 
     <header>
         <div class="logo">
-            <img id="logo" src="img/Logo minimalista DUCCA con hojas orgánicas.png" alt="" height="150" width="175">
+            <img
+                id="logo"
+                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+                alt=""
+                height="150"
+                width="175"
+            >
         </div>
 
         <nav>
             <span class="perfil-usuario">
-                Usuario: <strong>Doctora</strong>
+                Usuario: <strong><?php echo htmlspecialchars($_SESSION["nombre"]); ?></strong>
             </span>
+
+            <a href="cerrar_sesion.php">Cerrar sesión</a>
 
             <button type="button" id="btn-tema">
                 🌙Modo oscuro
@@ -39,7 +51,7 @@
 
                 <h2>BUSCAR PACIENTE</h2>
 
-                <form action="buscar_paciente.php" method="GET">
+                <form action="../Paciente/buscar_paciente.php" method="GET">
 
                     <label for="buscar-paciente">
                         DNI o apellido:
@@ -71,7 +83,7 @@
 
                 </ul>
 
-                <a href="turnos.php" class="ver-turnos">
+                <a href="#" class="ver-turnos">
                     Ver todos los turnos →
                 </a>
 
@@ -83,10 +95,9 @@
         <!-- MENU PRINCIPAL -->
         <section class="contenido-menu">
 
-            
             <div class="opciones-menu">
 
-                <a href="alta.php" class="tarjeta opcion-menu">
+                <a href="../Paciente/alta.php" class="tarjeta opcion-menu">
 
                     <div class="icono-menu">👤+</div>
 
@@ -103,7 +114,7 @@
                 </a>
 
 
-                <a href="listar.php" class="tarjeta opcion-menu">
+                <a href="../Paciente/listar.php" class="tarjeta opcion-menu">
 
                     <div class="icono-menu">📋</div>
 
@@ -119,7 +130,7 @@
                 </a>
 
 
-                <a href="agregar_examen.php" class="tarjeta opcion-menu">
+                <a href="../Paciente/agregar_examen.php" class="tarjeta opcion-menu">
 
                     <div class="icono-menu">🩺</div>
 
@@ -146,9 +157,9 @@
     </footer>
 
 
-    <script src="script.js"></script>
-    <script src="animaciones.js"></script>
-    <script src="modooscuro.js"></script>
+    <script src="../general/script.js"></script>
+    <script src="../general/animaciones.js"></script>
+    <script src="../general/modooscuro.js"></script>
 
 </body>
 </html>
