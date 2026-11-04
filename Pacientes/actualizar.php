@@ -1,120 +1,275 @@
 
 <?php
-// ===== BLOQUE 1 — Traer la conexión =====
 require_once "conexion.php";
 
-// ===== BLOQUE 2 — Recibir los datos del formulario y el DNI oculto =====
-if (isset($_POST["dni_p"])) {
-    $dni_p = trim($_POST["dni_p"]);
-} else {
-    $dni_p = "";
-}
-
-if ($dni_p == "" || !ctype_digit($dni_p) || strlen($dni_p) > 8 || intval($dni_p) <= 0) {
-    echo "<h1>DNI inválido</h1>";
-    echo "<p><a href='listar.php'>Volver al listado</a></p>";
-    mysqli_close($conexion);
-    exit;
-}
-
-$nombre_p = trim($_POST["nombre_p"] ?? "");
+// BLOQUE 1 - Recibir datos del formulario
+$dni = trim($_POST["dni_p"] ?? "");
+$nombre = trim($_POST["nombre_p"] ?? "");
 $apellido = trim($_POST["apellido"] ?? "");
 $cuil = trim($_POST["cuil"] ?? "");
 $telefono = trim($_POST["telefono"] ?? "");
 $mail = trim($_POST["mail"] ?? "");
 $obra_social = trim($_POST["obra_social"] ?? "");
-$id_trabajo = trim($_POST["id_trabajo"] ?? "");
 
-$volver = "editar.php?dni_p=" . urlencode($dni_p);
+$nombre_trabajo = trim($_POST["nombre_trabajo"] ?? "");
 
-// ===== BLOQUE 3 — Validar los datos =====
-$errores = "";
+$exposiciones = $_POST["exposiciones"] ?? [];
+$estudios = $_POST["estudios"] ?? [];
 
-if ($nombre_p == "") {
-    $errores .= "<li>El nombre no puede estar vacío.</li>";
-} elseif (strlen($nombre_p) > 30) {
-    $errores .= "<li>El nombre no puede superar los 30 caracteres.</li>";
+$nuevas_exposiciones = $_POST["nueva_exposicion"] ?? [];
+$nuevos_estudios = $_POST["nuevo_estudio"] ?? [];
+
+// BLOQUE 2 - Validar datos
+if (
+    !ctype_digit($dni) ||
+    $dni === "" ||
+    $nombre === "" ||
+    $apellido === "" ||
+    $telefono === "" ||
+    $mail === "" ||
+    $obra_social === ""
+) {
+    die("Faltan completar datos obligatorios o el DNI no es válido.");
 }
 
-if ($apellido == "") {
-    $errores .= "<li>El apellido no puede estar vacío.</li>";
-} elseif (strlen($apellido) > 30) {
-    $errores .= "<li>El apellido no puede superar los 30 caracteres.</li>";
+if (strlen($nombre_trabajo) > 50) {
+    die("El nombre del trabajo no puede superar los 50 caracteres.");
 }
 
-if ($cuil != "" && (!ctype_digit($cuil) || strlen($cuil) != 11)) {
-    $errores .= "<li>El CUIL debe contener 11 dígitos.</li>";
-}
+// BLOQUE 3 - Función para buscar o crear elementos
+function obtenerOCrear($conexion, $tabla, $campo_id, $campo_nombre, $nombre) {
 
-if ($telefono == "") {
-    $errores .= "<li>El teléfono no puede estar vacío.</li>";
-} elseif (strlen($telefono) > 20) {
-    $errores .= "<li>El teléfono no puede superar los 20 caracteres.</li>";
-}
+    $nombre = trim($nombre);
 
-if ($mail == "") {
-    $errores .= "<li>El mail no puede estar vacío.</li>";
-} elseif (strlen($mail) > 100) {
-    $errores .= "<li>El mail no puede superar los 100 caracteres.</li>";
-} elseif (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
-    $errores .= "<li>El mail no tiene un formato válido.</li>";
-}
+    if ($nombre === "") {
+        return null;
+    }
 
-if ($obra_social == "") {
-    $errores .= "<li>La obra social no puede estar vacía.</li>";
-} elseif (strlen($obra_social) > 50) {
-    $errores .= "<li>La obra social no puede superar los 50 caracteres.</li>";
-}
+    $sql = "SELECT $campo_id FROM $tabla WHERE $campo_nombre = ?";
+    $stmt = mysqli_prepare($conexion, $sql);
 
-if ($id_trabajo != "" && !ctype_digit($id_trabajo)) {
-    $errores .= "<li>El trabajo seleccionado no es válido.</li>";
-}
+    mysqli_stmt_bind_param($stmt, "s", $nombre);
+    mysqli_stmt_execute($stmt);
 
-// ===== BLOQUE 4 — Si hay errores, mostrarlos y frenar =====
-if ($errores != "") {
-    echo "<h1>No se pudo actualizar</h1>";
-    echo "<ul>" . $errores . "</ul>";
-    echo "<p><a href='" . htmlspecialchars($volver) . "'>Volver al formulario</a></p>";
-    mysqli_close($conexion);
-    exit;
-}
+    $resultado = mysqli_stmt_get_result($stmt);
 
-// ===== BLOQUE 5 — Preparar el UPDATE y atar las variables =====
-$dni_p = intval($dni_p);
-$id_trabajo = ($id_trabajo == "") ? null : intval($id_trabajo);
-$cuil = ($cuil == "") ? null : $cuil;
+    if ($fila = mysqli_fetch_assoc($resultado)) {
+        mysqli_stmt_close($stmt);
+        return (int)$fila[$campo_id];
+    }
 
-$sql = "UPDATE paciente
-        SET nombre_p = ?, apellido = ?, cuil = ?, telefono = ?,
-            mail = ?, obra_social = ?, id_trabajo = ?
-        WHERE dni_p = ?";
-
-$stmt = mysqli_prepare($conexion, $sql);
-
-mysqli_stmt_bind_param(
-    $stmt,
-    "ssssssii",
-    $nombre_p,
-    $apellido,
-    $cuil,
-    $telefono,
-    $mail,
-    $obra_social,
-    $id_trabajo,
-    $dni_p
-);
-
-// ===== BLOQUE 6 — Ejecutar, cerrar y volver al listado =====
-if (mysqli_stmt_execute($stmt)) {
     mysqli_stmt_close($stmt);
-    mysqli_close($conexion);
-    header("Location: listar.php");
-    exit;
-} else {
-    echo "<h1>Error al actualizar</h1>";
-    echo "<p>" . htmlspecialchars(mysqli_stmt_error($stmt)) . "</p>";
-    echo "<p><a href='" . htmlspecialchars($volver) . "'>Volver al formulario</a></p>";
+
+    $sql = "INSERT INTO $tabla ($campo_nombre) VALUES (?)";
+    $stmt = mysqli_prepare($conexion, $sql);
+
+    mysqli_stmt_bind_param($stmt, "s", $nombre);
+
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception(
+            "No se pudo agregar $nombre: " . mysqli_stmt_error($stmt)
+        );
+    }
+
+    $id = mysqli_insert_id($conexion);
+
     mysqli_stmt_close($stmt);
-    mysqli_close($conexion);
+
+    return $id;
 }
+
+try {
+
+    // BLOQUE 4 - Iniciar transacción
+    mysqli_begin_transaction($conexion);
+
+    // BLOQUE 5 - Buscar o crear el trabajo
+    $id_trabajo = null;
+
+    if ($nombre_trabajo !== "") {
+
+        $id_trabajo = obtenerOCrear(
+            $conexion,
+            "trabajo",
+            "id_trabajo",
+            "nombre_t",
+            $nombre_trabajo
+        );
+    }
+
+    // BLOQUE 6 - Actualizar datos del paciente
+    $sql = "UPDATE paciente
+            SET nombre_p = ?,
+                apellido = ?,
+                cuil = ?,
+                telefono = ?,
+                mail = ?,
+                obra_social = ?,
+                id_trabajo = ?
+            WHERE dni_p = ?";
+
+    $stmt = mysqli_prepare($conexion, $sql);
+
+    mysqli_stmt_bind_param(
+        $stmt,
+        "ssssssii",
+        $nombre,
+        $apellido,
+        $cuil,
+        $telefono,
+        $mail,
+        $obra_social,
+        $id_trabajo,
+        $dni
+    );
+
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception(
+            "No se pudieron actualizar los datos: " . mysqli_stmt_error($stmt)
+        );
+    }
+
+    mysqli_stmt_close($stmt);
+
+    // BLOQUE 7 - Crear o recuperar exposiciones nuevas
+    foreach ($nuevas_exposiciones as $exposicion) {
+
+        $exposicion = trim($exposicion);
+
+        if ($exposicion !== "") {
+
+            $id = obtenerOCrear(
+                $conexion,
+                "exposicion",
+                "id_exposicion",
+                "nombre_ex",
+                $exposicion
+            );
+
+            $exposiciones[] = $id;
+        }
+    }
+
+    // BLOQUE 8 - Crear o recuperar estudios nuevos
+    foreach ($nuevos_estudios as $estudio) {
+
+        $estudio = trim($estudio);
+
+        if ($estudio !== "") {
+
+            $id = obtenerOCrear(
+                $conexion,
+                "estudio",
+                "id_estudio",
+                "nombre_es",
+                $estudio
+            );
+
+            $estudios[] = $id;
+        }
+    }
+
+    // BLOQUE 9 - Evitar IDs repetidos
+    $exposiciones = array_unique($exposiciones);
+    $estudios = array_unique($estudios);
+
+    // BLOQUE 10 - Actualizar exposiciones del paciente
+    $sql = "DELETE FROM paciente_exposicion
+            WHERE dni_paciente = ?";
+
+    $stmt = mysqli_prepare($conexion, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $dni);
+
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("No se pudieron actualizar las exposiciones.");
+    }
+
+    mysqli_stmt_close($stmt);
+
+    $sql = "INSERT INTO paciente_exposicion
+            (dni_paciente, id_exposicion)
+            VALUES (?, ?)";
+
+    $stmt = mysqli_prepare($conexion, $sql);
+
+    foreach ($exposiciones as $id_exposicion) {
+
+        $id_exposicion = (int)$id_exposicion;
+
+        if ($id_exposicion <= 0) {
+            continue;
+        }
+
+        mysqli_stmt_bind_param($stmt, "ii", $dni, $id_exposicion);
+
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception(
+                "No se pudo guardar una exposición: " . mysqli_stmt_error($stmt)
+            );
+        }
+    }
+
+    mysqli_stmt_close($stmt);
+
+    // BLOQUE 11 - Eliminar estudios que ya no fueron seleccionados,
+    // pero conservar los que tengan historial médico
+    $sql = "DELETE FROM paciente_estudio
+            WHERE dni_paciente = ?
+            AND id_estudio NOT IN (
+                SELECT id_estudio
+                FROM historial_medico
+                WHERE dni_paciente = ?
+            )";
+
+    $stmt = mysqli_prepare($conexion, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $dni, $dni);
+
+    if (!mysqli_stmt_execute($stmt)) {
+        throw new Exception("No se pudieron actualizar los estudios.");
+    }
+
+    mysqli_stmt_close($stmt);
+
+    // BLOQUE 12 - Guardar los estudios seleccionados
+    // INSERT IGNORE evita duplicar asociaciones existentes
+    $sql = "INSERT IGNORE INTO paciente_estudio
+            (dni_paciente, id_estudio)
+            VALUES (?, ?)";
+
+    $stmt = mysqli_prepare($conexion, $sql);
+
+    foreach ($estudios as $id_estudio) {
+
+        $id_estudio = (int)$id_estudio;
+
+        if ($id_estudio <= 0) {
+            continue;
+        }
+
+        mysqli_stmt_bind_param($stmt, "ii", $dni, $id_estudio);
+
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception(
+                "No se pudo guardar un estudio: " . mysqli_stmt_error($stmt)
+            );
+        }
+    }
+
+    mysqli_stmt_close($stmt);
+
+    // BLOQUE 13 - Confirmar cambios
+    mysqli_commit($conexion);
+
+    echo "Paciente actualizado correctamente.<br>";
+    echo '<a href="listar.php">Volver al listado de pacientes</a>';
+
+} catch (Exception $e) {
+
+    mysqli_rollback($conexion);
+
+    echo "Error: " . htmlspecialchars($e->getMessage());
+    echo '<br><a href="listar.php">Volver al listado de pacientes</a>';
+}
+
+mysqli_close($conexion);
 ?>
