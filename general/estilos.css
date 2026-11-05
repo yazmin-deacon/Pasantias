@@ -1,4 +1,3 @@
-
 /* --- CONFIGURACIÓN GENERAL --- */
 
 * {
@@ -28,6 +27,9 @@ header {
     margin-bottom: 25px;
     box-shadow: 0 5px 18px rgba(20, 65, 80, 0.15);
     transition: background-color 0.7s ease, color 0.7s ease;
+    position: relative;
+    z-index: 1000;
+    overflow: visible;
 }
 
 .logo {
@@ -466,7 +468,6 @@ body.modo-oscuro #lista-pacientes-db li strong {
 body.modo-oscuro #lista-pacientes-db li p {
     color: #c0d0d8;
 }
-
 /* Lista de turnos */
 
 body.modo-oscuro .lista-turnos li {
@@ -574,12 +575,7 @@ body.modo-oscuro footer {
     }
 }
 
-
-
-
-/* =====================================
-   --- INICIO DE SESIÓN ---
-===================================== */
+/* --- INICIO DE SESIÓN --- */
 
 body.login-page {
     min-height: 100vh;
@@ -648,7 +644,6 @@ body.login-page {
     margin-bottom: 10px;
     margin-top: 10px;
     font-size: 18px;
-    
 }
 
 /* Descripción */
@@ -704,9 +699,7 @@ body.login-page {
     box-shadow: none;
 }
 
-/* =====================================
-   --- MODO OSCURO LOGIN ---
-===================================== */
+/* --- MODO OSCURO LOGIN --- */
 
 body.modo-oscuro.login-page {
     background: linear-gradient(135deg, #17232c, #243b47);
@@ -731,12 +724,9 @@ body.modo-oscuro .login-footer {
     color: #c0d0d8;
 }
 
-/* =====================================
-   --- RESPONSIVE LOGIN ---
-===================================== */
+/* --- RESPONSIVE LOGIN --- */
 
 @media (max-width: 550px) {
-
     body.login-page {
         padding: 15px;
     }
@@ -748,7 +738,6 @@ body.modo-oscuro .login-footer {
     .login h1 {
         font-size: 20px;
     }
-
 }
 
 #logo {
@@ -760,14 +749,13 @@ body.modo-oscuro #logo {
 }
 
 /* Logo siempre blanco en el menú */
+
 body:not(.login-page) #logo {
     filter: brightness(0) invert(1);
 }
 
+/* --- MENU PRINCIPAL --- */
 
-/* =====================================
-   --- MENU PRINCIPAL ---
-===================================== */
 .menu-layout {
     display: grid;
     grid-template-columns: 1fr 1.5fr;
@@ -892,7 +880,6 @@ body.modo-oscuro .ver-turnos {
 /* --- RESPONSIVE --- */
 
 @media (max-width: 850px) {
-
     .menu-layout {
         grid-template-columns: 1fr;
     }
@@ -905,11 +892,9 @@ body.modo-oscuro .ver-turnos {
         display: grid;
         grid-template-columns: 1fr 1fr;
     }
-
 }
 
 @media (max-width: 550px) {
-
     .barra-lateral {
         grid-template-columns: 1fr;
     }
@@ -925,5 +910,339 @@ body.modo-oscuro .ver-turnos {
     .opcion-menu {
         min-height: 200px;
     }
+}
+/* =====================================
+   CORRECCIÓN INTERNA DE LAS TARJETAS
+===================================== */
 
+/* BUSCAR PACIENTE */
+
+.bloque-buscador form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+}
+
+.bloque-buscador label {
+    display: block;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.bloque-buscador input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 8px;
+}
+
+.bloque-buscador button {
+    align-self: flex-start;
+    margin: 0;
+}
+
+/* --- TURNOS PENDIENTES --- */
+
+.bloque-turnos {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* TÍTULO */
+
+.bloque-turnos h2 {
+    color: #14566b;
+    font-size: 19px;
+    margin-bottom: 22px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #d8eff0;
+}
+
+/* LISTA */
+
+.bloque-turnos .lista-turnos {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+}
+
+/* TURNOS CARGADOS */
+
+.bloque-turnos .lista-turnos li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px;
+    background: #f4f9fa;
+    border: 1px solid #e0edef;
+    border-left: 4px solid #1995a0;
+    border-radius: 8px;
+    transition: background-color 0.3s ease,
+                border-color 0.3s ease;
+}
+
+.bloque-turnos .lista-turnos li:hover {
+    background: #eaf5f6;
+}
+
+/* FECHA Y HORA */
+
+.bloque-turnos .lista-turnos time {
+    background: #d9f0f0;
+    color: #126678;
+    font-weight: bold;
+    padding: 7px 11px;
+    border-radius: 7px;
+}
+
+/* NOMBRE DEL PACIENTE */
+
+.bloque-turnos .lista-turnos strong {
+    color: #24566a;
+}
+
+/* ESTADO DEL TURNO */
+
+.bloque-turnos .lista-turnos span {
+    color: #a56c20;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ENLACES DE LOS TURNOS */
+
+.bloque-turnos .lista-turnos a {
+    color: #168b78;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+/* VER TODOS LOS TURNOS */
+
+.bloque-turnos .ver-turnos,
+.bloque-turnos .ver-turnos:visited,
+.bloque-turnos .ver-turnos:hover,
+.bloque-turnos .ver-turnos:active {
+    display: inline-block;
+    align-self: flex-start;
+    margin: 0;
+    padding: 0;
+    color: #168B78;
+    text-decoration: none !important;
+    font-weight: 600;
+    border: none;
+}
+
+.bloque-turnos .ver-turnos:hover {
+    color: #14566b;
+    text-decoration: underline;
+}
+
+/* --- MODO OSCURO --- */
+
+body.modo-oscuro .bloque-turnos h2 {
+    color: #e5edf2;
+    border-color: #40535e;
+}
+
+body.modo-oscuro .bloque-turnos .lista-turnos li {
+    background: #30434f;
+    border-color: #405763;
+    border-left-color: #48b9c4;
+}
+
+body.modo-oscuro .bloque-turnos .lista-turnos li:hover {
+    background: #38515e;
+}
+
+body.modo-oscuro .bloque-turnos .lista-turnos time {
+    background: #244f59;
+    color: #c3f0f0;
+}
+
+body.modo-oscuro .bloque-turnos .lista-turnos strong {
+    color: #d7eaf0;
+}
+
+body.modo-oscuro .bloque-turnos .lista-turnos span {
+    color: #f0c47d;
+}
+
+body.modo-oscuro .bloque-turnos .lista-turnos a {
+    color: #72d6c3;
+}
+
+body.modo-oscuro .bloque-turnos .ver-turnos {
+    border-color: #40535e;
+    color: #72d6c3;
+}
+
+body.modo-oscuro .bloque-turnos .ver-turnos:hover {
+    color: #b8e5ec;
+}
+
+/* RESPONSIVE: SOLO ELEMENTOS INTERNOS */
+
+@media (max-width: 550px) {
+    .bloque-buscador form {
+        gap: 12px;
+    }
+
+    .bloque-buscador input {
+        width: 100%;
+    }
+}
+
+/* ENCABEZADO Y MENÚ DE CONFIGURACIÓN */
+
+.navegacion-superior {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.contenedor-configuracion {
+    position: relative;
+    z-index: 1001;
+}
+
+#btn-configuracion {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+    line-height: 1;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#btn-configuracion:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.menu-configuracion {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    z-index: 1002;
+    width: 220px;
+    padding: 12px;
+    background: white;
+    border: 1px solid #dce9ed;
+    border-radius: 12px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+
+.menu-configuracion[hidden] {
+    display: none !important;
+}
+
+.titulo-menu {
+    color: #14566b;
+    font-weight: bold;
+    margin: 5px 8px 10px;
+    font-size: 16px;
+}
+
+.menu-configuracion a,
+.opcion-configuracion {
+    display: block;
+    width: 100%;
+    padding: 11px 10px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #263d4a;
+    text-decoration: none;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.menu-configuracion a:hover,
+.opcion-configuracion:hover {
+    background: #edf5f7;
+    color: #14566b;
+}
+
+.separador-menu {
+    height: 1px;
+    background: #dce9ed;
+    margin: 8px 0;
+}
+
+/* MENÚ EN MODO OSCURO */
+
+.modo-oscuro .menu-configuracion {
+    background: #24343f;
+    border-color: #40535f;
+}
+
+.modo-oscuro .titulo-menu {
+    color: #8ed5dc;
+}
+
+.modo-oscuro .menu-configuracion a,
+.modo-oscuro .opcion-configuracion {
+    color: #e6eef2;
+}
+
+.modo-oscuro .menu-configuracion a:hover,
+.modo-oscuro .opcion-configuracion:hover {
+    background: #30434f;
+    color: #8ed5dc;
+}
+
+.modo-oscuro .separador-menu {
+    background: #40535f;
+}
+
+/* ADAPTACIÓN PARA CELULARES */
+
+@media (max-width: 550px) {
+    .navegacion-superior {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .menu-configuracion {
+        width: 200px;
+    }
+}
+
+.cerrar-sesion-menu {
+    color: #c44747 !important;
+    font-weight: bold;
+}
+
+.cerrar-sesion-menu:hover {
+    background: #fceaea !important;
+    color: #a52e2e !important;
+}
+
+.modo-oscuro .cerrar-sesion-menu {
+    color: #ff8585 !important;
+}
+
+.modo-oscuro .cerrar-sesion-menu:hover {
+    background: #493238 !important;
+    color: #ffaaaa !important;
 }
