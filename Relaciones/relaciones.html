@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar exposiciones - Clínica</title>
+
+    <link rel="stylesheet" href="../general/estilos.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>Administrar exposiciones</h1>
+        <p>Gestión de las exposiciones laborales</p>
+    </header>
+
+    <main class="gestion-contenido">
+
+        <!-- Agregar exposición -->
+        <section class="tarjeta form-gestion">
+
+            <h2>Agregar exposición</h2>
+
+            <form action="agregar.php" method="POST">
+
+                <label for="nombre_ex">Nombre de la exposición:</label>
+
+                <input type="text" id="nombre_ex" name="nombre_ex" placeholder="Ingresar nombre de la exposición"
+                    required>
+
+                <button type="submit">Agregar exposición</button>
+
+            </form>
+
+        </section>
+
+
+        <!-- Listado de exposiciones -->
+        <section class="tarjeta tabla-gestion">
+
+            <h2>Exposiciones registradas</h2>
+
+            <?php if (count($exposiciones) > 0) { ?>
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre de la exposición</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <?php foreach ($exposiciones as $exposicion) { ?>
+
+                    <tr>
+
+                        <td>
+                            <?php echo $exposicion["id_exposicion"]; ?>
+                        </td>
+
+                        <td>
+                            <?php echo htmlspecialchars($exposicion["nombre_ex"]); ?>
+                        </td>
+
+                        <td class="acciones">
+
+                            <a href="editar.php?id=<?php echo $exposicion[" id_exposicion"]; ?>">
+                                Editar
+                            </a>
+
+                            <a href="eliminar.php?id=<?php echo $exposicion[" id_exposicion"]; ?>"
+                                onclick="return confirm('¿Estás segura de que querés eliminar esta exposición?');"
+                                >
+                                Eliminar
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    <?php } ?>
+
+                </tbody>
+
+            </table>
+
+            <?php } else { ?>
+
+            <p>No hay exposiciones registradas.</p>
+
+            <?php } ?>
+
+        </section>
+
+
+        <!-- Navegación -->
+        <section class="tarjeta navegacion-gestion">
+
+            <h2>Otras gestiones</h2>
+
+            <a href="../Trabajos/listar.php">
+                Administrar trabajos
+            </a>
+
+            <br><br>
+
+            <a href="../Relaciones/listar.php">
+                Exposiciones por trabajo
+            </a>
+
+            <br><br>
+
+            <a href="../Relaciones/estudios.php">
+                Administrar estudios por trabajo
+            </a>
+
+            <br><br>
+
+            <a href="../general/index.html">
+                Volver al inicio
+            </a>
+
+        </section>
+
+    </main>
+
+    <script src="../general/script.js"></script>
+    <script src="../general/modooscuro.js"></script>
+    <script src="../general/animaciones.js"></script>
+
+</body>
+
+</html>

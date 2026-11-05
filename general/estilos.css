@@ -1246,3 +1246,131 @@ body.modo-oscuro .bloque-turnos .ver-turnos:hover {
     background: #493238 !important;
     color: #ffaaaa !important;
 }
+
+
+/* --- PÁGINAS DE ADMINISTRACIÓN --- */
+
+.gestion-contenido {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.gestion-contenido .bienvenida {
+    margin-bottom: 0;
+}
+
+/* --- FORMULARIOS --- */
+
+.form-gestion {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 650px;
+}
+
+.form-gestion .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-gestion input,
+.form-gestion select {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid #cbdde2;
+    border-radius: 8px;
+    background: #f8fbfc;
+    color: #263d4a;
+    font: inherit;
+}
+
+.form-gestion select[multiple] {
+    min-height: 130px;
+}
+
+.form-gestion small,
+.nota-listado {
+    color: #6c818b;
+    font-size: 12px;
+}
+
+/* --- TABLAS --- */
+
+.tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.tabla-gestion {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.tabla-gestion th,
+.tabla-gestion td {
+    padding: 13px;
+    border-bottom: 1px solid #dce9ed;
+}
+
+.tabla-gestion th {
+    color: #14566b;
+    background: #f3f9fa;
+}
+
+.tabla-gestion .acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tabla-gestion button {
+    align-self: auto;
+}
+
+.tabla-gestion .btn-secundario {
+    background: #e1f0f2;
+    color: #14566b;
+}
+
+.tabla-gestion .btn-eliminar {
+    background: #b94b4b;
+    color: white;
+}
+
+/* --- MODO OSCURO --- */
+
+body.modo-oscuro .form-gestion input,
+body.modo-oscuro .form-gestion select {
+    background: #30434f;
+    color: #fff;
+    border-color: #607783;
+}
+
+body.modo-oscuro .tabla-gestion th {
+    color: #b8e5ec;
+    background: #30434f;
+}
+
+body.modo-oscuro .tabla-gestion th,
+body.modo-oscuro .tabla-gestion td {
+    border-color: #40535e;
+}
+
+body.modo-oscuro .form-gestion small,
+body.modo-oscuro .nota-listado {
+    color: #c0d0d8;
+}
+
+/* --- RESPONSIVE --- */
+
+@media (max-width: 550px) {
+
+    .tabla-gestion th,
+    .tabla-gestion td {
+        padding: 9px;
+    }
+
+}

@@ -2,9 +2,9 @@
 <?php
 require_once "sesion.php";
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,25 +18,55 @@ require_once "sesion.php";
 
     <header>
         <div class="logo">
-            <img
-                id="logo"
-                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
-                alt=""
-                height="150"
-                width="175"
-            >
+            <img id="logo" src="../general/Logo minimalista DUCCA con hojas orgánicas.png" alt="Logo DUCA" height="150"
+                width="175">
         </div>
 
-        <nav>
+        <nav class="navegacion-superior">
+
             <span class="perfil-usuario">
-                Usuario: <strong><?php echo htmlspecialchars($_SESSION["nombre"]); ?></strong>
+                Usuario:
+                <strong>
+                    <?php echo htmlspecialchars($_SESSION["nombre"]); ?>
+                </strong>
             </span>
 
-            <a href="cerrar_sesion.php">Cerrar sesión</a>
+            <div class="contenedor-configuracion">
 
-            <button type="button" id="btn-tema">
-                🌙Modo oscuro
-            </button>
+                <button type="button" id="btn-configuracion" aria-label="Abrir configuración" aria-expanded="false">
+                    ⚙
+                </button>
+
+                <div id="menu-configuracion" class="menu-configuracion" hidden>
+
+                    <p class="titulo-menu">Administración</p>
+
+                    <button type="button" id="btn-tema" class="opcion-configuracion">
+                        ☽ Modo oscuro
+                    </button>
+
+                    <div class="separador-menu"></div>
+
+                    <a href="../administracion/trabajos.php">
+                        Trabajos
+                    </a>
+
+                    <a href="../administracion/exposiciones.php">
+                        Exposiciones
+                    </a>
+
+                    <a href="../administracion/relaciones.php">
+                        Relaciones
+                    </a>
+
+                    <a href="cerrar_sesion.php" class="cerrar-sesion-menu">
+                        Cerrar sesión
+                    </a>
+
+                </div>
+
+            </div>
+
         </nav>
     </header>
 
@@ -57,13 +87,8 @@ require_once "sesion.php";
                         DNI o apellido:
                     </label>
 
-                    <input
-                        type="text"
-                        id="buscar-paciente"
-                        name="buscar"
-                        placeholder="Ingrese DNI o apellido..."
-                        required
-                    >
+                    <input type="text" id="buscar-paciente" name="buscar" placeholder="Ingrese DNI o apellido..."
+                        required>
 
                     <button type="submit">BUSCAR</button>
 
@@ -160,6 +185,8 @@ require_once "sesion.php";
     <script src="../general/script.js"></script>
     <script src="../general/animaciones.js"></script>
     <script src="../general/modooscuro.js"></script>
+    <script src="configuracion.js"></script>
 
 </body>
+
 </html>
