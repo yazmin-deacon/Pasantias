@@ -1,24 +1,15 @@
 BD:
- toda la parte del inicio de sesion de la doctora
- las partes de acciones rapidas
- la parte de agregar los estudios y qeu queden registrados al paciente 
- proximos turnos
- lo de ordenar alfabeticamente la parte de pacientes
- agregar bd Trabajo
- falta bd exposiciones
 
+la parte de agregar los estudios y qeu queden registrados al paciente 
+proximos turnos
+lo de ordenar alfabeticamente la parte de pacientes
+en trabajos falta arrglar el id auto_increment
+arreglar id en estudios y exposiciones
+
+
+
+Giu:
+falta pagina de estudios a realizarr lpmm
  html index
- cuil, correo, obra social, Trabajo
  seleccion de obras sociales
- seleccion de trabajos agregar y editar (no visible a simple vista)
  seleccion y conexion de exposiciones y trabajos
- hacer como una barra de herramientas/tareas
-    en vez de poner arriba el tema en la barra
-    lo de ir de pagina en pagina
-    dentro de lo de cnfig 
-        crud de trabajo 
-        crud de expo
-
-    lupita pa buscar
-
-    falta pagina de estudios a realizarr lpmm

@@ -25,7 +25,7 @@ DROP TABLE IF EXISTS trabajo;
 -- =========================================
 
 CREATE TABLE trabajo (
-    id_trabajo INT NOT NULL AUTO_INCREMENT,
+    id_trabajo INT NOT NULL,
     nombre_t VARCHAR(50) NOT NULL,
     PRIMARY KEY (id_trabajo),
     UNIQUE (nombre_t)
@@ -69,7 +69,7 @@ COLLATE=utf8mb4_general_ci;
 -- =========================================
 
 CREATE TABLE exposicion (
-    id_exposicion INT NOT NULL AUTO_INCREMENT,
+    id_exposicion INT NOT NULL,
     nombre_ex VARCHAR(50) NOT NULL,
     PRIMARY KEY (id_exposicion),
     UNIQUE (nombre_ex)
@@ -81,7 +81,7 @@ COLLATE=utf8mb4_general_ci;
 -- =========================================
 
 CREATE TABLE estudio (
-    id_estudio INT NOT NULL AUTO_INCREMENT,
+    id_estudio INT NOT NULL,
     nombre_es VARCHAR(50) NOT NULL,
     PRIMARY KEY (id_estudio),
     UNIQUE (nombre_es)
