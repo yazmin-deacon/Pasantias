@@ -4,7 +4,7 @@
 require_once __DIR__ . "/../Pacientes/conexion.php";
 
 // BLOQUE 2 - Consultar los trabajos
-$sql = "SELECT id_trabajo, nombre_t FROM trabajo ORDER BY nombre_t";
+$sql = "SELECT id_trabajo, nombre_t FROM trabajo ORDER BY id_trabajo ASC";
 $resultado = mysqli_query($conexion, $sql);
 
 if (!$resultado) {

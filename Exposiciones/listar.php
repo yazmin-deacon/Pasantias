@@ -4,7 +4,7 @@
 require_once __DIR__ . "/../Pacientes/conexion.php";
 
 // BLOQUE 2 - Consultar las exposiciones
-$sql = "SELECT id_exposicion, nombre_ex FROM exposicion ORDER BY nombre_ex";
+$sql = "SELECT id_exposicion, nombre_ex FROM exposicion ORDER BY id_exposicion ASC";;
 $resultado = mysqli_query($conexion, $sql);
 
 if (!$resultado) {

@@ -7,7 +7,7 @@ $sql = "SELECT paciente.dni_p, paciente.nombre_p, paciente.apellido,
                paciente.obra_social, trabajo.nombre_t AS trabajo
         FROM paciente
         LEFT JOIN trabajo ON paciente.id_trabajo = trabajo.id_trabajo
-        ORDER BY paciente.dni_p";
+        ORDER BY paciente.apellido ASC";
 
 $resultado = mysqli_query($conexion, $sql);
 
