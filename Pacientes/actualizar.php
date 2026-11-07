@@ -3,7 +3,7 @@
 require_once "conexion.php";
 
 // =========================================
-// 1. RECIBIR DATOS DEL FORMULARIO
+// 1. RECIBIR DATOS
 // =========================================
 
 $dni = trim($_POST["dni_p"] ?? "");
@@ -12,26 +12,16 @@ $apellido = trim($_POST["apellido"] ?? "");
 $cuil = trim($_POST["cuil"] ?? "");
 $telefono = trim($_POST["telefono"] ?? "");
 $mail = trim($_POST["mail"] ?? "");
-
-$id_obra_social = trim(
-    $_POST["id_obra_social"] ?? ""
-);
-
-$nombre_trabajo = trim(
-    $_POST["nombre_trabajo"] ?? ""
-);
+$obra = trim($_POST["id_obra_social"] ?? "");
+$nombre_trabajo = trim($_POST["nombre_trabajo"] ?? "");
 
 $exposiciones = $_POST["exposiciones"] ?? [];
 $estudios = $_POST["estudios"] ?? [];
-
-$nuevas_exposiciones =
-    $_POST["nueva_exposicion"] ?? [];
-
-$nuevos_estudios =
-    $_POST["nuevo_estudio"] ?? [];
+$nuevas_exposiciones = $_POST["nueva_exposicion"] ?? [];
+$nuevos_estudios = $_POST["nuevo_estudio"] ?? [];
 
 // =========================================
-// 2. VALIDAR DATOS
+// 2. VALIDACIONES
 // =========================================
 
 if (
@@ -42,26 +32,36 @@ if (
     $apellido === "" ||
     $telefono === "" ||
     $mail === "" ||
-    $id_obra_social === ""
+    $obra === ""
 ) {
-    die("Faltan datos obligatorios o el DNI no es válido.");
+    die("Faltan datos obligatorios.");
 }
 
 if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
     die("El correo electrónico no es válido.");
 }
 
-if (strlen($nombre_trabajo) > 50) {
-    die("El nombre del trabajo supera los 50 caracteres.");
+if (
+    mb_strlen($nombre) > 30 ||
+    mb_strlen($apellido) > 30 ||
+    strlen($cuil) > 11 ||
+    strlen($telefono) > 20 ||
+    strlen($mail) > 100 ||
+    mb_strlen($nombre_trabajo) > 50
+) {
+    die("Uno de los campos supera el límite permitido.");
 }
 
-if (
-    !is_array($exposiciones) ||
-    !is_array($estudios) ||
-    !is_array($nuevas_exposiciones) ||
-    !is_array($nuevos_estudios)
-) {
-    die("Los estudios o exposiciones no son válidos.");
+foreach ([
+    $exposiciones,
+    $estudios,
+    $nuevas_exposiciones,
+    $nuevos_estudios
+] as $lista) {
+
+    if (!is_array($lista)) {
+        die("La selección de estudios o exposiciones no es válida.");
+    }
 }
 
 // =========================================
@@ -75,12 +75,28 @@ function obtenerOCrear(
     $campo_nombre,
     $nombre
 ) {
-    // Los nombres de tabla y columnas se utilizan
-    // solamente con valores fijos del código.
+
+    $permitidos = [
+        "trabajo" => ["id_trabajo", "nombre_t"],
+        "exposicion" => ["id_exposicion", "nombre_ex"],
+        "estudio" => ["id_estudio", "nombre_es"]
+    ];
+
+    if (
+        !isset($permitidos[$tabla]) ||
+        $permitidos[$tabla] !== [$campo_id, $campo_nombre]
+    ) {
+        throw new Exception("Catálogo no válido.");
+    }
+
     $nombre = trim($nombre);
 
     if ($nombre === "") {
         return null;
+    }
+
+    if (mb_strlen($nombre) > 50) {
+        throw new Exception("El nombre es demasiado largo.");
     }
 
     $sql = "SELECT $campo_id
@@ -90,18 +106,17 @@ function obtenerOCrear(
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception("Error al preparar la búsqueda.");
+        throw new Exception("Error al buscar elemento.");
     }
 
     mysqli_stmt_bind_param($stmt, "s", $nombre);
 
     if (!mysqli_stmt_execute($stmt)) {
-        throw new Exception("Error al buscar el elemento.");
+        throw new Exception("Error al consultar catálogo.");
     }
 
     $resultado = mysqli_stmt_get_result($stmt);
     $fila = mysqli_fetch_assoc($resultado);
-
     mysqli_stmt_close($stmt);
 
     if ($fila) {
@@ -114,7 +129,7 @@ function obtenerOCrear(
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception("Error al preparar la inserción.");
+        throw new Exception("Error al preparar el registro.");
     }
 
     mysqli_stmt_bind_param($stmt, "s", $nombre);
@@ -127,7 +142,6 @@ function obtenerOCrear(
     }
 
     $id = mysqli_insert_id($conexion);
-
     mysqli_stmt_close($stmt);
 
     return $id;
@@ -138,81 +152,89 @@ function obtenerOCrear(
 // =========================================
 
 try {
+
     mysqli_begin_transaction($conexion);
 
-    // =====================================
-    // 5. VALIDAR LA OBRA SOCIAL
-    // =====================================
+    // BUSCAR PACIENTE
 
-    if ($id_obra_social === "particular") {
+    $sql = "SELECT id_obra_social
+            FROM paciente
+            WHERE dni_p = ?
+            FOR UPDATE";
+
+    $stmt = mysqli_prepare($conexion, $sql);
+
+    if (!$stmt) {
+        throw new Exception("Error al buscar paciente.");
+    }
+
+    mysqli_stmt_bind_param($stmt, "i", $dni);
+    mysqli_stmt_execute($stmt);
+
+    $resultado = mysqli_stmt_get_result($stmt);
+    $paciente_actual = mysqli_fetch_assoc($resultado);
+
+    mysqli_stmt_close($stmt);
+
+    if (!$paciente_actual) {
+        throw new Exception("No se encontró el paciente.");
+    }
+
+    // VALIDAR OBRA SOCIAL
+
+    if ($obra === "particular") {
 
         $id_obra_social = null;
 
     } else {
 
-        if (
-            !ctype_digit($id_obra_social) ||
-            (int)$id_obra_social <= 0
-        ) {
-            throw new Exception(
-                "La obra social seleccionada no es válida."
-            );
+        if (!ctype_digit($obra) || (int)$obra <= 0) {
+            throw new Exception("Obra social no válida.");
         }
 
-        $id_obra_social = (int)$id_obra_social;
+        $id_obra_social = (int)$obra;
 
-        // Permitimos mantener una obra social inactiva
-        // si ya estaba asociada a este paciente.
-        $sql = "SELECT os.id_obra_social
-                FROM obra_social os
-                JOIN paciente p ON p.dni_p = ?
-                WHERE os.id_obra_social = ?
-                  AND (
-                    os.activa = 1
-                    OR p.id_obra_social = os.id_obra_social
-                  )";
+        $sql = "SELECT id_obra_social, activa
+                FROM obra_social
+                WHERE id_obra_social = ?";
 
         $stmt = mysqli_prepare($conexion, $sql);
 
         if (!$stmt) {
-            throw new Exception(
-                "No se pudo consultar la obra social."
-            );
+            throw new Exception("Error al consultar obra social.");
         }
 
         mysqli_stmt_bind_param(
-            $stmt,
-            "ii",
-            $dni,
-            $id_obra_social
+            $stmt, "i", $id_obra_social
         );
 
-        if (!mysqli_stmt_execute($stmt)) {
-            throw new Exception(
-                "No se pudo validar la obra social."
-            );
-        }
+        mysqli_stmt_execute($stmt);
 
         $resultado = mysqli_stmt_get_result($stmt);
-        $obra = mysqli_fetch_assoc($resultado);
+        $obra_encontrada = mysqli_fetch_assoc($resultado);
 
         mysqli_stmt_close($stmt);
 
-        if (!$obra) {
+        if (!$obra_encontrada) {
+            throw new Exception("La obra social no existe.");
+        }
+
+        if (
+            !(int)$obra_encontrada["activa"] &&
+            (int)($paciente_actual["id_obra_social"] ?? 0)
+                !== $id_obra_social
+        ) {
             throw new Exception(
-                "La obra social no está disponible."
+                "La obra social seleccionada está inactiva."
             );
         }
     }
 
-    // =====================================
-    // 6. BUSCAR O CREAR EL TRABAJO
-    // =====================================
+    // BUSCAR O CREAR TRABAJO
 
     $id_trabajo = null;
 
     if ($nombre_trabajo !== "") {
-
         $id_trabajo = obtenerOCrear(
             $conexion,
             "trabajo",
@@ -222,9 +244,7 @@ try {
         );
     }
 
-    // =====================================
-    // 7. ACTUALIZAR PACIENTE
-    // =====================================
+    // ACTUALIZAR PACIENTE
 
     $sql = "UPDATE paciente
             SET nombre_p = ?,
@@ -240,7 +260,7 @@ try {
 
     if (!$stmt) {
         throw new Exception(
-            "No se pudo preparar la actualización."
+            "Error al preparar la actualización."
         );
     }
 
@@ -258,7 +278,6 @@ try {
     );
 
     if (!mysqli_stmt_execute($stmt)) {
-
         throw new Exception(
             "No se pudo actualizar el paciente: " .
             mysqli_stmt_error($stmt)
@@ -267,60 +286,48 @@ try {
 
     mysqli_stmt_close($stmt);
 
-    // =====================================
-    // 8. AGREGAR EXPOSICIONES NUEVAS
-    // =====================================
+    // CREAR EXPOSICIONES NUEVAS
 
     foreach ($nuevas_exposiciones as $exposicion) {
 
-        $exposicion = trim($exposicion);
+        if (!is_string($exposicion)) {
+            throw new Exception("Exposición no válida.");
+        }
 
-        if ($exposicion !== "") {
-
-            $id = obtenerOCrear(
+        if (trim($exposicion) !== "") {
+            $exposiciones[] = obtenerOCrear(
                 $conexion,
                 "exposicion",
                 "id_exposicion",
                 "nombre_ex",
                 $exposicion
             );
-
-            $exposiciones[] = $id;
         }
     }
 
-    // =====================================
-    // 9. AGREGAR ESTUDIOS NUEVOS
-    // =====================================
+    // CREAR ESTUDIOS NUEVOS
 
     foreach ($nuevos_estudios as $estudio) {
 
-        $estudio = trim($estudio);
+        if (!is_string($estudio)) {
+            throw new Exception("Estudio no válido.");
+        }
 
-        if ($estudio !== "") {
-
-            $id = obtenerOCrear(
+        if (trim($estudio) !== "") {
+            $estudios[] = obtenerOCrear(
                 $conexion,
                 "estudio",
                 "id_estudio",
                 "nombre_es",
                 $estudio
             );
-
-            $estudios[] = $id;
         }
     }
-
-    // =====================================
-    // 10. EVITAR IDs REPETIDOS
-    // =====================================
 
     $exposiciones = array_unique($exposiciones);
     $estudios = array_unique($estudios);
 
-    // =====================================
-    // 11. ACTUALIZAR EXPOSICIONES
-    // =====================================
+    // ACTUALIZAR EXPOSICIONES
 
     $sql = "DELETE FROM paciente_exposicion
             WHERE dni_paciente = ?";
@@ -328,9 +335,7 @@ try {
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception(
-            "Error al preparar las exposiciones."
-        );
+        throw new Exception("Error al preparar exposiciones.");
     }
 
     mysqli_stmt_bind_param($stmt, "i", $dni);
@@ -355,23 +360,18 @@ try {
         );
     }
 
-    foreach ($exposiciones as $id_exposicion) {
+    foreach ($exposiciones as $id) {
 
         if (
-            !ctype_digit((string)$id_exposicion) ||
-            (int)$id_exposicion <= 0
+            !ctype_digit((string)$id) ||
+            (int)$id <= 0
         ) {
-            continue;
+            throw new Exception("ID de exposición no válido.");
         }
 
-        $id_exposicion = (int)$id_exposicion;
+        $id = (int)$id;
 
-        mysqli_stmt_bind_param(
-            $stmt,
-            "ii",
-            $dni,
-            $id_exposicion
-        );
+        mysqli_stmt_bind_param($stmt, "ii", $dni, $id);
 
         if (!mysqli_stmt_execute($stmt)) {
             throw new Exception(
@@ -383,9 +383,7 @@ try {
 
     mysqli_stmt_close($stmt);
 
-    // =====================================
-    // 12. CONSERVAR ESTUDIOS CON HISTORIAL
-    // =====================================
+    // CONSERVAR ESTUDIOS CON HISTORIAL
 
     $sql = "DELETE FROM paciente_estudio
             WHERE dni_paciente = ?
@@ -398,9 +396,7 @@ try {
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception(
-            "Error al preparar los estudios."
-        );
+        throw new Exception("Error al preparar estudios.");
     }
 
     mysqli_stmt_bind_param($stmt, "ii", $dni, $dni);
@@ -413,9 +409,7 @@ try {
 
     mysqli_stmt_close($stmt);
 
-    // =====================================
-    // 13. GUARDAR ESTUDIOS SELECCIONADOS
-    // =====================================
+    // GUARDAR ESTUDIOS SELECCIONADOS
 
     $sql = "INSERT INTO paciente_estudio
             (dni_paciente, id_estudio)
@@ -431,23 +425,18 @@ try {
         );
     }
 
-    foreach ($estudios as $id_estudio) {
+    foreach ($estudios as $id) {
 
         if (
-            !ctype_digit((string)$id_estudio) ||
-            (int)$id_estudio <= 0
+            !ctype_digit((string)$id) ||
+            (int)$id <= 0
         ) {
-            continue;
+            throw new Exception("ID de estudio no válido.");
         }
 
-        $id_estudio = (int)$id_estudio;
+        $id = (int)$id;
 
-        mysqli_stmt_bind_param(
-            $stmt,
-            "ii",
-            $dni,
-            $id_estudio
-        );
+        mysqli_stmt_bind_param($stmt, "ii", $dni, $id);
 
         if (!mysqli_stmt_execute($stmt)) {
             throw new Exception(
@@ -459,31 +448,24 @@ try {
 
     mysqli_stmt_close($stmt);
 
-    // =====================================
-    // 14. CONFIRMAR CAMBIOS
-    // =====================================
+    // CONFIRMAR TODOS LOS CAMBIOS
 
     mysqli_commit($conexion);
 
     echo "Paciente actualizado correctamente.<br>";
-    echo '<a href="listar.php">
-            Volver al listado de pacientes
-          </a>';
+    echo '<a href="listar.php">Volver al listado</a>';
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
 
     mysqli_rollback($conexion);
 
-    echo "Error: " .
-        htmlspecialchars(
-            $e->getMessage(),
-            ENT_QUOTES,
-            "UTF-8"
-        );
+    echo "Error: " . htmlspecialchars(
+        $e->getMessage(),
+        ENT_QUOTES,
+        "UTF-8"
+    );
 
-    echo '<br><a href="listar.php">
-            Volver al listado
-          </a>';
+    echo '<br><a href="listar.php">Volver al listado</a>';
 }
 
 mysqli_close($conexion);

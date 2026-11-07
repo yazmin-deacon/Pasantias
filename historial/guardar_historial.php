@@ -1,6 +1,6 @@
 
 <?php
-require_once "conexion.php";
+require_once "../Pacientes/conexion.php";
 
 // Obtener los datos del formulario
 $dni_p = $_POST["dni_p"] ?? "";

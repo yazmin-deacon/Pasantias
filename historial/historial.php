@@ -1,6 +1,6 @@
 
 <?php
-require_once "conexion.php";
+require_once "../Pacientes/conexion.php";
 
 // Obtener el DNI del paciente
 if (!isset($_GET["dni_p"]) || empty($_GET["dni_p"])) {
@@ -84,7 +84,7 @@ $historial = mysqli_stmt_get_result($stmt);
     </p>
 
     <p>
-        <a href="listar.php">Volver al listado de pacientes</a>
+        <a href="Pacientes/listar.php">Volver al listado de pacientes</a>
     </p>
 
     <hr>

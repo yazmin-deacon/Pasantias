@@ -3,28 +3,33 @@
 require_once "conexion.php";
 
 // =========================================
-// 1. CONSULTAR LOS CATÁLOGOS
+// 1. CONSULTAR CATÁLOGOS
 // =========================================
 
 function consultarTodos($conexion, $sql) {
     $resultado = mysqli_query($conexion, $sql);
 
     if (!$resultado) {
-        die("Error al consultar datos: " .
-            mysqli_error($conexion));
+        die("Error en la consulta: " . mysqli_error($conexion));
     }
 
     return mysqli_fetch_all($resultado, MYSQLI_ASSOC);
 }
 
-// Consultar trabajos
+function escapar($valor) {
+    return htmlspecialchars(
+        (string)($valor ?? ""),
+        ENT_QUOTES,
+        "UTF-8"
+    );
+}
+
 $trabajos = consultarTodos(
     $conexion,
     "SELECT id_trabajo, nombre_t
      FROM trabajo ORDER BY nombre_t"
 );
 
-// Consultar obras sociales activas
 $obras_sociales = consultarTodos(
     $conexion,
     "SELECT id_obra_social, nombre_os
@@ -33,14 +38,12 @@ $obras_sociales = consultarTodos(
      ORDER BY nombre_os"
 );
 
-// Consultar exposiciones
 $exposiciones = consultarTodos(
     $conexion,
     "SELECT id_exposicion, nombre_ex
      FROM exposicion ORDER BY nombre_ex"
 );
 
-// Consultar estudios
 $estudios = consultarTodos(
     $conexion,
     "SELECT id_estudio, nombre_es
@@ -48,7 +51,7 @@ $estudios = consultarTodos(
 );
 
 // =========================================
-// 2. RELACIONES DE LOS TRABAJOS
+// 2. RELACIONES POR TRABAJO
 // =========================================
 
 $exposiciones_trabajo = [];
@@ -83,10 +86,9 @@ foreach ($filas as $fila) {
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
-
-    <title>Alta de paciente</title>
+    <title>Agregar paciente</title>
+    <link rel="stylesheet" href="../general/estilos.css">
 </head>
-
 <body>
 
 <h1>Agregar paciente</h1>
@@ -97,79 +99,53 @@ foreach ($filas as $fila) {
 
 <form action="guardar.php" method="POST">
 
-    <!-- ================================= -->
-    <!-- 3. DATOS PERSONALES -->
-    <!-- ================================= -->
+    <!-- DATOS PERSONALES -->
 
     <h2>Datos personales</h2>
 
     <p>
         DNI:
-        <input
-            type="text"
-            name="dni_p"
-            maxlength="8"
-            inputmode="numeric"
-            required
-        >
+        <input type="text" name="dni_p"
+               maxlength="8" inputmode="numeric" required>
     </p>
 
     <p>
         Nombre:
-        <input
-            type="text"
-            name="nombre_p"
-            maxlength="30"
-            required
-        >
+        <input type="text" name="nombre_p"
+               maxlength="30" required>
     </p>
 
     <p>
         Apellido:
-        <input
-            type="text"
-            name="apellido"
-            maxlength="30"
-            required
-        >
+        <input type="text" name="apellido"
+               maxlength="30" required>
     </p>
 
     <p>
         CUIL:
-        <input
-            type="text"
-            name="cuil"
-            maxlength="11"
-        >
+        <input type="text" name="cuil"
+               maxlength="11">
     </p>
 
     <p>
         Teléfono:
-        <input
-            type="text"
-            name="telefono"
-            maxlength="20"
-            required
-        >
+        <input type="text" name="telefono"
+               maxlength="20" required>
     </p>
 
     <p>
         Mail:
-        <input
-            type="email"
-            name="mail"
-            maxlength="100"
-            required
-        >
+        <input type="email" name="mail"
+               maxlength="100" required>
     </p>
 
-    <!-- ================================= -->
-    <!-- 4. OBRA SOCIAL -->
-    <!-- ================================= -->
+    <hr>
+
+    <!-- OBRA SOCIAL -->
+
+    <h2>Obra social</h2>
 
     <p>
-        Obra social:
-
         <select name="id_obra_social" required>
 
             <option value="" disabled selected>
@@ -182,16 +158,10 @@ foreach ($filas as $fila) {
 
             <?php foreach ($obras_sociales as $obra) { ?>
 
-                <option
-                    value="<?php echo (int)$obra['id_obra_social']; ?>"
-                >
-                    <?php
-                        echo htmlspecialchars(
-                            $obra["nombre_os"],
-                            ENT_QUOTES,
-                            "UTF-8"
-                        );
-                    ?>
+                <option value="<?php
+                    echo (int)$obra["id_obra_social"];
+                ?>">
+                    <?php echo escapar($obra["nombre_os"]); ?>
                 </option>
 
             <?php } ?>
@@ -199,13 +169,21 @@ foreach ($filas as $fila) {
         </select>
     </p>
 
+    <p>
+        <a href="../Obra%20Social/listar.php"
+           target="_blank"
+           rel="noopener noreferrer">
+            Administrar obras sociales
+        </a>
+    </p>
+
     <hr>
 
-    <!-- ================================= -->
-    <!-- 5. TRABAJO -->
-    <!-- ================================= -->
+    <!-- TRABAJO -->
 
     <h2>Trabajo</h2>
+
+    <p>Buscar o escribir trabajo:</p>
 
     <p>
         <input
@@ -214,79 +192,67 @@ foreach ($filas as $fila) {
             id="trabajo_nombre"
             list="lista_trabajos"
             maxlength="50"
-            placeholder="Escribí o buscá un trabajo"
+            placeholder="Buscar o escribir trabajo"
             autocomplete="off"
         >
 
         <datalist id="lista_trabajos">
-
             <?php foreach ($trabajos as $trabajo) { ?>
 
-                <option
-                    value="<?php
-                        echo htmlspecialchars(
-                            $trabajo["nombre_t"],
-                            ENT_QUOTES,
-                            "UTF-8"
-                        );
-                    ?>"
-                >
+                <option value="<?php
+                    echo escapar($trabajo["nombre_t"]);
+                ?>">
 
             <?php } ?>
-
         </datalist>
     </p>
 
     <p>
-        Si el trabajo no existe, podés escribir
-        uno nuevo. Se guardará automáticamente.
+        <button type="button"
+                onclick="agregarTrabajo()">
+            Agregar trabajo
+        </button>
+    </p>
+
+    <p id="mensaje_trabajo"></p>
+
+    <p>
+        <a href="../Trabajos/listar.php"
+           target="_blank"
+           rel="noopener noreferrer">
+            Administrar trabajos
+        </a>
     </p>
 
     <hr>
 
-    <!-- ================================= -->
-    <!-- 6. EXPOSICIONES -->
-    <!-- ================================= -->
+    <!-- EXPOSICIONES -->
 
     <h2>Exposiciones del paciente</h2>
 
     <p>
-        <input
-            type="text"
-            id="buscar_exposiciones"
-            placeholder="Buscar exposición..."
-            autocomplete="off"
-        >
+        <input type="text"
+               id="buscar_exposiciones"
+               placeholder="Buscar exposición...">
     </p>
 
     <div id="lista_exposiciones">
 
         <?php foreach ($exposiciones as $exposicion) { ?>
 
-            <p
-                data-elemento-exposicion="<?php
-                    echo htmlspecialchars(
-                        mb_strtolower($exposicion["nombre_ex"]),
-                        ENT_QUOTES,
-                        "UTF-8"
-                    );
-                ?>"
-            >
+            <p class="opcion-exposicion">
                 <label>
                     <input
                         type="checkbox"
                         name="exposiciones[]"
-                        value="<?php echo (int)$exposicion['id_exposicion']; ?>"
-                        data-exposicion="<?php echo (int)$exposicion['id_exposicion']; ?>"
+                        value="<?php
+                            echo (int)$exposicion["id_exposicion"];
+                        ?>"
+                        data-exposicion="<?php
+                            echo (int)$exposicion["id_exposicion"];
+                        ?>"
                     >
-
-                    <?php
-                        echo htmlspecialchars(
-                            $exposicion["nombre_ex"],
-                            ENT_QUOTES,
-                            "UTF-8"
-                        );
-                    ?>
+                    <?php echo escapar($exposicion["nombre_ex"]); ?>
                 </label>
             </p>
 
@@ -295,68 +261,56 @@ foreach ($filas as $fila) {
     </div>
 
     <p>
-        <input
-            type="text"
-            id="nueva_exposicion"
-            maxlength="50"
-            placeholder="Escribí una exposición nueva"
-        >
+        <input type="text"
+               id="nueva_exposicion"
+               maxlength="50"
+               placeholder="Nueva exposición">
 
-        <button
-            type="button"
-            onclick="agregarExposicion()"
-        >
+        <button type="button"
+                onclick="agregarExposicion()">
             Agregar exposición
         </button>
     </p>
 
     <div id="exposiciones_nuevas"></div>
 
+    <p>
+        <a href="../Exposiciones/listar.php"
+           target="_blank"
+           rel="noopener noreferrer">
+            Administrar exposiciones
+        </a>
+    </p>
+
     <hr>
 
-    <!-- ================================= -->
-    <!-- 7. ESTUDIOS -->
-    <!-- ================================= -->
+    <!-- ESTUDIOS -->
 
     <h2>Estudios del paciente</h2>
 
     <p>
-        <input
-            type="text"
-            id="buscar_estudios"
-            placeholder="Buscar estudio..."
-            autocomplete="off"
-        >
+        <input type="text"
+               id="buscar_estudios"
+               placeholder="Buscar estudio...">
     </p>
 
     <div id="lista_estudios">
 
         <?php foreach ($estudios as $estudio) { ?>
 
-            <p
-                data-elemento-estudio="<?php
-                    echo htmlspecialchars(
-                        mb_strtolower($estudio["nombre_es"]),
-                        ENT_QUOTES,
-                        "UTF-8"
-                    );
-                ?>"
-            >
+            <p class="opcion-estudio">
                 <label>
                     <input
                         type="checkbox"
                         name="estudios[]"
-                        value="<?php echo (int)$estudio['id_estudio']; ?>"
-                        data-estudio="<?php echo (int)$estudio['id_estudio']; ?>"
+                        value="<?php
+                            echo (int)$estudio["id_estudio"];
+                        ?>"
+                        data-estudio="<?php
+                            echo (int)$estudio["id_estudio"];
+                        ?>"
                     >
-
-                    <?php
-                        echo htmlspecialchars(
-                            $estudio["nombre_es"],
-                            ENT_QUOTES,
-                            "UTF-8"
-                        );
-                    ?>
+                    <?php echo escapar($estudio["nombre_es"]); ?>
                 </label>
             </p>
 
@@ -365,163 +319,174 @@ foreach ($filas as $fila) {
     </div>
 
     <p>
-        <input
-            type="text"
-            id="nuevo_estudio"
-            maxlength="50"
-            placeholder="Escribí un estudio nuevo"
-        >
+        <input type="text"
+               id="nuevo_estudio"
+               maxlength="50"
+               placeholder="Nuevo estudio">
 
-        <button
-            type="button"
-            onclick="agregarEstudio()"
-        >
+        <button type="button"
+                onclick="agregarEstudio()">
             Agregar estudio
         </button>
     </p>
 
     <div id="estudios_nuevos"></div>
 
+    <p>
+        <a href="../Estudios/estudios.php"
+           target="_blank"
+           rel="noopener noreferrer">
+            Administrar estudios
+        </a>
+    </p>
+
     <br>
 
-    <input
-        type="submit"
-        value="Guardar paciente"
-    >
+    <input type="submit" value="Guardar paciente">
 
 </form>
 
-<!-- ================================= -->
-<!-- 8. JAVASCRIPT -->
-<!-- ================================= -->
-
 <script>
 
-// Datos enviados desde PHP
-const trabajos = <?php
-    echo json_encode(
-        $trabajos,
-        JSON_HEX_TAG |
-        JSON_HEX_APOS |
-        JSON_HEX_QUOT |
-        JSON_HEX_AMP
-    );
-?>;
+// =========================================
+// DATOS DESDE PHP
+// =========================================
 
-const exposicionesPorTrabajo = <?php
-    echo json_encode($exposiciones_trabajo);
-?>;
+const trabajos = <?php echo json_encode(
+    $trabajos,
+    JSON_HEX_TAG | JSON_HEX_APOS |
+    JSON_HEX_QUOT | JSON_HEX_AMP
+); ?>;
 
-const estudiosPorTrabajo = <?php
-    echo json_encode($estudios_trabajo);
-?>;
+const exposicionesPorTrabajo =
+    <?php echo json_encode($exposiciones_trabajo); ?>;
 
-// Normalizar textos
+const estudiosPorTrabajo =
+    <?php echo json_encode($estudios_trabajo); ?>;
+
 function normalizar(texto) {
     return texto.trim().toLocaleLowerCase("es");
 }
 
 // =========================================
-// 9. SELECCIÓN AUTOMÁTICA POR TRABAJO
+// SELECCIÓN AUTOMÁTICA POR TRABAJO
 // =========================================
 
 const campoTrabajo =
     document.getElementById("trabajo_nombre");
 
-campoTrabajo.addEventListener("change", function () {
+function actualizarPorTrabajo() {
 
-    const nombreTrabajo =
-        normalizar(campoTrabajo.value);
+    const nombre = normalizar(campoTrabajo.value);
 
-    const trabajoSeleccionado = trabajos.find(
-        trabajo =>
-            normalizar(trabajo.nombre_t) === nombreTrabajo
+    const trabajo = trabajos.find(t =>
+        normalizar(t.nombre_t) === nombre
     );
 
-    let exposicionesSeleccionadas = [];
-    let estudiosSeleccionados = [];
+    const exp = trabajo
+        ? exposicionesPorTrabajo[trabajo.id_trabajo] || []
+        : [];
 
-    if (trabajoSeleccionado) {
+    const est = trabajo
+        ? estudiosPorTrabajo[trabajo.id_trabajo] || []
+        : [];
 
-        const idTrabajo = trabajoSeleccionado.id_trabajo;
+    document.querySelectorAll("[data-exposicion]")
+        .forEach(casilla => {
 
-        exposicionesSeleccionadas =
-            exposicionesPorTrabajo[idTrabajo] || [];
-
-        estudiosSeleccionados =
-            estudiosPorTrabajo[idTrabajo] || [];
-    }
-
-    // Marcar exposiciones
-    document.querySelectorAll(
-        "[data-exposicion]"
-    ).forEach(casilla => {
-
-        casilla.checked =
-            exposicionesSeleccionadas.includes(
+            casilla.checked = exp.includes(
                 Number(casilla.dataset.exposicion)
             );
-    });
+        });
 
-    // Marcar estudios
-    document.querySelectorAll(
-        "[data-estudio]"
-    ).forEach(casilla => {
+    document.querySelectorAll("[data-estudio]")
+        .forEach(casilla => {
 
-        casilla.checked =
-            estudiosSeleccionados.includes(
+            casilla.checked = est.includes(
                 Number(casilla.dataset.estudio)
             );
-    });
-});
+        });
+}
+
+campoTrabajo.addEventListener(
+    "change",
+    actualizarPorTrabajo
+);
 
 // =========================================
-// 10. BUSCAR EXPOSICIONES Y ESTUDIOS
+// AGREGAR O SELECCIONAR TRABAJO
 // =========================================
 
-function configurarBuscador(campoId, atributo) {
+function agregarTrabajo() {
 
-    document.getElementById(campoId)
+    const nombre = campoTrabajo.value.trim();
+
+    const mensaje =
+        document.getElementById("mensaje_trabajo");
+
+    if (nombre === "") {
+        alert("Escribí o seleccioná un trabajo.");
+        return;
+    }
+
+    const existente = trabajos.find(t =>
+        normalizar(t.nombre_t) === normalizar(nombre)
+    );
+
+    if (existente) {
+        mensaje.textContent =
+            "Trabajo seleccionado: " + existente.nombre_t;
+    } else {
+        mensaje.textContent =
+            "Trabajo nuevo: " + nombre +
+            ". Se guardará al registrar el paciente.";
+    }
+
+    actualizarPorTrabajo();
+}
+
+// =========================================
+// BUSCAR EXPOSICIONES Y ESTUDIOS
+// =========================================
+
+function configurarBuscador(id, clase) {
+
+    document.getElementById(id)
         .addEventListener("input", function () {
 
             const busqueda = normalizar(this.value);
 
-            document.querySelectorAll(
-                "[" + atributo + "]"
-            ).forEach(elemento => {
+            document.querySelectorAll(clase)
+                .forEach(elemento => {
 
-                const nombre =
-                    elemento.getAttribute(atributo);
-
-                elemento.style.display =
-                    nombre.includes(busqueda)
-                    ? ""
-                    : "none";
-            });
+                    elemento.style.display =
+                        normalizar(elemento.textContent)
+                            .includes(busqueda)
+                        ? ""
+                        : "none";
+                });
         });
 }
 
 configurarBuscador(
     "buscar_exposiciones",
-    "data-elemento-exposicion"
+    ".opcion-exposicion"
 );
 
 configurarBuscador(
     "buscar_estudios",
-    "data-elemento-estudio"
+    ".opcion-estudio"
 );
 
 // =========================================
-// 11. AGREGAR EXPOSICIONES Y ESTUDIOS
+// AGREGAR EXPOSICIONES Y ESTUDIOS
 // =========================================
 
 function agregarElemento(
     campoId,
-    atributoExistente,
-    atributoNuevo,
-    contenedorId,
+    selectorExistente,
     nombreInput,
-    etiquetaTipo
+    contenedorId
 ) {
 
     const campo = document.getElementById(campoId);
@@ -532,104 +497,80 @@ function agregarElemento(
         return;
     }
 
-    const nombreNormalizado = normalizar(nombre);
-
-    // Revisar si ya existe en el catálogo
     const existente = Array.from(
-        document.querySelectorAll(
-            "[" + atributoExistente + "]"
-        )
-    ).find(elemento =>
+        document.querySelectorAll(selectorExistente)
+    ).find(casilla =>
         normalizar(
-            elemento.getAttribute(atributoExistente)
-        ) === nombreNormalizado
+            casilla.parentElement.textContent
+        ) === normalizar(nombre)
     );
 
     if (existente) {
 
-        existente.querySelector(
-            "input[type='checkbox']"
-        ).checked = true;
-
+        existente.checked = true;
         campo.value = "";
         return;
     }
 
-    // Evitar agregar dos veces un elemento nuevo
-    const nuevos = document.querySelectorAll(
-        "[" + atributoNuevo + "]"
-    );
-
-    for (const elemento of nuevos) {
-
-        if (
-            elemento.getAttribute(atributoNuevo)
-            === nombreNormalizado
-        ) {
-            campo.value = "";
-            return;
-        }
-    }
-
-    // Crear nueva casilla
     const contenedor =
         document.getElementById(contenedorId);
 
-    const fila = document.createElement("p");
-
-    fila.setAttribute(
-        atributoNuevo,
-        nombreNormalizado
+    const repetido = Array.from(
+        contenedor.querySelectorAll(
+            'input[name="' + nombreInput + '"]'
+        )
+    ).some(input =>
+        normalizar(input.value) === normalizar(nombre)
     );
 
-    const etiqueta =
-        document.createElement("label");
+    if (repetido) {
+        alert("Ese elemento ya fue agregado.");
+        return;
+    }
 
-    const casilla =
-        document.createElement("input");
+    const fila = document.createElement("p");
+    const etiqueta = document.createElement("label");
 
+    const casilla = document.createElement("input");
     casilla.type = "checkbox";
     casilla.name = nombreInput;
     casilla.value = nombre;
     casilla.checked = true;
 
     etiqueta.appendChild(casilla);
-
     etiqueta.appendChild(
-        document.createTextNode(
-            " " + nombre + " (" + etiquetaTipo + ")"
-        )
+        document.createTextNode(" " + nombre + " (nuevo) ")
     );
 
+    const quitar = document.createElement("button");
+    quitar.type = "button";
+    quitar.textContent = "Quitar";
+
+    quitar.onclick = () => fila.remove();
+
     fila.appendChild(etiqueta);
+    fila.appendChild(quitar);
+
     contenedor.appendChild(fila);
 
     campo.value = "";
 }
 
-// Agregar exposición
 function agregarExposicion() {
-
     agregarElemento(
         "nueva_exposicion",
-        "data-elemento-exposicion",
-        "data-nueva-exposicion",
-        "exposiciones_nuevas",
+        "[data-exposicion]",
         "nueva_exposicion[]",
-        "nueva"
+        "exposiciones_nuevas"
     );
 }
 
-// Agregar estudio
 function agregarEstudio() {
-
     agregarElemento(
         "nuevo_estudio",
-        "data-elemento-estudio",
-        "data-nuevo-estudio",
-        "estudios_nuevos",
+        "[data-estudio]",
         "nuevo_estudio[]",
-        "nuevo"
+        "estudios_nuevos"
     );
 }
 
@@ -638,6 +579,4 @@ function agregarEstudio() {
 </body>
 </html>
 
-<?php
-mysqli_close($conexion);
-?>
+<?php mysqli_close($conexion); ?>

@@ -1,6 +1,6 @@
 
 <?php
-require_once "conexion.php";
+require_once "../Pacientes/conexion.php";
 
 $id_historial = $_POST["id_historial"] ?? "";
 $dni_p = $_POST["dni_p"] ?? "";
