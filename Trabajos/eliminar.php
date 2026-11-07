@@ -1,65 +1,40 @@
-
 <?php
-// BLOQUE 1 - Conexión
 require_once __DIR__ . "/../Pacientes/conexion.php";
 
-// BLOQUE 2 - Recibir el ID
-if (!isset($_GET["id"]) || !is_numeric($_GET["id"])) {
-    die("ID de trabajo inválido.");
+if (!isset($_POST["id_trabajo"]) || !is_numeric($_POST["id_trabajo"])) {
+    header("Location: listar.php?mensaje=ID de trabajo inválido");
+    exit;
 }
 
-$id = (int) $_GET["id"];
+$id = (int) $_POST["id_trabajo"];
 
-// BLOQUE 3 - Verificar si el trabajo existe
-$sql = "SELECT nombre_t FROM trabajo WHERE id_trabajo = ?";
+$sql = "DELETE FROM trabajo
+        WHERE id_trabajo = ?";
+
 $stmt = mysqli_prepare($conexion, $sql);
-
-if (!$stmt) {
-    die("Error al preparar la consulta: " . mysqli_error($conexion));
-}
-
-mysqli_stmt_bind_param($stmt, "i", $id);
-mysqli_stmt_execute($stmt);
-
-$resultado = mysqli_stmt_get_result($stmt);
-$trabajo = mysqli_fetch_assoc($resultado);
-
-mysqli_stmt_close($stmt);
-
-if (!$trabajo) {
-    die("No se encontró el trabajo.");
-}
-
-// BLOQUE 4 - Eliminar el trabajo
-$sql = "DELETE FROM trabajo WHERE id_trabajo = ?";
-$stmt = mysqli_prepare($conexion, $sql);
-
-if (!$stmt) {
-    die("Error al preparar la consulta: " . mysqli_error($conexion));
-}
 
 mysqli_stmt_bind_param($stmt, "i", $id);
 
 if (mysqli_stmt_execute($stmt)) {
-    mysqli_stmt_close($stmt);
-    mysqli_close($conexion);
 
-    header("Location: listar.php");
-    exit;
-}
+    $mensaje = "Trabajo eliminado correctamente";
 
-// BLOQUE 5 - Controlar si tiene relaciones
-if (mysqli_stmt_errno($stmt) == 1451) {
-    echo "No se puede eliminar el trabajo '" .
-         htmlspecialchars($trabajo["nombre_t"]) .
-         "' porque está relacionado con pacientes, estudios o exposiciones.";
 } else {
-    echo "Error al eliminar: " . mysqli_stmt_error($stmt);
+
+    if (mysqli_stmt_errno($stmt) == 1451) {
+
+        $mensaje = "No se puede eliminar porque el trabajo está relacionado con otros registros";
+
+    } else {
+
+        $mensaje = "Error al eliminar el trabajo";
+
+    }
 }
 
 mysqli_stmt_close($stmt);
 mysqli_close($conexion);
-?>
 
-<br>
-<a href="listar.php">Volver al listado</a>
+header("Location: listar.php?mensaje=" . urlencode($mensaje));
+exit;
+?>
