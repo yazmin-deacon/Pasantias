@@ -33,43 +33,81 @@ if (!$trabajo) {
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar trabajo</title>
+    <title>Editar trabajo - Clínica</title>
+
+    <link rel="stylesheet" href="../general/estilos.css">
 </head>
+
 <body>
 
-    <h1>Editar trabajo</h1>
+    <header>
+        <div class="logo">Clínica</div>
 
-    <form action="actualizar.php" method="POST">
+        <nav>
+            <a href="../menu_principal.html">Menú principal</a>
+            <a href="../gestionar_exposiciones.html">Exposiciones</a>
+            <a href="listar.php">Trabajos</a>
+            <a href="../gestionar_relaciones.html">Relaciones</a>
+            <a href="../gestionar_estudios.html">Estudios</a>
+        </nav>
 
-        <input
-            type="hidden"
-            name="id_trabajo"
-            value="<?php echo $trabajo["id_trabajo"]; ?>"
-        >
+        <button type="button" id="btn-tema">Modo oscuro</button>
+    </header>
 
-        <p>
-            Nombre del trabajo:
-            <input
-                type="text"
-                name="nombre_t"
-                maxlength="50"
-                value="<?php echo htmlspecialchars($trabajo["nombre_t"]); ?>"
-                required
-            >
-        </p>
+    <main class="gestion-contenido">
 
-        <input type="submit" value="Guardar cambios">
+        <section class="bienvenida">
+            <h1>Editar trabajo</h1>
+            <p>Modificá los datos del trabajo seleccionado.</p>
+        </section>
 
-    </form>
+        <section class="tarjeta">
 
-    <br>
+            <h2>Actualizar trabajo</h2>
 
-    <a href="listar.php">Volver al listado</a>
+            <form class="form-gestion" action="actualizar.php" method="POST">
+
+                <input type="hidden" name="id_trabajo" value="<?php echo $trabajo[" id_trabajo"]; ?>"
+                >
+
+                <div class="campo">
+
+                    <label for="nombre_t">Nombre del trabajo</label>
+
+                    <input type="text" id="nombre_t" name="nombre_t" maxlength="50"
+                        value="<?php echo htmlspecialchars($trabajo[" nombre_t"]); ?>"
+                    required
+                    >
+
+                </div>
+
+                <button type="submit">Guardar cambios</button>
+
+                <a href="listar.php" class="btn-secundario">
+                    Cancelar
+                </a>
+
+            </form>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <span>Clínica</span>
+        <span>Administración de trabajos</span>
+    </footer>
+
+    <script src="../general/script.js"></script>
+    <script src="../general/modooscuro.js"></script>
+    <script src="../general/animaciones.js"></script>
 
 </body>
+
 </html>
 
 <?php
