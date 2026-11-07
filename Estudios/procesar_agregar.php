@@ -1,92 +1,98 @@
-
 <?php
-// BLOQUE 1 - Conexión a la base de datos
+// BLOQUE 1 - Conexión
 require_once __DIR__ . "/../Pacientes/conexion.php";
 
-// BLOQUE 2 - Recibir datos del formulario
+// BLOQUE 2 - Recibir los datos del formulario
 $dni = isset($_POST["dni"]) ? (int) $_POST["dni"] : 0;
 
 $estudios = isset($_POST["estudios"])
     ? array_unique(array_map("intval", $_POST["estudios"]))
     : [];
 
-$estudios = array_filter($estudios, function ($id) {
+$estudios = array_values(array_filter($estudios, function ($id) {
     return $id > 0;
-});
+}));
 
 // BLOQUE 3 - Verificar que el paciente exista
 $sqlPaciente = "SELECT dni_p FROM paciente WHERE dni_p = ?";
 
 $stmt = mysqli_prepare($conexion, $sqlPaciente);
+
 mysqli_stmt_bind_param($stmt, "i", $dni);
+
 mysqli_stmt_execute($stmt);
 
-$resultado = mysqli_stmt_get_result($stmt);
-$existePaciente = mysqli_num_rows($resultado) > 0;
+$resultadoPaciente = mysqli_stmt_get_result($stmt);
+
+$existePaciente = mysqli_num_rows($resultadoPaciente) > 0;
 
 mysqli_stmt_close($stmt);
 
-if (!$existePaciente) {
-    die("El paciente no existe.");
+if ($dni <= 0 || !$existePaciente) {
+    die("El paciente seleccionado no existe.");
 }
 
-// BLOQUE 4 - Verificar que los estudios existan
+// BLOQUE 4 - Verificar que todos los estudios existan
 $sqlVerificar = "SELECT id_estudio FROM estudio WHERE id_estudio = ?";
+
 $stmtVerificar = mysqli_prepare($conexion, $sqlVerificar);
 
 foreach ($estudios as $id) {
 
     mysqli_stmt_bind_param($stmtVerificar, "i", $id);
+
     mysqli_stmt_execute($stmtVerificar);
 
-    $resultado = mysqli_stmt_get_result($stmtVerificar);
+    $resultadoVerificar = mysqli_stmt_get_result($stmtVerificar);
 
-    if (mysqli_num_rows($resultado) == 0) {
+    if (mysqli_num_rows($resultadoVerificar) == 0) {
+
+        mysqli_stmt_close($stmtVerificar);
+
         die("Uno de los estudios seleccionados no existe.");
     }
 }
 
 mysqli_stmt_close($stmtVerificar);
 
-// BLOQUE 5 - Actualizar las asignaciones
+// BLOQUE 5 - Guardar las asignaciones
 try {
 
     mysqli_begin_transaction($conexion);
 
-    // Eliminar las asignaciones anteriores
-    $sqlEliminar = "DELETE FROM paciente_estudio
-                    WHERE dni_paciente = ?";
+    $sqlEliminar = "DELETE FROM paciente_estudio WHERE dni_paciente = ?";
 
-    $stmt = mysqli_prepare($conexion, $sqlEliminar);
-    mysqli_stmt_bind_param($stmt, "i", $dni);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
+    $stmtEliminar = mysqli_prepare($conexion, $sqlEliminar);
 
-    // Guardar las nuevas asignaciones
-    $sqlInsertar = "INSERT INTO paciente_estudio
-                    (dni_paciente, id_estudio)
-                    VALUES (?, ?)";
+    mysqli_stmt_bind_param($stmtEliminar, "i", $dni);
 
-    $stmt = mysqli_prepare($conexion, $sqlInsertar);
+    mysqli_stmt_execute($stmtEliminar);
 
-    foreach ($estudios as $id) {
+    mysqli_stmt_close($stmtEliminar);
 
-        mysqli_stmt_bind_param($stmt, "ii", $dni, $id);
-        mysqli_stmt_execute($stmt);
+    $sqlInsertar = "INSERT INTO paciente_estudio (dni_paciente, id_estudio) VALUES (?, ?)";
 
+    $stmtInsertar = mysqli_prepare($conexion, $sqlInsertar);
+
+    foreach ($estudios as $idEstudio) {
+
+        mysqli_stmt_bind_param($stmtInsertar, "ii", $dni, $idEstudio);
+
+        mysqli_stmt_execute($stmtInsertar);
     }
 
-    mysqli_stmt_close($stmt);
+    mysqli_stmt_close($stmtInsertar);
 
     mysqli_commit($conexion);
 
-    header("Location: index.php");
+    header("Location: estudios.php");
     exit;
 
-} catch (mysqli_sql_exception $e) {
+} catch (Throwable $e) {
 
     mysqli_rollback($conexion);
-    die("Error al guardar los estudios: " . $e->getMessage());
+
+    die("Error al guardar los estudios: " . htmlspecialchars($e->getMessage()));
 
 }
 ?>
