@@ -3,7 +3,7 @@
 require_once "conexion.php";
 
 // =========================================
-// 1. CONSULTAR PACIENTES
+// CONSULTAR PACIENTES
 // =========================================
 
 $sql = "SELECT
@@ -29,18 +29,16 @@ $sql = "SELECT
         LEFT JOIN trabajo t
             ON p.id_trabajo = t.id_trabajo
 
-        ORDER BY p.apellido ASC, p.nombre_p ASC";
+        ORDER BY p.apellido, p.nombre_p";
 
 $resultado = mysqli_query($conexion, $sql);
 
 if (!$resultado) {
-    die("Error en la consulta: " .
-        mysqli_error($conexion));
+    die("Error en la consulta: " . mysqli_error($conexion));
 }
 
 $cantidad = mysqli_num_rows($resultado);
 
-// Función para mostrar datos de forma segura
 function escapar($valor) {
     return htmlspecialchars(
         (string)($valor ?? ""),
@@ -52,21 +50,26 @@ function escapar($valor) {
 
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
-
     <title>Listado de pacientes</title>
 </head>
-
 <body>
 
 <h1>Listado de pacientes</h1>
 
 <p>
     <a href="alta.php">Nuevo paciente</a>
+</p>
+
+<p>
+    <a href="../Obra%20Social/listar.php"
+       target="_blank"
+       rel="noopener noreferrer">
+        Administrar obras sociales
+    </a>
 </p>
 
 <p>
@@ -155,7 +158,7 @@ function escapar($valor) {
                 </td>
 
                 <td>
-                    <a href="historial.php?dni_p=<?php
+                    <a href="../historial%20clinico/historial.php?dni_p=<?php
                         echo urlencode($fila["dni_p"]);
                     ?>">
                         Ver historial
@@ -167,7 +170,6 @@ function escapar($valor) {
         <?php } ?>
 
         </tbody>
-
     </table>
 
 <?php } ?>
