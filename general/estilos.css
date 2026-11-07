@@ -1374,3 +1374,14 @@ body.modo-oscuro .nota-listado {
     }
 
 }
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header #btn-tema {
+    align-self: center;
+    margin: 0;
+}
