@@ -1,6 +1,9 @@
 
 <?php
-// ===== BLOQUE 1 — Modo de aviso de errores y datos de conexión =====
+// =========================================
+// 1. DATOS DE CONEXIÓN
+// =========================================
+
 mysqli_report(MYSQLI_REPORT_OFF);
 
 $servidor = "localhost";
@@ -8,15 +11,28 @@ $usuario = "root";
 $clave = "";
 $base = "clinica";
 
-// ===== BLOQUE 2 — Abrir la conexión =====
-$conexion = mysqli_connect($servidor, $usuario, $clave, $base);
+// =========================================
+// 2. CONECTAR A MYSQL
+// =========================================
 
-// ===== BLOQUE 3 — Controlar si la conexión falló =====
+$conexion = mysqli_connect(
+    $servidor,
+    $usuario,
+    $clave,
+    $base
+);
+
+// =========================================
+// 3. VERIFICAR CONEXIÓN
+// =========================================
+
 if (!$conexion) {
-    echo "Error de conexión: " . mysqli_connect_error();
-    exit;
+    die("Error de conexión a la base de datos.");
 }
 
-// ===== BLOQUE 4 — Definir el juego de caracteres =====
+// =========================================
+// 4. CONFIGURAR CARACTERES
+// =========================================
+
 mysqli_set_charset($conexion, "utf8mb4");
 ?>
