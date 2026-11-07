@@ -76,7 +76,9 @@ mysqli_close($conexion);
 <head>
     <meta charset="utf-8">
     <title>Eliminar paciente</title>
+    <link rel="stylesheet" href="../general/estilos.css">
 </head>
+
 <body>
     <!-- ===== BLOQUE 6 — Pantalla de confirmación ===== -->
     <h1>¿Eliminar paciente?</h1>

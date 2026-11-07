@@ -1,5 +1,5 @@
 <?php
-require_once "conexion.php";
+require_once "../Pacientes/conexion.php";
 
 $busqueda = trim($_GET["busqueda"] ?? "");
 
