@@ -8,6 +8,8 @@ arreglar id en estudios y exposiciones
 turnos pendientes
 obras sociales
 
+pendiente, realizado, como boton como el de activado desactivado del de oibra socialles
+
 
 
 Giu:
@@ -15,3 +17,7 @@ falta pagina de estudios a realizarr lpmm
  html index
  seleccion de obras sociales
  seleccion y conexion de exposiciones y trabajos
+<<<<<<< HEAD
+=======
+ no tocar estudios editar hasta que yaz no lo arregle
+>>>>>>> 8549d152a4b14121f45140cb8047592aba774f5e
