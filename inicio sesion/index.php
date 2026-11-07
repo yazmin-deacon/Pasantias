@@ -1,7 +1,5 @@
 
-<?php
-require_once "sesion.php";
-?>
+
 <!DOCTYPE html>
 <html lang="es">
 
@@ -47,7 +45,7 @@ require_once "sesion.php";
 
                     <div class="separador-menu"></div>
 
-                    <a href="../administracion/trabajos.php">
+                    <a href="../Trabajos/Trabajos.php">
                         Trabajos
                     </a>
 
@@ -185,8 +183,10 @@ require_once "sesion.php";
     <script src="../general/script.js"></script>
     <script src="../general/animaciones.js"></script>
     <script src="../general/modooscuro.js"></script>
-    <script src="configuracion.js"></script>
+    <script src="../configuracion.js"></script>
 
 </body>
 
 </html>
+
+<!-- actualizado 07/11/2026 -->
