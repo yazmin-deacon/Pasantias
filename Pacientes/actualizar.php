@@ -1,6 +1,9 @@
 
 <?php
-require_once "conexion.php";
+
+require_once __DIR__ . "/conexion.php";
+
+/** @var mysqli $conexion */
 
 // =========================================
 // FUNCIONES
@@ -21,30 +24,17 @@ function normalizarNombre($texto) {
 
 function ejecutar($stmt) {
     if (!mysqli_stmt_execute($stmt)) {
-        throw new Exception(mysqli_stmt_error($stmt));
+        throw new Exception(
+            mysqli_stmt_error($stmt)
+        );
     }
 }
 
-function obtenerOCrear(
-    $conexion,
-    $tabla,
-    $campoId,
-    $campoNombre,
-    $nombre
-) {
+// =========================================
+// OBTENER O CREAR TRABAJO
+// =========================================
 
-    $permitidos = [
-        "trabajo" => ["id_trabajo", "nombre_t"],
-        "exposicion" => ["id_exposicion", "nombre_ex"],
-        "estudio" => ["id_estudio", "nombre_es"]
-    ];
-
-    if (
-        !isset($permitidos[$tabla]) ||
-        $permitidos[$tabla] !== [$campoId, $campoNombre]
-    ) {
-        throw new Exception("Catálogo no permitido.");
-    }
+function obtenerOCrearTrabajo($conexion, $nombre) {
 
     $nombre = limpiarNombre($nombre);
 
@@ -52,11 +42,16 @@ function obtenerOCrear(
         return null;
     }
 
-    if (mb_strlen($nombre) > 50) {
-        throw new Exception("El nombre es demasiado largo.");
+    if (mb_strlen($nombre, "UTF-8") > 50) {
+        throw new Exception(
+            "El nombre del trabajo es demasiado largo."
+        );
     }
 
-    $sql = "SELECT $campoId, $campoNombre FROM $tabla";
+    $sql = "SELECT id_trabajo, nombre_t
+            FROM trabajo
+            FOR UPDATE";
+
     $resultado = mysqli_query($conexion, $sql);
 
     if (!$resultado) {
@@ -66,34 +61,46 @@ function obtenerOCrear(
     while ($fila = mysqli_fetch_assoc($resultado)) {
 
         if (
-            normalizarNombre($fila[$campoNombre]) ===
+            normalizarNombre($fila["nombre_t"]) ===
             normalizarNombre($nombre)
         ) {
+
+            $id = (int)$fila["id_trabajo"];
+
             mysqli_free_result($resultado);
-            return (int)$fila[$campoId];
+
+            return $id;
         }
     }
 
     mysqli_free_result($resultado);
 
-    $sql = "INSERT INTO $tabla ($campoNombre) VALUES (?)";
+    $sql = "INSERT INTO trabajo (nombre_t)
+            VALUES (?)";
+
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
         throw new Exception(mysqli_error($conexion));
     }
 
-    mysqli_stmt_bind_param($stmt, "s", $nombre);
+    mysqli_stmt_bind_param(
+        $stmt,
+        "s",
+        $nombre
+    );
+
     ejecutar($stmt);
 
     $id = mysqli_insert_id($conexion);
+
     mysqli_stmt_close($stmt);
 
     return $id;
 }
 
 // =========================================
-// OBRA SOCIAL
+// OBTENER O CREAR OBRA SOCIAL
 // =========================================
 
 function resolverObraSocial(
@@ -105,7 +112,9 @@ function resolverObraSocial(
     $nombre = limpiarNombre($nombre);
 
     if ($nombre === "") {
-        throw new Exception("Tenés que ingresar una obra social.");
+        throw new Exception(
+            "Tenés que ingresar una obra social."
+        );
     }
 
     if (
@@ -115,15 +124,17 @@ function resolverObraSocial(
         return null;
     }
 
-    if (mb_strlen($nombre) > 100) {
+    if (mb_strlen($nombre, "UTF-8") > 100) {
         throw new Exception(
             "El nombre de la obra social es demasiado largo."
         );
     }
 
-    $sql = "SELECT id_obra_social, nombre_os, activa
+    $sql = "SELECT
+                id_obra_social,
+                nombre_os,
+                activa
             FROM obra_social
-            ORDER BY id_obra_social
             FOR UPDATE";
 
     $resultado = mysqli_query($conexion, $sql);
@@ -139,17 +150,16 @@ function resolverObraSocial(
             normalizarNombre($nombre)
         ) {
 
-            mysqli_free_result($resultado);
-
             $id = (int)$fila["id_obra_social"];
+
+            mysqli_free_result($resultado);
 
             if (
                 !(int)$fila["activa"] &&
                 $id !== $idObraAnterior
             ) {
                 throw new Exception(
-                    "Esa obra social existe, pero está inactiva. " .
-                    "Activala desde Administrar obras sociales."
+                    "Esa obra social está inactiva."
                 );
             }
 
@@ -159,7 +169,8 @@ function resolverObraSocial(
 
     mysqli_free_result($resultado);
 
-    $sql = "INSERT INTO obra_social (nombre_os, activa)
+    $sql = "INSERT INTO obra_social
+                (nombre_os, activa)
             VALUES (?, 1)";
 
     $stmt = mysqli_prepare($conexion, $sql);
@@ -168,48 +179,82 @@ function resolverObraSocial(
         throw new Exception(mysqli_error($conexion));
     }
 
-    mysqli_stmt_bind_param($stmt, "s", $nombre);
+    mysqli_stmt_bind_param(
+        $stmt,
+        "s",
+        $nombre
+    );
+
     ejecutar($stmt);
 
     $id = mysqli_insert_id($conexion);
+
     mysqli_stmt_close($stmt);
 
     return $id;
 }
 
 // =========================================
+// COMPROBAR MÉTODO
+// =========================================
+
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
+    die("Método no permitido.");
+}
+
+// =========================================
 // RECIBIR DATOS
 // =========================================
 
-$dni = trim($_POST["dni_p"] ?? "");
-$nombre = trim($_POST["nombre_p"] ?? "");
-$apellido = trim($_POST["apellido"] ?? "");
-$cuil = trim($_POST["cuil"] ?? "");
-$telefono = trim($_POST["telefono"] ?? "");
-$mail = trim($_POST["mail"] ?? "");
+$dni = trim((string)($_POST["dni_p"] ?? ""));
 
-$obraNombre = trim($_POST["obra_social_nombre"] ?? "");
-$trabajoNombre = trim($_POST["nombre_trabajo"] ?? "");
+$nombre = limpiarNombre(
+    $_POST["nombre_p"] ?? ""
+);
 
-$exposiciones = $_POST["exposiciones"] ?? [];
-$estudios = $_POST["estudios"] ?? [];
+$apellido = limpiarNombre(
+    $_POST["apellido"] ?? ""
+);
 
-$nuevasExposiciones =
-    $_POST["nueva_exposicion"] ?? [];
+$cuil = trim((string)($_POST["cuil"] ?? ""));
 
-$nuevosEstudios =
-    $_POST["nuevo_estudio"] ?? [];
+$telefono = trim(
+    (string)($_POST["telefono"] ?? "")
+);
+
+$mail = trim(
+    (string)($_POST["mail"] ?? "")
+);
+
+$obraNombre = limpiarNombre(
+    $_POST["obra_social_nombre"] ?? ""
+);
+
+$trabajoNombre = limpiarNombre(
+    $_POST["nombre_trabajo"] ?? ""
+);
+
+// =========================================
+// VALIDACIONES
+// =========================================
 
 if (
     !ctype_digit($dni) ||
     strlen($dni) > 8 ||
+    (int)$dni <= 0
+) {
+    die("El DNI no es válido.");
+}
+
+if (
     $nombre === "" ||
     $apellido === "" ||
     $telefono === "" ||
     $mail === "" ||
     $obraNombre === ""
 ) {
-    die("Faltan datos obligatorios o el DNI no es válido.");
+    die("Faltan datos obligatorios.");
 }
 
 if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
@@ -217,38 +262,29 @@ if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
 }
 
 if (
-    mb_strlen($nombre) > 30 ||
-    mb_strlen($apellido) > 30 ||
+    mb_strlen($nombre, "UTF-8") > 30 ||
+    mb_strlen($apellido, "UTF-8") > 30 ||
     strlen($cuil) > 11 ||
     strlen($telefono) > 20 ||
     strlen($mail) > 100 ||
-    mb_strlen($trabajoNombre) > 50
+    mb_strlen($trabajoNombre, "UTF-8") > 50
 ) {
     die("Alguno de los datos supera el tamaño permitido.");
 }
 
-foreach (
-    [
-        $exposiciones,
-        $estudios,
-        $nuevasExposiciones,
-        $nuevosEstudios
-    ] as $lista
-) {
-    if (!is_array($lista)) {
-        die("Lista de estudios o exposiciones no válida.");
-    }
-}
+$dniNumero = (int)$dni;
 
 // =========================================
-// ACTUALIZAR
+// ACTUALIZAR PACIENTE
 // =========================================
 
 try {
 
     mysqli_begin_transaction($conexion);
 
-    // BLOQUEAR PACIENTE PARA LA EDICIÓN
+    // =====================================
+    // 1. VERIFICAR PACIENTE
+    // =====================================
 
     $sql = "SELECT id_obra_social
             FROM paciente
@@ -261,22 +297,35 @@ try {
         throw new Exception(mysqli_error($conexion));
     }
 
-    mysqli_stmt_bind_param($stmt, "i", $dni);
+    mysqli_stmt_bind_param(
+        $stmt,
+        "i",
+        $dniNumero
+    );
+
     ejecutar($stmt);
 
     $resultado = mysqli_stmt_get_result($stmt);
-    $pacienteActual = mysqli_fetch_assoc($resultado);
+
+    $pacienteActual = mysqli_fetch_assoc(
+        $resultado
+    );
 
     mysqli_stmt_close($stmt);
 
     if (!$pacienteActual) {
-        throw new Exception("No se encontró el paciente.");
+        throw new Exception(
+            "No se encontró el paciente."
+        );
     }
 
-    $idObraAnterior =
-        (int)($pacienteActual["id_obra_social"] ?? 0);
+    $idObraAnterior = (int)(
+        $pacienteActual["id_obra_social"] ?? 0
+    );
 
-    // OBRA SOCIAL EXISTENTE O NUEVA
+    // =====================================
+    // 2. OBRA SOCIAL
+    // =====================================
 
     $idObraSocial = resolverObraSocial(
         $conexion,
@@ -284,31 +333,30 @@ try {
         $idObraAnterior
     );
 
-    // TRABAJO EXISTENTE O NUEVO
+    // =====================================
+    // 3. TRABAJO
+    // =====================================
 
-    $idTrabajo = null;
+    $idTrabajo = obtenerOCrearTrabajo(
+        $conexion,
+        $trabajoNombre
+    );
 
-    if ($trabajoNombre !== "") {
-
-        $idTrabajo = obtenerOCrear(
-            $conexion,
-            "trabajo",
-            "id_trabajo",
-            "nombre_t",
-            $trabajoNombre
-        );
-    }
-
-    // DATOS PERSONALES
+    // =====================================
+    // 4. ACTUALIZAR DATOS PERSONALES
+    // =====================================
 
     $sql = "UPDATE paciente
-            SET nombre_p = ?,
+
+            SET
+                nombre_p = ?,
                 apellido = ?,
                 cuil = ?,
                 telefono = ?,
                 mail = ?,
                 id_obra_social = ?,
                 id_trabajo = ?
+
             WHERE dni_p = ?";
 
     $stmt = mysqli_prepare($conexion, $sql);
@@ -327,151 +375,26 @@ try {
         $mail,
         $idObraSocial,
         $idTrabajo,
-        $dni
+        $dniNumero
     );
 
     ejecutar($stmt);
-    mysqli_stmt_close($stmt);
-
-    // CREAR EXPOSICIONES NUEVAS
-
-    foreach ($nuevasExposiciones as $valor) {
-
-        if (!is_string($valor)) {
-            throw new Exception("Exposición no válida.");
-        }
-
-        if (trim($valor) !== "") {
-
-            $exposiciones[] = obtenerOCrear(
-                $conexion,
-                "exposicion",
-                "id_exposicion",
-                "nombre_ex",
-                $valor
-            );
-        }
-    }
-
-    // CREAR ESTUDIOS NUEVOS
-
-    foreach ($nuevosEstudios as $valor) {
-
-        if (!is_string($valor)) {
-            throw new Exception("Estudio no válido.");
-        }
-
-        if (trim($valor) !== "") {
-
-            $estudios[] = obtenerOCrear(
-                $conexion,
-                "estudio",
-                "id_estudio",
-                "nombre_es",
-                $valor
-            );
-        }
-    }
-
-    $exposiciones = array_unique($exposiciones);
-    $estudios = array_unique($estudios);
-
-    // =====================================
-    // ACTUALIZAR EXPOSICIONES
-    // =====================================
-
-    $sql = "DELETE FROM paciente_exposicion
-            WHERE dni_paciente = ?";
-
-    $stmt = mysqli_prepare($conexion, $sql);
-
-    if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
-    }
-
-    mysqli_stmt_bind_param($stmt, "i", $dni);
-    ejecutar($stmt);
-    mysqli_stmt_close($stmt);
-
-    $sql = "INSERT INTO paciente_exposicion
-            (dni_paciente, id_exposicion)
-            VALUES (?, ?)";
-
-    $stmt = mysqli_prepare($conexion, $sql);
-
-    if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
-    }
-
-    foreach ($exposiciones as $id) {
-
-        if (!ctype_digit((string)$id) || (int)$id <= 0) {
-            throw new Exception("ID de exposición no válido.");
-        }
-
-        $id = (int)$id;
-
-        mysqli_stmt_bind_param($stmt, "ii", $dni, $id);
-        ejecutar($stmt);
-    }
 
     mysqli_stmt_close($stmt);
 
     // =====================================
-    // ESTUDIOS: CONSERVAR EL HISTORIAL
+    // IMPORTANTE
     // =====================================
 
-    // Quitar solamente las asociaciones sin historial.
-    // Las que tienen historial se conservan.
-
-    $sql = "DELETE FROM paciente_estudio
-            WHERE dni_paciente = ?
-              AND id_estudio NOT IN (
-                  SELECT id_estudio
-                  FROM historial_medico
-                  WHERE dni_paciente = ?
-              )";
-
-    $stmt = mysqli_prepare($conexion, $sql);
-
-    if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
-    }
-
-    mysqli_stmt_bind_param($stmt, "ii", $dni, $dni);
-    ejecutar($stmt);
-    mysqli_stmt_close($stmt);
-
-    // Volver a asociar todos los estudios seleccionados
-
-    $sql = "INSERT INTO paciente_estudio
-            (dni_paciente, id_estudio)
-            VALUES (?, ?)
-            ON DUPLICATE KEY UPDATE
-                id_estudio = VALUES(id_estudio)";
-
-    $stmt = mysqli_prepare($conexion, $sql);
-
-    if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
-    }
-
-    foreach ($estudios as $id) {
-
-        if (!ctype_digit((string)$id) || (int)$id <= 0) {
-            throw new Exception("ID de estudio no válido.");
-        }
-
-        $id = (int)$id;
-
-        mysqli_stmt_bind_param($stmt, "ii", $dni, $id);
-        ejecutar($stmt);
-    }
-
-    mysqli_stmt_close($stmt);
+    // NO modificar paciente_estudio.
+    // NO modificar paciente_exposicion.
+    // NO modificar historial_medico.
+    //
+    // Esas asignaciones se administrarán
+    // desde el historial del paciente.
 
     // =====================================
-    // CONFIRMAR CAMBIOS
+    // 5. CONFIRMAR CAMBIOS
     // =====================================
 
     mysqli_commit($conexion);
@@ -493,8 +416,11 @@ try {
         "UTF-8"
     ) . "</p>";
 
-    echo '<p><a href="listar.php">Volver al listado</a></p>';
+    echo '<p><a href="listar.php">
+            Volver al listado de pacientes
+          </a></p>';
 }
 
 mysqli_close($conexion);
+
 ?>

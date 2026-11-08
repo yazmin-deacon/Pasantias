@@ -1,6 +1,6 @@
 
 <?php
-require_once "../Pacientes/conexion.php";
+require_once __DIR__ . "/../Pacientes/conexion.php";
 
 // Mostrar errores de MySQL como excepciones.
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);

@@ -1,15 +1,11 @@
 BD:
 
-la parte de agregar los estudios y qeu queden registrados al paciente 
+
 proximos turnos
 lo de ordenar alfabeticamente la parte de pacientes
 arreglar id en estudios y exposiciones
 
 turnos pendientes
-obras sociales
-
-pendiente, realizado, como boton como el de activado desactivado del de oibra socialles
-
 
 
 Giu:
@@ -17,7 +13,4 @@ falta pagina de estudios a realizarr lpmm
  html index
  seleccion de obras sociales
  seleccion y conexion de exposiciones y trabajos
-<<<<<<< HEAD
-=======
- no tocar estudios editar hasta que yaz no lo arregle
->>>>>>> 8549d152a4b14121f45140cb8047592aba774f5e
+quitar los ID de la vista

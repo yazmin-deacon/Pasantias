@@ -1,6 +1,6 @@
 
 <?php
-require_once "../Pacientes/conexion.php";
+require_once __DIR__ . "/../Pacientes/conexion.php";
 
 // Obtener DNI del paciente
 if (!isset($_GET["dni_p"]) || empty($_GET["dni_p"])) {

@@ -1,58 +1,42 @@
 
+-- ==============================================
+-- BASE DE DATOS: CLINICA
+-- SISTEMA DE GESTION DE PACIENTES
+-- ==============================================
+
 CREATE DATABASE IF NOT EXISTS clinica
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_general_ci;
 
 USE clinica;
 
--- =========================================
--- 1. ELIMINAR TABLAS ANTERIORES
--- =========================================
 
-DROP TABLE IF EXISTS historial_medico;
-DROP TABLE IF EXISTS paciente_estudio;
-DROP TABLE IF EXISTS paciente_exposicion;
-DROP TABLE IF EXISTS trabajo_estudio;
-DROP TABLE IF EXISTS trabajo_exposicion;
-DROP TABLE IF EXISTS paciente;
-DROP TABLE IF EXISTS usuario;
-DROP TABLE IF EXISTS estudio;
-DROP TABLE IF EXISTS exposicion;
-DROP TABLE IF EXISTS trabajo;
-DROP TABLE IF EXISTS obra_social;
+-- ==============================================
+-- 1. TRABAJOS
+-- ==============================================
 
--- =========================================
--- 2. TABLA DE TRABAJOS
--- =========================================
+CREATE TABLE IF NOT EXISTS trabajo (
+    id_trabajo INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_t VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE trabajo (
-    id_trabajo INT NOT NULL AUTO_INCREMENT,
-    nombre_t VARCHAR(50) NOT NULL,
 
-    PRIMARY KEY (id_trabajo),
-    UNIQUE (nombre_t)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+-- ==============================================
+-- 2. OBRAS SOCIALES
+-- ==============================================
 
--- =========================================
--- 3. TABLA DE OBRAS SOCIALES
--- =========================================
+CREATE TABLE IF NOT EXISTS obra_social (
+    id_obra_social INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_os VARCHAR(100) NOT NULL UNIQUE,
+    activa TINYINT(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE obra_social (
-    id_obra_social INT NOT NULL AUTO_INCREMENT,
-    nombre_os VARCHAR(100) NOT NULL,
-    activa BOOLEAN NOT NULL DEFAULT TRUE,
 
-    PRIMARY KEY (id_obra_social),
-    UNIQUE (nombre_os)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+-- ==============================================
+-- 3. PACIENTES
+-- ==============================================
 
--- =========================================
--- 4. TABLA DE PACIENTES
--- =========================================
-
-CREATE TABLE paciente (
+CREATE TABLE IF NOT EXISTS paciente (
     dni_p INT PRIMARY KEY,
     nombre_p VARCHAR(30) NOT NULL,
     apellido VARCHAR(30) NOT NULL,
@@ -63,213 +47,287 @@ CREATE TABLE paciente (
     id_obra_social INT NULL,
     id_trabajo INT NULL,
 
-    FOREIGN KEY (id_obra_social)
-        REFERENCES obra_social(id_obra_social),
+    CONSTRAINT fk_paciente_obra_social
+        FOREIGN KEY (id_obra_social)
+        REFERENCES obra_social(id_obra_social)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
 
-    FOREIGN KEY (id_trabajo)
+    CONSTRAINT fk_paciente_trabajo
+        FOREIGN KEY (id_trabajo)
         REFERENCES trabajo(id_trabajo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 
--- =========================================
--- 5. TABLA DE USUARIOS
--- =========================================
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE usuario (
+
+-- ==============================================
+-- 4. USUARIOS DEL SISTEMA
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS usuario (
     dni_u INT PRIMARY KEY,
     nombre_u VARCHAR(30) NOT NULL,
     apellido VARCHAR(30) NOT NULL,
     mail VARCHAR(100) NOT NULL,
     contrasena VARCHAR(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================================
--- 6. CATÁLOGO DE EXPOSICIONES
--- =========================================
 
-CREATE TABLE exposicion (
-    id_exposicion INT NOT NULL AUTO_INCREMENT,
-    nombre_ex VARCHAR(50) NOT NULL,
+-- ==============================================
+-- 5. EXPOSICIONES
+-- ==============================================
 
-    PRIMARY KEY (id_exposicion),
-    UNIQUE (nombre_ex)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS exposicion (
+    id_exposicion INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_ex VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================================
--- 7. CATÁLOGO DE ESTUDIOS
--- =========================================
 
-CREATE TABLE estudio (
-    id_estudio INT NOT NULL AUTO_INCREMENT,
-    nombre_es VARCHAR(50) NOT NULL,
+-- ==============================================
+-- 6. ESTUDIOS
+-- ==============================================
 
-    PRIMARY KEY (id_estudio),
-    UNIQUE (nombre_es)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+CREATE TABLE IF NOT EXISTS estudio (
+    id_estudio INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_es VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================================
--- 8. EXPOSICIONES HABITUALES POR TRABAJO
--- =========================================
 
-CREATE TABLE trabajo_exposicion (
+-- ==============================================
+-- 7. TRABAJO - EXPOSICION
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS trabajo_exposicion (
     id_trabajo INT NOT NULL,
     id_exposicion INT NOT NULL,
 
     PRIMARY KEY (id_trabajo, id_exposicion),
 
-    FOREIGN KEY (id_trabajo)
-        REFERENCES trabajo(id_trabajo),
+    CONSTRAINT fk_te_trabajo
+        FOREIGN KEY (id_trabajo)
+        REFERENCES trabajo(id_trabajo)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
 
-    FOREIGN KEY (id_exposicion)
+    CONSTRAINT fk_te_exposicion
+        FOREIGN KEY (id_exposicion)
         REFERENCES exposicion(id_exposicion)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 
--- =========================================
--- 9. ESTUDIOS HABITUALES POR TRABAJO
--- =========================================
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE trabajo_estudio (
+
+-- ==============================================
+-- 8. TRABAJO - ESTUDIO
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS trabajo_estudio (
     id_trabajo INT NOT NULL,
     id_estudio INT NOT NULL,
 
     PRIMARY KEY (id_trabajo, id_estudio),
 
-    FOREIGN KEY (id_trabajo)
-        REFERENCES trabajo(id_trabajo),
+    CONSTRAINT fk_ts_trabajo
+        FOREIGN KEY (id_trabajo)
+        REFERENCES trabajo(id_trabajo)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
 
-    FOREIGN KEY (id_estudio)
+    CONSTRAINT fk_ts_estudio
+        FOREIGN KEY (id_estudio)
         REFERENCES estudio(id_estudio)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 
--- =========================================
--- 10. EXPOSICIONES PARTICULARES POR PACIENTE
--- =========================================
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE paciente_exposicion (
+
+-- ==============================================
+-- 9. PACIENTE - EXPOSICION
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS paciente_exposicion (
     dni_paciente INT NOT NULL,
     id_exposicion INT NOT NULL,
 
     PRIMARY KEY (dni_paciente, id_exposicion),
 
-    FOREIGN KEY (dni_paciente)
-        REFERENCES paciente(dni_p),
+    CONSTRAINT fk_pe_paciente
+        FOREIGN KEY (dni_paciente)
+        REFERENCES paciente(dni_p)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
 
-    FOREIGN KEY (id_exposicion)
+    CONSTRAINT fk_pe_exposicion
+        FOREIGN KEY (id_exposicion)
         REFERENCES exposicion(id_exposicion)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 
--- =========================================
--- 11. ESTUDIOS QUE DEBE REALIZARSE CADA PACIENTE
--- =========================================
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE paciente_estudio (
+
+-- ==============================================
+-- 10. PACIENTE - ESTUDIO
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS paciente_estudio (
     dni_paciente INT NOT NULL,
     id_estudio INT NOT NULL,
 
+    estado ENUM(
+        'Pendiente',
+        'Realizado'
+    ) NOT NULL DEFAULT 'Pendiente',
+
     PRIMARY KEY (dni_paciente, id_estudio),
 
-    FOREIGN KEY (dni_paciente)
-        REFERENCES paciente(dni_p),
+    CONSTRAINT fk_pest_paciente
+        FOREIGN KEY (dni_paciente)
+        REFERENCES paciente(dni_p)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
 
-    FOREIGN KEY (id_estudio)
+    CONSTRAINT fk_pest_estudio
+        FOREIGN KEY (id_estudio)
         REFERENCES estudio(id_estudio)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 
--- =========================================
--- 12. HISTORIAL MÉDICO
--- =========================================
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE historial_medico (
+
+-- ==============================================
+-- 11. HISTORIAL MEDICO
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS historial_medico (
     id_historial INT AUTO_INCREMENT PRIMARY KEY,
+
     dni_paciente INT NOT NULL,
     id_estudio INT NOT NULL,
 
     fecha DATE NOT NULL,
 
-    estado ENUM('Pendiente', 'Realizado')
-        NOT NULL DEFAULT 'Pendiente',
+    estado ENUM(
+        'Pendiente',
+        'Realizado'
+    ) NOT NULL DEFAULT 'Pendiente',
 
     observaciones TEXT NULL,
     archivo VARCHAR(255) NULL,
 
-    fecha_carga TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_carga TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (dni_paciente)
-        REFERENCES paciente(dni_p),
+    INDEX idx_historial_paciente (dni_paciente),
+    INDEX idx_historial_fecha (fecha),
 
-    FOREIGN KEY (id_estudio)
+    CONSTRAINT fk_historial_paciente
+        FOREIGN KEY (dni_paciente)
+        REFERENCES paciente(dni_p)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_historial_estudio
+        FOREIGN KEY (id_estudio)
         REFERENCES estudio(id_estudio)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-COLLATE=utf8mb4_general_ci;
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 
--- =========================================
--- 13. DATOS INICIALES DE TRABAJOS
--- =========================================
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO trabajo (nombre_t)
+
+-- ==============================================
+-- 12. TURNOS
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS turno (
+    id_turno INT AUTO_INCREMENT PRIMARY KEY,
+
+    dni_paciente INT NOT NULL,
+
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+
+    motivo VARCHAR(150) NOT NULL,
+
+    estado ENUM(
+        'Pendiente',
+        'Confirmado',
+        'Realizado',
+        'Cancelado',
+        'Ausente'
+    ) NOT NULL DEFAULT 'Pendiente',
+
+    observaciones TEXT NULL,
+
+    fecha_creacion TIMESTAMP
+        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_turno_fecha (fecha, hora),
+    INDEX idx_turno_paciente (dni_paciente),
+    INDEX idx_turno_estado (estado),
+
+    CONSTRAINT fk_turno_paciente
+        FOREIGN KEY (dni_paciente)
+        REFERENCES paciente(dni_p)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ==============================================
+-- DATOS DE EJEMPLO
+-- SOLO SE INSERTAN SI NO EXISTEN
+-- ==============================================
+
+
+-- ----------------------------------------------
+-- TRABAJO
+-- ----------------------------------------------
+
+INSERT IGNORE INTO trabajo (nombre_t)
 VALUES ('Administrativo');
 
--- =========================================
--- 14. DATOS INICIALES DE OBRAS SOCIALES
--- =========================================
 
-INSERT INTO obra_social (nombre_os)
+-- ----------------------------------------------
+-- OBRA SOCIAL
+-- ----------------------------------------------
+
+INSERT IGNORE INTO obra_social (nombre_os, activa)
+VALUES ('Obra Social XYZ', 1);
+
+
+-- ----------------------------------------------
+-- EXPOSICIONES
+-- ----------------------------------------------
+
+INSERT IGNORE INTO exposicion (nombre_ex)
 VALUES
-('OSDE'),
-('Swiss Medical'),
-('PAMI'),
-('Obra Social XYZ');
+    ('Ruido'),
+    ('Sustancias');
 
--- =========================================
--- 15. DATOS INICIALES DE EXPOSICIONES
--- =========================================
 
-INSERT INTO exposicion (nombre_ex)
+-- ----------------------------------------------
+-- ESTUDIOS
+-- ----------------------------------------------
+
+INSERT IGNORE INTO estudio (nombre_es)
 VALUES
-('Ruido'),
-('Sustancias');
+    ('Radiografia'),
+    ('Analisis de sangre');
 
--- =========================================
--- 16. DATOS INICIALES DE ESTUDIOS
--- =========================================
 
-INSERT INTO estudio (nombre_es)
-VALUES
-('Radiografia'),
-('Analisis de sangre');
+-- ----------------------------------------------
+-- PACIENTE DE EJEMPLO
+-- ----------------------------------------------
 
--- =========================================
--- 17. EXPOSICIONES ASOCIADAS AL TRABAJO
--- =========================================
-
-INSERT INTO trabajo_exposicion
-(id_trabajo, id_exposicion)
-VALUES
-(1, 1),
-(1, 2);
-
--- =========================================
--- 18. ESTUDIOS ASOCIADOS AL TRABAJO
--- =========================================
-
-INSERT INTO trabajo_estudio
-(id_trabajo, id_estudio)
-VALUES
-(1, 1),
-(1, 2);
-
--- =========================================
--- 19. PACIENTE DE PRUEBA
--- =========================================
-
-INSERT INTO paciente (
+INSERT IGNORE INTO paciente (
     dni_p,
     nombre_p,
     apellido,
@@ -279,77 +337,59 @@ INSERT INTO paciente (
     id_obra_social,
     id_trabajo
 )
-VALUES (
+SELECT
     12345678,
     'Juan',
     'Perez',
     '20345678901',
     '1234567890',
     'juan.perez@epet20.edu.ar',
-    4,
-    1
-);
+    os.id_obra_social,
+    t.id_trabajo
+FROM obra_social os
+CROSS JOIN trabajo t
+WHERE os.nombre_os = 'Obra Social XYZ'
+  AND t.nombre_t = 'Administrativo';
 
--- =========================================
--- 20. EXPOSICIONES DEL PACIENTE
--- =========================================
 
-INSERT INTO paciente_exposicion (
+-- ----------------------------------------------
+-- EXPOSICION DEL PACIENTE DE EJEMPLO
+-- ----------------------------------------------
+
+INSERT IGNORE INTO paciente_exposicion (
     dni_paciente,
     id_exposicion
 )
-VALUES
-(12345678, 1);
+SELECT
+    p.dni_p,
+    e.id_exposicion
+FROM paciente p
+CROSS JOIN exposicion e
+WHERE p.dni_p = 12345678
+  AND e.nombre_ex = 'Ruido';
 
--- =========================================
--- 21. ESTUDIOS DEL PACIENTE
--- =========================================
 
-INSERT INTO paciente_estudio (
+-- ----------------------------------------------
+-- ESTUDIO DEL PACIENTE DE EJEMPLO
+-- ----------------------------------------------
+
+INSERT IGNORE INTO paciente_estudio (
     dni_paciente,
-    id_estudio
+    id_estudio,
+    estado
 )
-VALUES
-(12345678, 1);
-
--- =========================================
--- 22. COMPROBAR OBRAS SOCIALES
--- =========================================
-
 SELECT
-    id_obra_social,
-    nombre_os,
-    activa
-FROM obra_social
-ORDER BY nombre_os;
+    p.dni_p,
+    e.id_estudio,
+    'Pendiente'
+FROM paciente p
+CROSS JOIN estudio e
+WHERE p.dni_p = 12345678
+  AND e.nombre_es = 'Radiografia';
 
--- =========================================
--- 23. COMPROBAR LISTADO DE PACIENTES
--- =========================================
 
-SELECT
-    paciente.dni_p,
-    paciente.nombre_p,
-    paciente.apellido,
-    paciente.cuil,
-    paciente.telefono,
-    paciente.mail,
+-- ==============================================
+-- FIN DEL SEED
+-- ==============================================
 
-    COALESCE(
-        obra_social.nombre_os,
-        'Particular / Sin obra social'
-    ) AS obra_social,
-
-    trabajo.nombre_t AS trabajo
-
-FROM paciente
-
-LEFT JOIN obra_social
-    ON paciente.id_obra_social =
-       obra_social.id_obra_social
-
-LEFT JOIN trabajo
-    ON paciente.id_trabajo =
-       trabajo.id_trabajo
-
-ORDER BY paciente.dni_p;
+SELECT 'Base de datos preparada correctamente' AS mensaje;

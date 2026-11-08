@@ -1,6 +1,8 @@
 
 <?php
-require_once "conexion.php";
+require_once __DIR__ . "/conexion.php";
+
+/** @var mysqli $conexion */
 
 // =========================================
 // CONSULTAR PACIENTES
@@ -50,27 +52,29 @@ function escapar($valor) {
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Listado de pacientes</title>
-     <link rel="stylesheet" href="../general/estilos.css">
+
+    <link
+        rel="stylesheet"
+        href="../general/estilos.css"
+    >
 </head>
+
 <body>
 
 <h1>Listado de pacientes</h1>
 
 <p>
     <a href="alta.php">Nuevo paciente</a>
-</p>
-
-<p>
-    <a href="../Obra%20Social/listar.php"
-       target="_blank"
-       rel="noopener noreferrer">
-        Administrar obras sociales
-    </a>
 </p>
 
 <p>
@@ -159,7 +163,7 @@ function escapar($valor) {
                 </td>
 
                 <td>
-                    <a href="../historial%20clinico/historial.php?dni_p=<?php
+                    <a href="../historial/historial.php?dni_p=<?php
                         echo urlencode($fila["dni_p"]);
                     ?>">
                         Ver historial
@@ -171,6 +175,7 @@ function escapar($valor) {
         <?php } ?>
 
         </tbody>
+
     </table>
 
 <?php } ?>

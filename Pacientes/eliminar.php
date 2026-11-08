@@ -1,7 +1,9 @@
 
 <?php
 // ===== BLOQUE 1 — Traer la conexión =====
-require_once "conexion.php";
+require_once __DIR__ . "/conexion.php";
+
+/** @var mysqli $conexion */
 
 // ===== BLOQUE 2 — Recibir el DNI =====
 if (isset($_POST["dni_p"])) {

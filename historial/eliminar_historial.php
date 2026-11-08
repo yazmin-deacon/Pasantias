@@ -1,7 +1,6 @@
 
 <?php
-require_once "../Pacientes/conexion.php";
-
+require_once __DIR__ . "/../Pacientes/conexion.php";
 $id_historial = $_GET["id_historial"] ?? "";
 
 if (empty($id_historial)) {
