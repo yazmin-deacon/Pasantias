@@ -1386,3 +1386,435 @@ header #btn-tema {
     margin: 0;
 }
 
+
+/* =========================================
+   LISTADO DE PACIENTES - DUCA
+========================================= */
+
+.pagina-listado {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    gap: 25px;
+}
+
+/* ENCABEZADO */
+
+.pagina-listado .encabezado-listado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 28px 32px;
+}
+
+.pagina-listado .encabezado-listado h1 {
+    font-size: 26px;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.pagina-listado .encabezado-listado p {
+    color: #e5f3f5;
+    font-size: 14px;
+}
+
+/* BOTÓN NUEVO PACIENTE */
+
+.btn-nuevo-paciente {
+    display: inline-block;
+    padding: 12px 18px;
+    background: white;
+    color: #14566b;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: 0.3s ease;
+}
+
+.btn-nuevo-paciente:hover {
+    background: #d9f0f0;
+    color: #123f55;
+    transform: translateY(-2px);
+}
+
+/* TARJETA PRINCIPAL */
+
+.pagina-listado .bloque-listado {
+    padding: 25px;
+    min-width: 0;
+}
+
+/* TÍTULO Y CONTADOR */
+
+.titulo-listado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 22px;
+}
+
+.titulo-listado h2 {
+    color: #14566b;
+    font-size: 19px;
+    margin-bottom: 7px;
+}
+
+.titulo-listado p {
+    color: #6c818b;
+    font-size: 13px;
+}
+
+.contador-pacientes {
+    background: #d9f0f0;
+    color: #126678;
+    padding: 9px 15px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* TABLA */
+
+.pagina-listado .tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dce9ed;
+    border-radius: 10px;
+}
+
+.pagina-listado .tabla-pacientes {
+    width: 100%;
+    min-width: 1150px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+/* ENCABEZADOS */
+
+.pagina-listado .tabla-pacientes th {
+    background: linear-gradient(120deg, #123f55, #167d89);
+    color: white;
+    padding: 15px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: none;
+}
+
+/* CELDAS */
+
+.pagina-listado .tabla-pacientes td {
+    padding: 14px 12px;
+    font-size: 13px;
+    color: #365563;
+    border-bottom: 1px solid #e0edef;
+    white-space: nowrap;
+}
+
+/* FILAS */
+
+.pagina-listado .tabla-pacientes tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+.pagina-listado .tabla-pacientes tbody tr:nth-child(even) {
+    background: #f7fafb;
+}
+
+.pagina-listado .tabla-pacientes tbody tr:hover {
+    background: #eaf5f6;
+}
+
+.pagina-listado .tabla-pacientes tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* BOTONES DE ACCIONES */
+
+.pagina-listado .accion-tabla {
+    display: inline-block;
+    padding: 7px 11px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: 0.25s ease;
+}
+
+.pagina-listado .accion-editar {
+    background: #e1f0f2;
+    color: #14566b;
+}
+
+.pagina-listado .accion-editar:hover {
+    background: #176d82;
+    color: white;
+}
+
+.pagina-listado .accion-eliminar {
+    background: #fbeaea;
+    color: #b94343;
+}
+
+.pagina-listado .accion-eliminar:hover {
+    background: #b94343;
+    color: white;
+}
+
+.pagina-listado .accion-historial {
+    background: #e0f2eb;
+    color: #16816b;
+}
+
+.pagina-listado .accion-historial:hover {
+    background: #16816b;
+    color: white;
+}
+
+/* MENSAJE SIN PACIENTES */
+
+.mensaje-listado-vacio {
+    padding: 40px 20px;
+    text-align: center;
+    background: #f4f9fa;
+    border: 1px dashed #cbdde2;
+    border-radius: 10px;
+}
+
+.mensaje-listado-vacio h3 {
+    color: #14566b;
+    margin-bottom: 10px;
+    font-size: 17px;
+}
+
+.mensaje-listado-vacio p {
+    color: #6c818b;
+    font-size: 14px;
+}
+
+/* =========================================
+   MODO OSCURO
+========================================= */
+
+body.modo-oscuro .pagina-listado .titulo-listado h2 {
+    color: #b8e5ec;
+}
+
+body.modo-oscuro .pagina-listado .titulo-listado p {
+    color: #c0d0d8;
+}
+
+body.modo-oscuro .contador-pacientes {
+    background: #244f59;
+    color: #c3f0f0;
+}
+
+/* Tabla */
+
+body.modo-oscuro .pagina-listado .tabla-contenedor {
+    border-color: #40535e;
+}
+
+body.modo-oscuro .pagina-listado .tabla-pacientes th {
+    background: linear-gradient(120deg, #101a22, #193c49);
+    color: white;
+}
+
+body.modo-oscuro .pagina-listado .tabla-pacientes td {
+    color: #e0eaf0;
+    border-color: #40535e;
+}
+
+body.modo-oscuro .pagina-listado .tabla-pacientes tbody tr:nth-child(even) {
+    background: #293b46;
+}
+
+body.modo-oscuro .pagina-listado .tabla-pacientes tbody tr:nth-child(odd) {
+    background: #24343f;
+}
+
+body.modo-oscuro .pagina-listado .tabla-pacientes tbody tr:hover {
+    background: #38515e;
+}
+
+/* Acciones */
+
+body.modo-oscuro .pagina-listado .accion-editar {
+    background: #304b58;
+    color: #8bd6d5;
+}
+
+body.modo-oscuro .pagina-listado .accion-editar:hover {
+    background: #176d82;
+    color: white;
+}
+
+body.modo-oscuro .pagina-listado .accion-eliminar {
+    background: #493238;
+    color: #ffaaaa;
+}
+
+body.modo-oscuro .pagina-listado .accion-eliminar:hover {
+    background: #b94343;
+    color: white;
+}
+
+body.modo-oscuro .pagina-listado .accion-historial {
+    background: #25483f;
+    color: #8bdcc5;
+}
+
+body.modo-oscuro .pagina-listado .accion-historial:hover {
+    background: #16816b;
+    color: white;
+}
+
+/* Mensaje vacío */
+
+body.modo-oscuro .mensaje-listado-vacio {
+    background: #30434f;
+    border-color: #526a77;
+}
+
+body.modo-oscuro .mensaje-listado-vacio h3 {
+    color: #b8e5ec;
+}
+
+body.modo-oscuro .mensaje-listado-vacio p {
+    color: #c0d0d8;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 850px) {
+
+    .pagina-listado .encabezado-listado {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pagina-listado .encabezado-listado h1 {
+        font-size: 22px;
+    }
+
+}
+
+@media (max-width: 550px) {
+
+    .pagina-listado .bloque-listado {
+        padding: 17px;
+    }
+
+    .titulo-listado {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pagina-listado .encabezado-listado {
+        padding: 20px;
+    }
+
+}
+
+/* =========================================
+   BOTONES DEL LISTADO DE PACIENTES
+========================================= */
+
+/* NUEVO PACIENTE */
+
+main.pagina-listado a.btn-nuevo-paciente,
+main.pagina-listado a.btn-nuevo-paciente:visited {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    padding: 12px 20px;
+    background: #176d82;
+    color: #ffffff;
+    border: 1px solid #176d82;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+main.pagina-listado a.btn-nuevo-paciente:hover {
+    background: #123f55;
+    border-color: #123f55;
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+/* BOTONES DE LA TABLA */
+
+main.pagina-listado table.tabla-pacientes a.accion-tabla,
+main.pagina-listado table.tabla-pacientes a.accion-tabla:visited {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 85px;
+    padding: 9px 12px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+/* EDITAR */
+
+main.pagina-listado table.tabla-pacientes a.accion-editar {
+    background: #176d82;
+    border-color: #176d82;
+    color: #ffffff;
+}
+
+main.pagina-listado table.tabla-pacientes a.accion-editar:hover {
+    background: #123f55;
+    border-color: #123f55;
+    color: #ffffff;
+}
+
+/* ELIMINAR */
+
+main.pagina-listado table.tabla-pacientes a.accion-eliminar {
+    background: #bd5555;
+    border-color: #bd5555;
+    color: #ffffff;
+}
+
+main.pagina-listado table.tabla-pacientes a.accion-eliminar:hover {
+    background: #963c3c;
+    border-color: #963c3c;
+    color: #ffffff;
+}
+
+/* VER HISTORIAL */
+
+main.pagina-listado table.tabla-pacientes a.accion-historial {
+    background: #168b78;
+    border-color: #168b78;
+    color: #ffffff;
+}
+
+main.pagina-listado table.tabla-pacientes a.accion-historial:hover {
+    background: #116b5c;
+    border-color: #116b5c;
+    color: #ffffff;
+}

@@ -4,9 +4,7 @@ require_once __DIR__ . "/conexion.php";
 
 /** @var mysqli $conexion */
 
-// =========================================
 // CONSULTAR PACIENTES
-// =========================================
 
 $sql = "SELECT
             p.dni_p,
@@ -55,131 +53,234 @@ function escapar($valor) {
 
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Listado de pacientes</title>
 
-    <link
-        rel="stylesheet"
-        href="../general/estilos.css"
-    >
+    <link rel="stylesheet" href="../general/estilos.css">
 </head>
 
 <body>
 
-<h1>Listado de pacientes</h1>
+<header>
 
-<p>
-    <a href="alta.php">Nuevo paciente</a>
-</p>
+        <div class="logo">
 
-<p>
-    Cantidad de pacientes cargados:
-    <?php echo $cantidad; ?>
-</p>
+            <img
+                id="logo"
+                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+                alt="Logo DUCA"
+                height="150"
+                width="175"
+            >
 
-<?php if ($cantidad == 0) { ?>
+        </div>
 
-    <p>Todavía no hay pacientes cargados.</p>
+        <nav>
 
-<?php } else { ?>
+            <a href="../inicio sesion/index.php">
+                Menú principal
+            </a>
 
-    <table border="1" cellpadding="5">
+            <a href="../gestionar_exposiciones.html">
+                Exposiciones
+            </a>
 
-        <thead>
-            <tr>
-                <th>DNI</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>CUIL</th>
-                <th>Teléfono</th>
-                <th>Mail</th>
-                <th>Obra social</th>
-                <th>Trabajo</th>
-                <th>Editar</th>
-                <th>Eliminar</th>
-                <th>Historial médico</th>
-            </tr>
-        </thead>
+            <a href="listar.php">
+                Trabajos
+            </a>
 
-        <tbody>
+            <a href="../gestionar_relaciones.html">
+                Relaciones
+            </a>
 
-        <?php while ($fila = mysqli_fetch_assoc($resultado)) { ?>
+            <a href="../gestionar_estudios.html">
+                Estudios
+            </a>
 
-            <tr>
+        </nav>
 
-                <td>
-                    <?php echo escapar($fila["dni_p"]); ?>
-                </td>
+        <button type="button" id="btn-tema">
+            Modo oscuro
+        </button>
 
-                <td>
-                    <?php echo escapar($fila["nombre_p"]); ?>
-                </td>
+    </header>
 
-                <td>
-                    <?php echo escapar($fila["apellido"]); ?>
-                </td>
+<main class="gestion-contenido pagina-listado">
 
-                <td>
-                    <?php echo escapar($fila["cuil"]); ?>
-                </td>
+    <!-- ENCABEZADO -->
 
-                <td>
-                    <?php echo escapar($fila["telefono"]); ?>
-                </td>
+    <section class="bienvenida encabezado-listado">
 
-                <td>
-                    <?php echo escapar($fila["mail"]); ?>
-                </td>
+        <div>
+            <h1>Listado de pacientes</h1>
 
-                <td>
-                    <?php echo escapar($fila["obra_social"]); ?>
-                </td>
+            <p>
+                Administración y consulta de los pacientes registrados
+                en el sistema.
+            </p>
+        </div>
 
-                <td>
-                    <?php echo escapar(
-                        $fila["trabajo"] ?? "Sin asignar"
-                    ); ?>
-                </td>
+        <a href="alta.php" class="btn-nuevo-paciente">
+            + Nuevo paciente
+        </a>
 
-                <td>
-                    <a href="editar.php?dni_p=<?php
-                        echo urlencode($fila["dni_p"]);
-                    ?>">
-                        Editar
-                    </a>
-                </td>
+    </section>
 
-                <td>
-                    <a href="eliminar.php?dni_p=<?php
-                        echo urlencode($fila["dni_p"]);
-                    ?>">
-                        Eliminar
-                    </a>
-                </td>
 
-                <td>
-                    <a href="../historial/historial.php?dni_p=<?php
-                        echo urlencode($fila["dni_p"]);
-                    ?>">
-                        Ver historial
-                    </a>
-                </td>
+    <!-- CONTENIDO PRINCIPAL -->
 
-            </tr>
+    <section class="tarjeta bloque-listado">
+
+        <div class="titulo-listado">
+
+            <div>
+                <h2>Pacientes registrados</h2>
+
+                <p>
+                    Consultá los datos y administrá la información
+                    de cada paciente.
+                </p>
+            </div>
+
+            <span class="contador-pacientes">
+                <?php echo $cantidad; ?>
+                <?php echo ($cantidad == 1) ? "paciente" : "pacientes"; ?>
+            </span>
+
+        </div>
+
+
+        <?php if ($cantidad == 0) { ?>
+
+            <div class="mensaje-listado-vacio">
+
+                <h3>No hay pacientes registrados</h3>
+
+                <p>
+                    Todavía no se cargaron pacientes en el sistema.
+                </p>
+
+            </div>
+
+        <?php } else { ?>
+
+
+            <!-- TABLA DE PACIENTES -->
+
+            <div class="tabla-contenedor">
+
+                <table class="tabla-gestion tabla-pacientes">
+
+                    <thead>
+                        <tr>
+                            <th>DNI</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>CUIL</th>
+                            <th>Teléfono</th>
+                            <th>Mail</th>
+                            <th>Obra social</th>
+                            <th>Trabajo</th>
+                            <th>Editar</th>
+                            <th>Eliminar</th>
+                            <th>Historial médico</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <?php while ($fila = mysqli_fetch_assoc($resultado)) { ?>
+
+                        <tr>
+
+                            <td>
+                                <?php echo escapar($fila["dni_p"]); ?>
+                            </td>
+
+                            <td>
+                                <?php echo escapar($fila["nombre_p"]); ?>
+                            </td>
+
+                            <td>
+                                <?php echo escapar($fila["apellido"]); ?>
+                            </td>
+
+                            <td>
+                                <?php echo escapar($fila["cuil"]); ?>
+                            </td>
+
+                            <td>
+                                <?php echo escapar($fila["telefono"]); ?>
+                            </td>
+
+                            <td>
+                                <?php echo escapar($fila["mail"]); ?>
+                            </td>
+
+                            <td>
+                                <?php echo escapar($fila["obra_social"]); ?>
+                            </td>
+
+                            <td>
+                                <?php echo escapar(
+                                    $fila["trabajo"] ?? "Sin asignar"
+                                ); ?>
+                            </td>
+
+                            <td>
+                                <a
+                                    class="accion-tabla accion-editar"
+                                    href="editar.php?dni_p=<?php
+                                        echo urlencode($fila["dni_p"]);
+                                    ?>"
+                                >
+                                    Editar
+                                </a>
+                            </td>
+
+                            <td>
+                                <a
+                                    class="accion-tabla accion-eliminar"
+                                    href="eliminar.php?dni_p=<?php
+                                        echo urlencode($fila["dni_p"]);
+                                    ?>"
+                                >
+                                    Eliminar
+                                </a>
+                            </td>
+
+                            <td>
+                                <a
+                                    class="accion-tabla accion-historial"
+                                    href="../historial/historial.php?dni_p=<?php
+                                        echo urlencode($fila["dni_p"]);
+                                    ?>"
+                                >
+                                    Ver historial
+                                </a>
+                            </td>
+
+                        </tr>
+
+                    <?php } ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
 
         <?php } ?>
 
-        </tbody>
+    </section>
 
-    </table>
+</main>
 
-<?php } ?>
 
+    <script src="../general/animaciones.js"></script>
+    <script src="../general/modooscuro.js"></script>
+    <script src="../general/script.js"></script>
 </body>
 </html>
 

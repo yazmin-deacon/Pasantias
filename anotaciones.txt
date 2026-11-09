@@ -7,10 +7,17 @@ arreglar id en estudios y exposiciones
 
 turnos pendientes
 
+hay que arreglar el cuil de los pacientes, se tienen qeu dejar poner los 
+guiones o que se pongan automaticament4e cuando se guardan los datos del paciente
+
 
 Giu:
 falta pagina de estudios a realizarr lpmm
  html index
  seleccion de obras sociales
  seleccion y conexion de exposiciones y trabajos
-quitar los ID de la vista
+ hay qeu arreglar las conexiones (TODAS) de las paginas
+ hay que ver porque no anduvieron los estilos en alta.php de pacientes (creo que en los demas tmb)
+ en listar pacientes cambiar el estilo de la tabla (no me gusto)
+ hay que agregar el animaciones.js porqeu se ven horrible las paginas
+
