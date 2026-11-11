@@ -270,76 +270,6 @@ if (
         href="../general/estilos.css"
     >
 
-    <style>
-
-        .buscador-exposicion {
-            width: 100%;
-            max-width: 450px;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        .mensaje-busqueda {
-            margin-top: 12px;
-            font-size: 14px;
-        }
-
-        .acciones {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn-editar,
-        .btn-eliminar {
-            display: inline-block;
-            padding: 9px 16px;
-            border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-            font-family: inherit;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            transition: 0.3s;
-        }
-
-        .btn-editar {
-            background-color: #e5e5e5;
-            color: #333;
-        }
-
-        .btn-editar:hover {
-            background-color: #d0d0d0;
-        }
-
-        .btn-eliminar {
-            background-color: #c94b4b;
-            color: white;
-        }
-
-        .btn-eliminar:hover {
-            background-color: #a93636;
-        }
-
-        .texto-ayuda {
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .sin-resultados {
-            display: none;
-            margin-top: 15px;
-        }
-
-    </style>
-
 </head>
 
 <body>
@@ -368,7 +298,7 @@ if (
                 Menú principal
             </a>
 
-            <a href="listar.php">
+            <a href="../Exposiciones/listar.php">
                 Exposiciones
             </a>
 
@@ -376,7 +306,7 @@ if (
                 Trabajos
             </a>
 
-            <a href="../gestionar_relaciones.html">
+            <a href="../Relaciones/listar.php">
                 Relaciones
             </a>
 
@@ -527,7 +457,6 @@ if (
                         <thead>
 
                             <tr>
-                                <th>ID</th>
                                 <th>Nombre de la exposición</th>
                                 <th>Acciones</th>
                             </tr>
@@ -549,11 +478,6 @@ if (
 
                                     <!-- ID -->
 
-                                    <td>
-                                        <?php
-                                            echo (int)$exposicion["id_exposicion"];
-                                        ?>
-                                    </td>
 
                                     <!-- NOMBRE -->
 

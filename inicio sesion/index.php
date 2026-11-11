@@ -45,7 +45,7 @@
 
                     <div class="separador-menu"></div>
 
-                    <a href="../Trabajos/Trabajos.php">
+                    <a href="../Trabajos/listar.php">
                         Trabajos
                     </a>
 
@@ -120,7 +120,7 @@
 
             <div class="opciones-menu">
 
-                <a href="../Paciente/alta.php" class="tarjeta opcion-menu">
+                <a href="../Pacientes/alta.php" class="tarjeta opcion-menu">
 
                     <div class="icono-menu">👤+</div>
 
@@ -137,7 +137,7 @@
                 </a>
 
 
-                <a href="../Paciente/listar.php" class="tarjeta opcion-menu">
+                <a href="../Pacientes/listar.php" class="tarjeta opcion-menu">
 
                     <div class="icono-menu">📋</div>
 
@@ -183,7 +183,7 @@
     <script src="../general/script.js"></script>
     <script src="../general/animaciones.js"></script>
     <script src="../general/modooscuro.js"></script>
-    <script src="../configuracion.js"></script>
+    <script src="../general/configuracion.js"></script>
 
 </body>
 
