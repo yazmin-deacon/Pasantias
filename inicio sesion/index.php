@@ -1,5 +1,12 @@
 
+<?php
+session_start();
 
+if (!isset($_SESSION["dni"])) {
+    header("Location: login.html");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -7,7 +14,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Menú Principal - Clínica</title>
+    <title>Menú Principal - DUCCA</title>
 
     <link rel="stylesheet" href="../general/estilos.css">
 </head>
@@ -16,8 +23,13 @@
 
     <header>
         <div class="logo">
-            <img id="logo" src="../general/Logo minimalista DUCCA con hojas orgánicas.png" alt="Logo DUCA" height="150"
-                width="175">
+            <img
+                id="logo"
+                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+                alt="Logo DUCCA"
+                height="150"
+                width="175"
+            >
         </div>
 
         <nav class="navegacion-superior">
@@ -25,27 +37,46 @@
             <span class="perfil-usuario">
                 Usuario:
                 <strong>
-                    <?php echo htmlspecialchars($_SESSION["nombre"]); ?>
+                    <?php
+                    echo htmlspecialchars(
+                        $_SESSION["nombre"] ?? "Usuario",
+                        ENT_QUOTES,
+                        "UTF-8"
+                    );
+                    ?>
                 </strong>
             </span>
 
             <div class="contenedor-configuracion">
 
-                <button type="button" id="btn-configuracion" aria-label="Abrir configuración" aria-expanded="false">
+                <button
+                    type="button"
+                    id="btn-configuracion"
+                    aria-label="Abrir configuración"
+                    aria-expanded="false"
+                >
                     ⚙
                 </button>
 
-                <div id="menu-configuracion" class="menu-configuracion" hidden>
+                <div
+                    id="menu-configuracion"
+                    class="menu-configuracion"
+                    hidden
+                >
 
                     <p class="titulo-menu">Administración</p>
 
-                    <button type="button" id="btn-tema" class="opcion-configuracion">
+                    <button
+                        type="button"
+                        id="btn-tema"
+                        class="opcion-configuracion"
+                    >
                         ☽ Modo oscuro
                     </button>
 
                     <div class="separador-menu"></div>
 
-                    <a href="../Trabajos/listar.php">
+                    <a href="../Trabajos/Trabajos.php">
                         Trabajos
                     </a>
 
@@ -68,7 +99,6 @@
         </nav>
     </header>
 
-
     <main class="menu-layout">
 
         <!-- BARRA LATERAL -->
@@ -79,14 +109,22 @@
 
                 <h2>BUSCAR PACIENTE</h2>
 
-                <form action="../Paciente/buscar_paciente.php" method="GET">
+                <form
+                    action="../Pacientes/buscar_paciente.php"
+                    method="GET"
+                >
 
                     <label for="buscar-paciente">
                         DNI o apellido:
                     </label>
 
-                    <input type="text" id="buscar-paciente" name="buscar" placeholder="Ingrese DNI o apellido..."
-                        required>
+                    <input
+                        type="text"
+                        id="buscar-paciente"
+                        name="buscar"
+                        placeholder="Ingrese DNI o apellido..."
+                        required
+                    >
 
                     <button type="submit">BUSCAR</button>
 
@@ -94,19 +132,16 @@
 
             </section>
 
-
             <!-- TURNOS PENDIENTES -->
             <section class="tarjeta bloque-turnos">
 
                 <h2>TURNOS PENDIENTES</h2>
 
                 <ul class="lista-turnos" id="lista-turnos-db">
-
                     <!-- Turnos cargados desde la base de datos -->
-
                 </ul>
 
-                <a href="#" class="ver-turnos">
+                <a href="../turnos/listar.php" class="ver-turnos">
                     Ver todos los turnos →
                 </a>
 
@@ -114,13 +149,15 @@
 
         </aside>
 
-
-        <!-- MENU PRINCIPAL -->
+        <!-- MENÚ PRINCIPAL -->
         <section class="contenido-menu">
 
             <div class="opciones-menu">
 
-                <a href="../Pacientes/alta.php" class="tarjeta opcion-menu">
+                <a
+                    href="../Pacientes/alta.php"
+                    class="tarjeta opcion-menu"
+                >
 
                     <div class="icono-menu">👤+</div>
 
@@ -136,8 +173,10 @@
 
                 </a>
 
-
-                <a href="../Pacientes/listar.php" class="tarjeta opcion-menu">
+                <a
+                    href="../Pacientes/listar.php"
+                    class="tarjeta opcion-menu"
+                >
 
                     <div class="icono-menu">📋</div>
 
@@ -152,16 +191,19 @@
 
                 </a>
 
-
-                <a href="../Paciente/agregar_examen.php" class="tarjeta opcion-menu">
+                <a
+                    href="../Estudios/estudios.php"
+                    class="tarjeta opcion-menu"
+                >
 
                     <div class="icono-menu">🩺</div>
 
-                    <h2>AGREGAR ESTUDIO</h2>
+                    <h2>ADMINISTRAR ESTUDIOS</h2>
 
                     <p>
-                        Asignar un nuevo estudio médico
-                        a un paciente registrado.
+                        Consultar y administrar
+                        los estudios disponibles
+                        en el sistema.
                     </p>
 
                     <span>INGRESAR →</span>
@@ -174,19 +216,14 @@
 
     </main>
 
-
     <footer>
         <p>Proyecto Web Clínica - EPET N°20 (2026)</p>
     </footer>
 
-
     <script src="../general/script.js"></script>
     <script src="../general/animaciones.js"></script>
     <script src="../general/modooscuro.js"></script>
-    <script src="../general/configuracion.js"></script>
+    <script src="../configuracion.js"></script>
 
 </body>
-
 </html>
-
-<!-- actualizado 07/11/2026 -->

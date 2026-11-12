@@ -10,21 +10,28 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 $nombre = trim($_POST["nombre"] ?? "");
+$dni = trim($_POST["dni"] ?? "");
+$mail = trim($_POST["correo"] ?? "");
 $contrasena = $_POST["contrasena"] ?? "";
 
-$sql = "SELECT dni_u, nombre_u, contrasena
+$sql = "SELECT dni_u, nombre_u, mail, contrasena
         FROM usuario
-        WHERE nombre_u = ?";
+        WHERE dni_u = ?";
 
 $stmt = $conexion->prepare($sql);
-$stmt->bind_param("s", $nombre);
+$stmt->bind_param("s", $dni);
 $stmt->execute();
 
 $usuario = $stmt->get_result()->fetch_assoc();
 
 if (
     $usuario &&
-    password_verify($contrasena, $usuario["contrasena"])
+    $nombre === $usuario["nombre_u"] &&
+    strcasecmp($mail, $usuario["mail"]) === 0 &&
+    password_verify(
+        $contrasena,
+        $usuario["contrasena"]
+    )
 ) {
     session_regenerate_id(true);
 

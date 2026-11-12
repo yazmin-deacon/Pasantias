@@ -25,7 +25,7 @@ function consultar($conexion, $sql, $dni) {
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        die("No se pudo preparar la consulta.");
+        die("No se pudo preparar la consulta." . $conexion->error);
     }
 
     mysqli_stmt_bind_param($stmt, "i", $dni);

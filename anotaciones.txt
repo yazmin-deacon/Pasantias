@@ -5,13 +5,22 @@ turnos pendientes
 
 hay que arreglar el cuil de los pacientes, se tienen qeu dejar poner los 
 guiones o que se pongan automaticament4e cuando se guardan los datos del paciente
-
+no abren las paginas desde el menu
+mejorar la descarga de docs
 
 Giu:
  seleccion y conexion de exposiciones y trabajos
  hay qeu arreglar las conexiones (TODAS) de las paginas
  hay que ver porque no anduvieron los estilos en alta.php de pacientes (creo que en los demas tmb)
- en listar pacientes cambiar el estilo de la tabla (no me gusto)
+ en listar pacientes cambiar el estilo de la tabla (no me gusto)($this->GiuWeona)
  hay que agregar el animaciones.js porqeu se ven horrible las paginas
  quitar los id de tds las paginas
- 
+ agregar flechita para retroceder a la pagina anterior y una casita que lleve directamente al menu principal
+ quitar emojis lmp(como en las otras paginas pero en las idnividuales)
+ quitar las redundancias de enlaces entre paginas
+ en estudios: separar el boton de "agregar estudio" del buscar
+ estaria bueno centrar las paginas para que no se vea td tan de costado, queda raro.
+falta estilos en los botones nuevos
+el tema no se mantiene en las paginas individiuales
+el checkbox esta desentrado, me da toc la vdd.
+no esta cargada la ruedita en ningun lao(incluyendo la pag princi), por ende, la actualizacion de claro o oscuro esta para el tuje
