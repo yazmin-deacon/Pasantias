@@ -1,0 +1,90 @@
+/* ==========================================
+   CORRECCIÓN DE CENTRADO - AGREGAR PACIENTE
+========================================== */
+
+main.gestion-contenido {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+
+    width: 100% !important;
+    max-width: 1100px !important;
+
+    margin: 30px auto !important;
+    padding: 20px !important;
+
+    box-sizing: border-box !important;
+}
+
+/* Bienvenida */
+
+main.gestion-contenido > .bienvenida {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Tarjeta del formulario */
+
+main.gestion-contenido > .tarjeta {
+    display: block !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+}
+
+/* Formulario */
+
+main.gestion-contenido .form-gestion {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+
+    width: 100% !important;
+    max-width: 100% !important;
+
+    box-sizing: border-box !important;
+}
+
+/* Campos */
+
+main.gestion-contenido .form-gestion > p {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+main.gestion-contenido .form-gestion input:not([type="checkbox"]) {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Listas de exposiciones y estudios */
+
+main.gestion-contenido .opciones,
+main.gestion-contenido .nuevos {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Buscadores */
+
+main.gestion-contenido .campo-busqueda {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Pantallas pequeñas */
+
+@media (max-width: 600px) {
+    main.gestion-contenido {
+        width: 100% !important;
+        padding: 15px !important;
+    }
+}

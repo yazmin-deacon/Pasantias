@@ -156,6 +156,51 @@ foreach ($filas as $fila) {
 
 <body>
 
+<header>
+
+        <div class="logo">
+
+            <img
+                id="logo"
+                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+                alt="Logo DUCA"
+                height="150"
+                width="175"
+            >
+
+        </div>
+
+        <nav>
+
+            <a href="../inicio sesion/index.php">
+                Menú principal
+            </a>
+
+            <a href="../gestionar_exposiciones.html">
+                Exposiciones
+            </a>
+
+            <a href="listar.php">
+                Trabajos
+            </a>
+
+            <a href="../gestionar_relaciones.html">
+                Relaciones
+            </a>
+
+            <a href="../gestionar_estudios.html">
+                Estudios
+            </a>
+
+        </nav>
+
+        <button type="button" id="btn-tema">
+            Modo oscuro
+        </button>
+
+    </header>
+
+
 <main class="gestion-contenido">
 
     <section class="bienvenida">
@@ -807,6 +852,9 @@ document.getElementById("formPaciente")
     });
 
 </script>
+<script src="../general/script.js"></script>
+<script src="../general/animaciones.js"></script>
+<script src="../general/modooscuro.js"></script>
 
 </body>
 </html>

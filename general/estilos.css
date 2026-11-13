@@ -1888,3 +1888,267 @@ main.pagina-listado table.tabla-pacientes a.accion-historial:hover {
     display: none;
     margin-top: 15px;
 }
+
+/* =========================================
+   AGREGAR PACIENTE
+   Estilos complementarios para estilos.css
+========================================= */
+
+.pagina-agregar-paciente {
+    width: 100%;
+    gap: 22px;
+}
+
+.tarjeta-formulario-paciente {
+    width: 100%;
+}
+
+.formulario-paciente {
+    width: 100%;
+    max-width: 100%;
+}
+
+.formulario-paciente .titulo-seccion-formulario {
+    width: 100%;
+    margin: 8px 0 5px;
+    color: #14566b;
+    font-size: 19px;
+}
+
+.formulario-paciente .campo-dato {
+    width: 100%;
+    margin: 0;
+}
+
+.formulario-paciente .campo-dato input {
+    width: 100%;
+}
+
+.formulario-paciente .texto-ayuda-formulario {
+    margin: 0;
+    color: #6c818b;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.formulario-paciente .campo-busqueda-formulario {
+    display: block;
+    width: 100%;
+    max-width: 430px;
+    margin: 5px 0;
+    padding: 11px 13px;
+    border: 1px solid #cbdde2;
+    border-radius: 8px;
+    background: #f8fbfc;
+    color: #263d4a;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.formulario-paciente .campo-busqueda-formulario:focus {
+    outline: none;
+    border-color: #168c9b;
+    box-shadow: 0 0 0 3px rgba(22, 140, 155, 0.12);
+}
+
+.formulario-paciente .sugerencias-formulario {
+    width: 100%;
+    max-width: 430px;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #dce9ed;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #263d4a;
+    box-shadow: 0 4px 12px rgba(30, 75, 90, 0.08);
+}
+
+.formulario-paciente .sugerencia {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+    color: #263d4a;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.formulario-paciente .sugerencia:hover {
+    background: #eaf5f6;
+    color: #14566b;
+    transform: none;
+    box-shadow: none;
+}
+
+.formulario-paciente .lista-opciones-formulario {
+    width: 100%;
+    max-width: 650px;
+    max-height: 230px;
+    overflow-y: auto;
+    margin: 8px 0 12px;
+    padding: 12px 15px;
+    border: 1px solid #dce9ed;
+    border-radius: 9px;
+    background: #f8fbfc;
+}
+
+.formulario-paciente .opcion-catalogo,
+.formulario-paciente .opcion-nueva-catalogo {
+    margin: 7px 0;
+    color: #365563;
+    font-size: 14px;
+}
+
+.formulario-paciente .opcion-catalogo label,
+.formulario-paciente .opcion-nueva-catalogo label,
+.formulario-paciente .nuevos label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+}
+
+.formulario-paciente input[type="checkbox"] {
+    width: auto;
+    accent-color: #176d82;
+    cursor: pointer;
+}
+
+.formulario-paciente .opciones-nuevas-formulario {
+    width: 100%;
+    max-width: 650px;
+    padding: 0 12px;
+}
+
+.formulario-paciente .separador-formulario {
+    width: 100%;
+    height: 1px;
+    margin: 12px 0;
+    border: 0;
+    background: #dce9ed;
+}
+
+.formulario-paciente .enlace-administrar {
+    display: inline-block;
+    width: fit-content;
+    color: #168b78;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.formulario-paciente .enlace-administrar:hover {
+    color: #14566b;
+    text-decoration: underline;
+}
+
+.formulario-paciente .btn-guardar-paciente {
+    align-self: flex-start;
+    margin-top: 8px;
+}
+
+.formulario-paciente .btn-cancelar-paciente {
+    display: inline-block;
+    width: fit-content;
+    padding: 9px 14px;
+    border: 1px solid #cbdde2;
+    border-radius: 8px;
+    background: transparent;
+    color: #365563;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.25s ease;
+}
+
+.formulario-paciente .btn-cancelar-paciente:hover {
+    background: #eaf5f6;
+    color: #14566b;
+}
+
+/* Modo oscuro */
+
+body.modo-oscuro .formulario-paciente .titulo-seccion-formulario {
+    color: #b8e5ec;
+}
+
+body.modo-oscuro .formulario-paciente .texto-ayuda-formulario {
+    color: #c0d0d8;
+}
+
+body.modo-oscuro .formulario-paciente .campo-busqueda-formulario {
+    background: #30434f;
+    color: #ffffff;
+    border-color: #607783;
+}
+
+body.modo-oscuro .formulario-paciente .campo-busqueda-formulario::placeholder {
+    color: #bdcbd3;
+    opacity: 1;
+}
+
+body.modo-oscuro .formulario-paciente .sugerencias-formulario,
+body.modo-oscuro .formulario-paciente .sugerencia {
+    background: #24343f;
+    color: #e0eaf0;
+    border-color: #40535e;
+}
+
+body.modo-oscuro .formulario-paciente .sugerencia:hover {
+    background: #30434f;
+    color: #b8e5ec;
+}
+
+body.modo-oscuro .formulario-paciente .lista-opciones-formulario {
+    background: #30434f;
+    border-color: #40535e;
+}
+
+body.modo-oscuro .formulario-paciente .opcion-catalogo,
+body.modo-oscuro .formulario-paciente .opcion-nueva-catalogo {
+    color: #e0eaf0;
+}
+
+body.modo-oscuro .formulario-paciente .separador-formulario {
+    background: #40535e;
+}
+
+body.modo-oscuro .formulario-paciente .enlace-administrar {
+    color: #72d6c3;
+}
+
+body.modo-oscuro .formulario-paciente .enlace-administrar:hover {
+    color: #b8e5ec;
+}
+
+body.modo-oscuro .formulario-paciente .btn-cancelar-paciente {
+    border-color: #607783;
+    color: #e0eaf0;
+}
+
+body.modo-oscuro .formulario-paciente .btn-cancelar-paciente:hover {
+    background: #405763;
+    color: #ffffff;
+}
+
+/* Adaptación para celulares */
+
+@media (max-width: 550px) {
+    .formulario-paciente {
+        gap: 13px;
+    }
+
+    .formulario-paciente .campo-busqueda-formulario,
+    .formulario-paciente .sugerencias-formulario,
+    .formulario-paciente .lista-opciones-formulario {
+        max-width: 100%;
+    }
+
+    .formulario-paciente .btn-guardar-paciente {
+        width: 100%;
+        align-self: stretch;
+    }
+}
