@@ -55,7 +55,9 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
     $resultado = mysqli_query($conexion, $sql);
 
     if (!$resultado) {
-        throw new Exception(mysqli_error($conexion));
+        throw new Exception(
+            mysqli_error($conexion)
+        );
     }
 
     while ($fila = mysqli_fetch_assoc($resultado)) {
@@ -64,7 +66,6 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
             normalizarNombre($fila["nombre_t"]) ===
             normalizarNombre($nombre)
         ) {
-
             $id = (int)$fila["id_trabajo"];
 
             mysqli_free_result($resultado);
@@ -81,7 +82,9 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
+        throw new Exception(
+            mysqli_error($conexion)
+        );
     }
 
     mysqli_stmt_bind_param(
@@ -140,7 +143,9 @@ function resolverObraSocial(
     $resultado = mysqli_query($conexion, $sql);
 
     if (!$resultado) {
-        throw new Exception(mysqli_error($conexion));
+        throw new Exception(
+            mysqli_error($conexion)
+        );
     }
 
     while ($fila = mysqli_fetch_assoc($resultado)) {
@@ -149,13 +154,13 @@ function resolverObraSocial(
             normalizarNombre($fila["nombre_os"]) ===
             normalizarNombre($nombre)
         ) {
-
             $id = (int)$fila["id_obra_social"];
+            $activa = (int)$fila["activa"];
 
             mysqli_free_result($resultado);
 
             if (
-                !(int)$fila["activa"] &&
+                !$activa &&
                 $id !== $idObraAnterior
             ) {
                 throw new Exception(
@@ -176,7 +181,9 @@ function resolverObraSocial(
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
+        throw new Exception(
+            mysqli_error($conexion)
+        );
     }
 
     mysqli_stmt_bind_param(
@@ -200,14 +207,26 @@ function resolverObraSocial(
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
-    die("Método no permitido.");
+    exit("Método no permitido.");
 }
 
 // =========================================
 // RECIBIR DATOS
 // =========================================
 
-$dni = trim((string)($_POST["dni_p"] ?? ""));
+// DNI: quitar puntos.
+$dni = preg_replace(
+    '/\D/',
+    '',
+    (string)($_POST["dni_p"] ?? "")
+);
+
+// CUIL: quitar guiones.
+$cuil = preg_replace(
+    '/\D/',
+    '',
+    (string)($_POST["cuil"] ?? "")
+);
 
 $nombre = limpiarNombre(
     $_POST["nombre_p"] ?? ""
@@ -216,8 +235,6 @@ $nombre = limpiarNombre(
 $apellido = limpiarNombre(
     $_POST["apellido"] ?? ""
 );
-
-$cuil = trim((string)($_POST["cuil"] ?? ""));
 
 $telefono = trim(
     (string)($_POST["telefono"] ?? "")
@@ -248,6 +265,13 @@ if (
 }
 
 if (
+    $cuil !== "" &&
+    !preg_match('/^[0-9]{11}$/', $cuil)
+) {
+    die("El CUIL debe contener 11 números.");
+}
+
+if (
     $nombre === "" ||
     $apellido === "" ||
     $telefono === "" ||
@@ -264,12 +288,14 @@ if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
 if (
     mb_strlen($nombre, "UTF-8") > 30 ||
     mb_strlen($apellido, "UTF-8") > 30 ||
-    strlen($cuil) > 11 ||
     strlen($telefono) > 20 ||
     strlen($mail) > 100 ||
     mb_strlen($trabajoNombre, "UTF-8") > 50
 ) {
-    die("Alguno de los datos supera el tamaño permitido.");
+    die(
+        "Alguno de los datos supera " .
+        "el tamaño permitido."
+    );
 }
 
 $dniNumero = (int)$dni;
@@ -294,7 +320,9 @@ try {
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
+        throw new Exception(
+            mysqli_error($conexion)
+        );
     }
 
     mysqli_stmt_bind_param(
@@ -362,7 +390,9 @@ try {
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
+        throw new Exception(
+            mysqli_error($conexion)
+        );
     }
 
     mysqli_stmt_bind_param(
@@ -390,8 +420,8 @@ try {
     // NO modificar paciente_exposicion.
     // NO modificar historial_medico.
     //
-    // Esas asignaciones se administrarán
-    // desde el historial del paciente.
+    // Los estudios y exposiciones se
+    // administran desde el historial.
 
     // =====================================
     // 5. CONFIRMAR CAMBIOS

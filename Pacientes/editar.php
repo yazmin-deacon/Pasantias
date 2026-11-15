@@ -4,10 +4,6 @@ require_once __DIR__ . "/conexion.php";
 
 /** @var mysqli $conexion */
 
-// =========================================
-// FUNCIONES
-// =========================================
-
 function escapar($valor) {
     return htmlspecialchars(
         (string)($valor ?? ""),
@@ -20,7 +16,7 @@ function consultarTodos($conexion, $sql) {
     $resultado = mysqli_query($conexion, $sql);
 
     if (!$resultado) {
-        die("Error en la consulta: " . mysqli_error($conexion));
+        die("Error al consultar los datos.");
     }
 
     $filas = mysqli_fetch_all(
@@ -33,11 +29,13 @@ function consultarTodos($conexion, $sql) {
     return $filas;
 }
 
-// =========================================
-// OBTENER EL PACIENTE
-// =========================================
+// OBTENER PACIENTE
 
-$dni = trim((string)($_GET["dni_p"] ?? ""));
+$dni = preg_replace(
+    '/\D/',
+    '',
+    (string)($_GET["dni_p"] ?? "")
+);
 
 if (
     !ctype_digit($dni) ||
@@ -51,9 +49,7 @@ $dniNumero = (int)$dni;
 
 $stmt = mysqli_prepare(
     $conexion,
-    "SELECT *
-     FROM paciente
-     WHERE dni_p = ?"
+    "SELECT * FROM paciente WHERE dni_p = ?"
 );
 
 if (!$stmt) {
@@ -77,27 +73,21 @@ if (!$paciente) {
     die("No se encontró el paciente.");
 }
 
-// =========================================
-// OBTENER OBRAS SOCIALES Y TRABAJOS
-// =========================================
+// OBRAS SOCIALES Y TRABAJOS
 
 $obrasSociales = consultarTodos(
     $conexion,
     "SELECT id_obra_social, nombre_os
-     FROM obra_social
-     ORDER BY nombre_os"
+     FROM obra_social ORDER BY nombre_os"
 );
 
 $trabajos = consultarTodos(
     $conexion,
     "SELECT id_trabajo, nombre_t
-     FROM trabajo
-     ORDER BY nombre_t"
+     FROM trabajo ORDER BY nombre_t"
 );
 
-// =========================================
-// VALORES ACTUALES
-// =========================================
+// DATOS ACTUALES
 
 $nombreObraActual = "Particular / Sin obra social";
 
@@ -137,12 +127,9 @@ mysqli_close($conexion);
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Editar paciente</title>
+    <title>Editar paciente - DUCCA</title>
 
-    <link
-        rel="stylesheet"
-        href="../general/estilos.css"
-    >
+    <link rel="stylesheet" href="../general/estilos.css">
 
     <style>
         .campo-busqueda {
@@ -168,14 +155,12 @@ mysqli_close($conexion);
 <main class="gestion-contenido">
 
     <section class="bienvenida">
-
         <h1>Editar paciente</h1>
 
         <p>
             Modificá los datos personales,
             la obra social y el trabajo del paciente.
         </p>
-
     </section>
 
     <section class="tarjeta">
@@ -187,13 +172,15 @@ mysqli_close($conexion);
             class="form-gestion"
         >
 
+            <!-- DNI ORIGINAL PARA MYSQL -->
+
             <input
                 type="hidden"
                 name="dni_p"
-                value="<?php echo escapar($paciente["dni_p"]); ?>"
+                value="<?php
+                    echo escapar($paciente["dni_p"]);
+                ?>"
             >
-
-            <!-- DATOS PERSONALES -->
 
             <h2>Datos personales</h2>
 
@@ -203,7 +190,16 @@ mysqli_close($conexion);
                 <input
                     type="text"
                     id="dni_mostrar"
-                    value="<?php echo escapar($paciente["dni_p"]); ?>"
+                    value="<?php
+                        echo escapar(
+                            number_format(
+                                (int)$paciente["dni_p"],
+                                0,
+                                ",",
+                                "."
+                            )
+                        );
+                    ?>"
                     disabled
                 >
             </p>
@@ -217,7 +213,9 @@ mysqli_close($conexion);
                     name="nombre_p"
                     maxlength="30"
                     required
-                    value="<?php echo escapar($paciente["nombre_p"]); ?>"
+                    value="<?php
+                        echo escapar($paciente["nombre_p"]);
+                    ?>"
                 >
             </p>
 
@@ -230,7 +228,9 @@ mysqli_close($conexion);
                     name="apellido"
                     maxlength="30"
                     required
-                    value="<?php echo escapar($paciente["apellido"]); ?>"
+                    value="<?php
+                        echo escapar($paciente["apellido"]);
+                    ?>"
                 >
             </p>
 
@@ -241,8 +241,12 @@ mysqli_close($conexion);
                     type="text"
                     id="cuil"
                     name="cuil"
-                    maxlength="11"
-                    value="<?php echo escapar($paciente["cuil"]); ?>"
+                    maxlength="13"
+                    inputmode="numeric"
+                    placeholder="20-12345678-3"
+                    value="<?php
+                        echo escapar($paciente["cuil"]);
+                    ?>"
                 >
             </p>
 
@@ -255,7 +259,9 @@ mysqli_close($conexion);
                     name="telefono"
                     maxlength="20"
                     required
-                    value="<?php echo escapar($paciente["telefono"]); ?>"
+                    value="<?php
+                        echo escapar($paciente["telefono"]);
+                    ?>"
                 >
             </p>
 
@@ -268,13 +274,13 @@ mysqli_close($conexion);
                     name="mail"
                     maxlength="100"
                     required
-                    value="<?php echo escapar($paciente["mail"]); ?>"
+                    value="<?php
+                        echo escapar($paciente["mail"]);
+                    ?>"
                 >
             </p>
 
             <hr>
-
-            <!-- OBRA SOCIAL -->
 
             <h2>Obra social</h2>
 
@@ -292,13 +298,17 @@ mysqli_close($conexion);
                 maxlength="100"
                 autocomplete="off"
                 required
-                value="<?php echo escapar($nombreObraActual); ?>"
+                value="<?php
+                    echo escapar($nombreObraActual);
+                ?>"
                 placeholder="Buscar obra social..."
             >
 
             <datalist id="lista_obras_sociales">
 
-                <option value="Particular / Sin obra social"></option>
+                <option
+                    value="Particular / Sin obra social"
+                ></option>
 
                 <?php foreach ($obrasSociales as $obra) { ?>
 
@@ -326,8 +336,6 @@ mysqli_close($conexion);
 
             <hr>
 
-            <!-- TRABAJO -->
-
             <h2>Trabajo</h2>
 
             <p class="ayuda">
@@ -343,7 +351,9 @@ mysqli_close($conexion);
                 list="lista_trabajos"
                 maxlength="50"
                 autocomplete="off"
-                value="<?php echo escapar($nombreTrabajoActual); ?>"
+                value="<?php
+                    echo escapar($nombreTrabajoActual);
+                ?>"
                 placeholder="Buscar trabajo..."
             >
 
@@ -373,8 +383,6 @@ mysqli_close($conexion);
                 </a>
             </p>
 
-            <!-- ACCIONES -->
-
             <div class="acciones-finales">
 
                 <button type="submit">
@@ -394,7 +402,6 @@ mysqli_close($conexion);
 </main>
 
 <script>
-
 const obras = <?php echo json_encode(
     $obrasSociales,
     JSON_HEX_TAG |
@@ -423,9 +430,68 @@ function normalizar(texto) {
     return limpiar(texto).toLocaleLowerCase("es");
 }
 
-// =========================================
+// ======================================
+// CUIL CON GUIONES AUTOMÁTICOS
+// ======================================
+
+function formatoCUIL(texto) {
+    const numeros = String(texto)
+        .replace(/\D/g, "")
+        .slice(0, 11);
+
+    if (numeros.length > 10) {
+        return numeros.slice(0, 2) + "-" +
+               numeros.slice(2, 10) + "-" +
+               numeros.slice(10);
+    }
+
+    if (numeros.length > 2) {
+        return numeros.slice(0, 2) + "-" +
+               numeros.slice(2);
+    }
+
+    return numeros;
+}
+
+const campoCUIL = document.getElementById("cuil");
+
+// Mostrar con guiones el CUIL guardado.
+
+campoCUIL.value = formatoCUIL(campoCUIL.value);
+
+// Aplicar formato mientras se escribe.
+
+campoCUIL.addEventListener("input", function () {
+    const posicion = this.selectionStart ?? this.value.length;
+
+    const digitosAntes = this.value
+        .slice(0, posicion)
+        .replace(/\D/g, "")
+        .length;
+
+    const nuevo = formatoCUIL(this.value);
+    this.value = nuevo;
+
+    let indice = 0;
+    let digitos = 0;
+
+    while (
+        indice < nuevo.length &&
+        digitos < digitosAntes
+    ) {
+        if (/\d/.test(nuevo[indice])) {
+            digitos++;
+        }
+
+        indice++;
+    }
+
+    this.setSelectionRange(indice, indice);
+});
+
+// ======================================
 // OBRA SOCIAL
-// =========================================
+// ======================================
 
 const campoObra = document.getElementById(
     "obra_social_nombre"
@@ -438,8 +504,12 @@ const mensajeObra = document.getElementById(
 function actualizarObra() {
     const nombre = normalizar(campoObra.value);
 
-    const existente = [SIN_OBRA, ...obras.map(o => o.nombre_os)]
-        .find(item => normalizar(item) === nombre);
+    const existente = [
+        SIN_OBRA,
+        ...obras.map(o => o.nombre_os)
+    ].find(
+        item => normalizar(item) === nombre
+    );
 
     if (!nombre) {
         mensajeObra.textContent = "";
@@ -452,13 +522,16 @@ function actualizarObra() {
     }
 }
 
-campoObra.addEventListener("input", actualizarObra);
+campoObra.addEventListener(
+    "input",
+    actualizarObra
+);
 
 actualizarObra();
 
-// =========================================
+// ======================================
 // TRABAJO
-// =========================================
+// ======================================
 
 const campoTrabajo = document.getElementById(
     "nombre_trabajo"
@@ -487,13 +560,16 @@ function actualizarTrabajo() {
     }
 }
 
-campoTrabajo.addEventListener("input", actualizarTrabajo);
+campoTrabajo.addEventListener(
+    "input",
+    actualizarTrabajo
+);
 
 actualizarTrabajo();
 
-// =========================================
-// VALIDACIÓN
-// =========================================
+// ======================================
+// VALIDACIÓN Y GUARDADO
+// ======================================
 
 document.getElementById("formPaciente")
     .addEventListener("submit", evento => {
@@ -509,9 +585,27 @@ document.getElementById("formPaciente")
             );
 
             campoObra.focus();
+            return;
         }
-    });
 
+        const cuilNumeros = campoCUIL.value
+            .replace(/\D/g, "");
+
+        if (
+            cuilNumeros !== "" &&
+            !/^[0-9]{11}$/.test(cuilNumeros)
+        ) {
+            evento.preventDefault();
+
+            alert("El CUIL debe tener 11 números.");
+
+            campoCUIL.focus();
+            return;
+        }
+
+        // Guardar en MySQL sin guiones.
+        campoCUIL.value = cuilNumeros;
+    });
 </script>
 
 </body>

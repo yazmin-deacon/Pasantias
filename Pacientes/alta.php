@@ -4,15 +4,11 @@ require_once __DIR__ . "/conexion.php";
 
 /** @var mysqli $conexion */
 
-// ======================================
-// FUNCIONES
-// ======================================
-
 function consultarTodos($conexion, $sql) {
     $resultado = mysqli_query($conexion, $sql);
 
     if (!$resultado) {
-        die("Error en la consulta: " . mysqli_error($conexion));
+        die("Error al consultar los datos.");
     }
 
     $filas = mysqli_fetch_all($resultado, MYSQLI_ASSOC);
@@ -29,9 +25,7 @@ function escapar($valor) {
     );
 }
 
-// ======================================
 // CATÁLOGOS
-// ======================================
 
 $trabajos = consultarTodos(
     $conexion,
@@ -57,9 +51,7 @@ $estudios = consultarTodos(
      FROM estudio ORDER BY nombre_es"
 );
 
-// ======================================
 // RELACIONES DE TRABAJOS
-// ======================================
 
 $exposicionesTrabajo = [];
 $estudiosTrabajo = [];
@@ -85,23 +77,27 @@ foreach ($filas as $fila) {
     $estudiosTrabajo[$fila["id_trabajo"]][] =
         (int)$fila["id_estudio"];
 }
+
+mysqli_close($conexion);
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Agregar paciente</title>
+    <title>Agregar paciente - DUCCA</title>
 
     <link rel="stylesheet" href="../general/estilos.css">
 
     <style>
         .campo-busqueda {
             width: 100%;
-            max-width: 430px;
             box-sizing: border-box;
             padding: 10px;
             margin: 5px 0;
@@ -109,7 +105,7 @@ foreach ($filas as $fila) {
 
         .sugerencias {
             display: none;
-            max-width: 430px;
+            width: 100%;
             max-height: 180px;
             overflow-y: auto;
             border: 1px solid #ccc;
@@ -151,61 +147,118 @@ foreach ($filas as $fila) {
         .ayuda {
             font-size: 14px;
         }
+
+        header,
+        main.gestion-contenido {
+            width: calc(100% - 24px) !important;
+            max-width: none !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            box-sizing: border-box !important;
+        }
+
+        main.gestion-contenido {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 30px !important;
+            padding: 0 !important;
+            margin-top: 35px !important;
+        }
+
+        main.gestion-contenido > .bienvenida,
+        main.gestion-contenido > .tarjeta {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        main.gestion-contenido > .tarjeta {
+            padding: 35px !important;
+        }
+
+        main.gestion-contenido .form-gestion {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        main.gestion-contenido .form-gestion > p,
+        main.gestion-contenido .campo-busqueda,
+        main.gestion-contenido .sugerencias,
+        main.gestion-contenido .opciones,
+        main.gestion-contenido .nuevos {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        main.gestion-contenido input:not([type="checkbox"]),
+        main.gestion-contenido select,
+        main.gestion-contenido textarea {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        @media (max-width: 600px) {
+            main.gestion-contenido > .tarjeta {
+                padding: 20px !important;
+            }
+        }
     </style>
 </head>
 
 <body>
 
 <header>
+    <div class="logo">
+        <img
+            id="logo"
+            src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+            alt="Logo DUCCA"
+            height="150"
+            width="175"
+        >
+    </div>
 
-        <div class="logo">
+    <nav>
+        <a href="../inicio sesion/index.php">
+            Menú principal
+        </a>
 
-            <img
-                id="logo"
-                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
-                alt="Logo DUCA"
-                height="150"
-                width="175"
-            >
+        <a href="../Exposiciones/listar.php">
+            Exposiciones
+        </a>
 
-        </div>
+        <a href="../Trabajos/listar.php">
+            Trabajos
+        </a>
 
-        <nav>
+        <a href="../Relaciones/listar.php">
+            Relaciones
+        </a>
 
-            <a href="../inicio sesion/index.php">
-                Menú principal
-            </a>
+        <a href="../Estudios/index.php">
+            Estudios
+        </a>
+    </nav>
 
-            <a href="../gestionar_exposiciones.html">
-                Exposiciones
-            </a>
-
-            <a href="listar.php">
-                Trabajos
-            </a>
-
-            <a href="../gestionar_relaciones.html">
-                Relaciones
-            </a>
-
-            <a href="../gestionar_estudios.html">
-                Estudios
-            </a>
-
-        </nav>
-
-        <button type="button" id="btn-tema">
-            Modo oscuro
-        </button>
-
-    </header>
-
+    <button type="button" id="btn-tema">
+        Modo oscuro
+    </button>
+</header>
 
 <main class="gestion-contenido">
 
     <section class="bienvenida">
         <h1>Agregar paciente</h1>
-        <p>Registrá un paciente y sus datos correspondientes.</p>
+
+        <p>
+            Registrá un paciente y sus datos correspondientes.
+        </p>
     </section>
 
     <section class="tarjeta">
@@ -217,26 +270,28 @@ foreach ($filas as $fila) {
             class="form-gestion"
         >
 
-            <!-- DATOS PERSONALES -->
-
             <h2>Datos personales</h2>
 
             <p>
-                <label>DNI</label>
+                <label for="dni_p">DNI</label>
+
                 <input
                     type="text"
+                    id="dni_p"
                     name="dni_p"
-                    maxlength="8"
+                    maxlength="10"
                     inputmode="numeric"
-                    pattern="[0-9]{1,8}"
+                    placeholder="12.345.678"
                     required
                 >
             </p>
 
             <p>
-                <label>Nombre</label>
+                <label for="nombre_p">Nombre</label>
+
                 <input
                     type="text"
+                    id="nombre_p"
                     name="nombre_p"
                     maxlength="30"
                     required
@@ -244,9 +299,11 @@ foreach ($filas as $fila) {
             </p>
 
             <p>
-                <label>Apellido</label>
+                <label for="apellido">Apellido</label>
+
                 <input
                     type="text"
+                    id="apellido"
                     name="apellido"
                     maxlength="30"
                     required
@@ -254,18 +311,24 @@ foreach ($filas as $fila) {
             </p>
 
             <p>
-                <label>CUIL</label>
+                <label for="cuil">CUIL</label>
+
                 <input
                     type="text"
+                    id="cuil"
                     name="cuil"
-                    maxlength="11"
+                    maxlength="13"
+                    inputmode="numeric"
+                    placeholder="20-12345678-3"
                 >
             </p>
 
             <p>
-                <label>Teléfono</label>
+                <label for="telefono">Teléfono</label>
+
                 <input
                     type="text"
+                    id="telefono"
                     name="telefono"
                     maxlength="20"
                     required
@@ -273,9 +336,11 @@ foreach ($filas as $fila) {
             </p>
 
             <p>
-                <label>Mail</label>
+                <label for="mail">Mail</label>
+
                 <input
                     type="email"
+                    id="mail"
                     name="mail"
                     maxlength="100"
                     required
@@ -283,8 +348,6 @@ foreach ($filas as $fila) {
             </p>
 
             <hr>
-
-            <!-- OBRA SOCIAL -->
 
             <h2>Obra social</h2>
 
@@ -303,21 +366,25 @@ foreach ($filas as $fila) {
                 required
             >
 
-            <div id="sugerencias_obras" class="sugerencias"></div>
+            <div
+                id="sugerencias_obras"
+                class="sugerencias"
+            ></div>
 
             <p id="mensaje_obra" class="ayuda"></p>
 
             <p>
-                <a href="../Obra%20Social/listar.php"
-                   target="_blank"
-                   rel="noopener noreferrer">
+                <a
+                    href="../Obra%20Social/listar.php"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-administrar"
+                >
                     Administrar obras sociales
                 </a>
             </p>
 
             <hr>
-
-            <!-- TRABAJO -->
 
             <h2>Trabajo</h2>
 
@@ -337,37 +404,36 @@ foreach ($filas as $fila) {
             >
 
             <datalist id="lista_trabajos">
-
                 <?php foreach ($trabajos as $trabajo) { ?>
-
-                    <option value="<?php
-                        echo escapar($trabajo["nombre_t"]);
-                    ?>"></option>
-
+                    <option
+                        value="<?php
+                            echo escapar($trabajo["nombre_t"]);
+                        ?>"
+                    ></option>
                 <?php } ?>
-
             </datalist>
 
             <p id="mensaje_trabajo" class="ayuda"></p>
 
             <p>
-                <a href="../Trabajos/listar.php"
-                   target="_blank"
-                   rel="noopener noreferrer">
+                <a
+                    href="../Trabajos/listar.php"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-administrar"
+                >
                     Administrar trabajos
                 </a>
             </p>
 
             <hr>
 
-            <!-- EXPOSICIONES -->
-
             <h2>Exposiciones del paciente</h2>
 
             <p class="ayuda">
                 Buscá y seleccioná las exposiciones existentes.
-                Para incorporar una nueva, escribí su nombre
-                completo y presioná Enter.
+                Para agregar una nueva, escribí su nombre
+                y presioná Enter.
             </p>
 
             <input
@@ -390,7 +456,6 @@ foreach ($filas as $fila) {
                         ?>"
                     >
                         <label>
-
                             <input
                                 type="checkbox"
                                 name="exposiciones[]"
@@ -405,7 +470,6 @@ foreach ($filas as $fila) {
                             <?php
                                 echo escapar($exposicion["nombre_ex"]);
                             ?>
-
                         </label>
                     </p>
 
@@ -413,27 +477,35 @@ foreach ($filas as $fila) {
 
             </div>
 
-            <p id="mensaje_exposiciones" class="ayuda"></p>
-            <div id="exposiciones_nuevas" class="nuevos"></div>
+            <p
+                id="mensaje_exposiciones"
+                class="ayuda"
+            ></p>
+
+            <div
+                id="exposiciones_nuevas"
+                class="nuevos"
+            ></div>
 
             <p>
-                <a href="../Exposiciones/listar.php"
-                   target="_blank"
-                   rel="noopener noreferrer">
+                <a
+                    href="../Exposiciones/listar.php"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-administrar"
+                >
                     Administrar exposiciones
                 </a>
             </p>
 
             <hr>
 
-            <!-- ESTUDIOS -->
-
             <h2>Estudios del paciente</h2>
 
             <p class="ayuda">
                 Buscá y seleccioná los estudios existentes.
-                Para incorporar uno nuevo, escribí su nombre
-                completo y presioná Enter.
+                Para agregar uno nuevo, escribí su nombre
+                y presioná Enter.
             </p>
 
             <input
@@ -456,7 +528,6 @@ foreach ($filas as $fila) {
                         ?>"
                     >
                         <label>
-
                             <input
                                 type="checkbox"
                                 name="estudios[]"
@@ -471,7 +542,6 @@ foreach ($filas as $fila) {
                             <?php
                                 echo escapar($estudio["nombre_es"]);
                             ?>
-
                         </label>
                     </p>
 
@@ -480,27 +550,42 @@ foreach ($filas as $fila) {
             </div>
 
             <p id="mensaje_estudios" class="ayuda"></p>
-            <div id="estudios_nuevos" class="nuevos"></div>
+
+            <div
+                id="estudios_nuevos"
+                class="nuevos"
+            ></div>
 
             <p>
-                <a href="../Estudios/estudios.php"
-                   target="_blank"
-                   rel="noopener noreferrer">
+                <a
+                    href="../Estudios/estudios.php"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-administrar"
+                >
                     Administrar estudios
                 </a>
             </p>
 
             <hr>
 
-            <!-- GUARDAR -->
+            <div class="acciones-paciente">
 
-            <button type="submit">
-                Guardar paciente
-            </button>
+                <button
+                    type="submit"
+                    class="btn-guardar-paciente"
+                >
+                    Guardar paciente
+                </button>
 
-            <a href="listar.php">
-                Cancelar
-            </a>
+                <a
+                    href="listar.php"
+                    class="btn-cancelar-paciente"
+                >
+                    Cancelar
+                </a>
+
+            </div>
 
         </form>
 
@@ -509,10 +594,7 @@ foreach ($filas as $fila) {
 </main>
 
 <script>
-
-// ======================================
-// DATOS
-// ======================================
+// DATOS DE LOS CATÁLOGOS
 
 const trabajos = <?php echo json_encode(
     $trabajos,
@@ -536,18 +618,88 @@ const estTrabajo = <?php echo json_encode(
 
 const SIN_OBRA = "Particular / Sin obra social";
 
-function normalizar(texto) {
-    return String(texto)
-        .trim()
-        .replace(/\s+/g, " ")
-        .toLocaleLowerCase("es");
-}
-
 function limpiar(texto) {
     return String(texto)
         .trim()
         .replace(/\s+/g, " ");
 }
+
+function normalizar(texto) {
+    return limpiar(texto).toLocaleLowerCase("es");
+}
+
+// ======================================
+// FORMATO AUTOMÁTICO DNI Y CUIL
+// ======================================
+
+function soloNumeros(texto, maximo) {
+    return String(texto)
+        .replace(/\D/g, "")
+        .slice(0, maximo);
+}
+
+function formatoDNI(texto) {
+    const numeros = soloNumeros(texto, 8);
+
+    return numeros.replace(
+        /\B(?=(\d{3})+(?!\d))/g,
+        "."
+    );
+}
+
+function formatoCUIL(texto) {
+    const numeros = soloNumeros(texto, 11);
+
+    if (numeros.length > 10) {
+        return numeros.slice(0, 2) + "-" +
+               numeros.slice(2, 10) + "-" +
+               numeros.slice(10);
+    }
+
+    if (numeros.length > 2) {
+        return numeros.slice(0, 2) + "-" +
+               numeros.slice(2);
+    }
+
+    return numeros;
+}
+
+function activarFormato(campo, formatear) {
+    campo.addEventListener("input", function () {
+        const posicion = this.selectionStart ?? this.value.length;
+
+        const cantidadNumeros = this.value
+            .slice(0, posicion)
+            .replace(/\D/g, "")
+            .length;
+
+        const nuevo = formatear(this.value);
+
+        this.value = nuevo;
+
+        let indice = 0;
+        let digitos = 0;
+
+        while (
+            indice < nuevo.length &&
+            digitos < cantidadNumeros
+        ) {
+            if (/\d/.test(nuevo[indice])) {
+                digitos++;
+            }
+
+            indice++;
+        }
+
+        this.setSelectionRange(indice, indice);
+    });
+}
+
+const campoDNI = document.getElementById("dni_p");
+const campoCUIL = document.getElementById("cuil");
+
+activarFormato(campoDNI, formatoDNI);
+activarFormato(campoCUIL, formatoCUIL);
 
 // ======================================
 // OBRA SOCIAL
@@ -678,35 +830,62 @@ function actualizarTrabajo() {
     const exp = expTrabajo[trabajo.id_trabajo] || [];
     const est = estTrabajo[trabajo.id_trabajo] || [];
 
-    // Sumar sin borrar selecciones manuales.
+    // Agregar estudios y exposiciones habituales
+    // sin borrar las selecciones manuales.
 
     document.querySelectorAll("[data-exposicion]")
         .forEach(casilla => {
-            if (exp.includes(Number(casilla.dataset.exposicion))) {
+            if (
+                exp.includes(
+                    Number(casilla.dataset.exposicion)
+                )
+            ) {
                 casilla.checked = true;
             }
         });
 
     document.querySelectorAll("[data-estudio]")
         .forEach(casilla => {
-            if (est.includes(Number(casilla.dataset.estudio))) {
+            if (
+                est.includes(
+                    Number(casilla.dataset.estudio)
+                )
+            ) {
                 casilla.checked = true;
             }
         });
 }
 
-campoTrabajo.addEventListener("input", actualizarTrabajo);
-campoTrabajo.addEventListener("change", actualizarTrabajo);
+campoTrabajo.addEventListener(
+    "input",
+    actualizarTrabajo
+);
+
+campoTrabajo.addEventListener(
+    "change",
+    actualizarTrabajo
+);
 
 // ======================================
 // EXPOSICIONES Y ESTUDIOS
 // ======================================
 
 function configurarCatalogo(config) {
-    const campo = document.getElementById(config.buscador);
-    const lista = document.getElementById(config.lista);
-    const nuevos = document.getElementById(config.nuevos);
-    const mensaje = document.getElementById(config.mensaje);
+    const campo = document.getElementById(
+        config.buscador
+    );
+
+    const lista = document.getElementById(
+        config.lista
+    );
+
+    const nuevos = document.getElementById(
+        config.nuevos
+    );
+
+    const mensaje = document.getElementById(
+        config.mensaje
+    );
 
     const opciones = Array.from(
         lista.querySelectorAll(".opcion")
@@ -721,7 +900,8 @@ function configurarCatalogo(config) {
                 opcion.dataset.nombre
             ).includes(texto);
 
-            opcion.style.display = coincide ? "" : "none";
+            opcion.style.display =
+                coincide ? "" : "none";
 
             if (coincide) {
                 coincidencias++;
@@ -737,14 +917,14 @@ function configurarCatalogo(config) {
             mensaje.textContent = "";
         } else if (exacta) {
             mensaje.textContent =
-                "Ya existe. Podés marcarlo en la lista o presionar Enter.";
+                "Ya existe. Podés marcarlo o presionar Enter.";
         } else if (coincidencias > 0) {
             mensaje.textContent =
                 "Hay elementos similares. Presioná Enter " +
-                "para incorporar un nombre nuevo.";
+                "para agregar uno nuevo.";
         } else {
             mensaje.textContent =
-                "No existe todavía. Presioná Enter para incorporarlo.";
+                "No existe todavía. Presioná Enter para agregarlo.";
         }
     }
 
@@ -762,20 +942,28 @@ function configurarCatalogo(config) {
         );
 
         if (exacta) {
-            exacta.querySelector("input[type=checkbox]").checked = true;
+            exacta.querySelector(
+                "input[type=checkbox]"
+            ).checked = true;
+
             campo.value = "";
             filtrar();
             return;
         }
 
         const repetida = Array.from(
-            nuevos.querySelectorAll("input[type=checkbox]")
+            nuevos.querySelectorAll(
+                "input[type=checkbox]"
+            )
         ).find(
-            input => normalizar(input.value) === normalizar(nombre)
+            input =>
+                normalizar(input.value) ===
+                normalizar(nombre)
         );
 
         if (repetida) {
             repetida.checked = true;
+
             campo.value = "";
             filtrar();
             return;
@@ -791,8 +979,11 @@ function configurarCatalogo(config) {
         casilla.checked = true;
 
         etiqueta.appendChild(casilla);
+
         etiqueta.appendChild(
-            document.createTextNode(" " + nombre + " (nuevo)")
+            document.createTextNode(
+                " " + nombre + " (nuevo)"
+            )
         );
 
         fila.appendChild(etiqueta);
@@ -842,21 +1033,60 @@ document.getElementById("formPaciente")
 
         if (!campoObra.value) {
             evento.preventDefault();
-            alert("Seleccioná una obra social o indicá Particular.");
+
+            alert(
+                "Seleccioná una obra social o indicá Particular."
+            );
+
             campoObra.focus();
+            return;
+        }
+
+        const dniNumeros = soloNumeros(
+            campoDNI.value,
+            8
+        );
+
+        const cuilNumeros = soloNumeros(
+            campoCUIL.value,
+            11
+        );
+
+        if (
+            !/^[0-9]{1,8}$/.test(dniNumeros) ||
+            Number(dniNumeros) <= 0
+        ) {
+            evento.preventDefault();
+            alert("El DNI no es válido.");
+            campoDNI.focus();
+            return;
+        }
+
+        if (
+            cuilNumeros !== "" &&
+            !/^[0-9]{11}$/.test(cuilNumeros)
+        ) {
+            evento.preventDefault();
+            alert("El CUIL debe tener 11 números.");
+            campoCUIL.focus();
             return;
         }
 
         incorporarExposicion();
         incorporarEstudio();
+
+        // Los separadores son solo visuales.
+        // PHP también normaliza ambos campos.
+
+        campoDNI.value = dniNumeros;
+        campoCUIL.value = cuilNumeros;
     });
 
 </script>
+
 <script src="../general/script.js"></script>
 <script src="../general/animaciones.js"></script>
 <script src="../general/modooscuro.js"></script>
 
 </body>
 </html>
-
-<?php mysqli_close($conexion); ?>

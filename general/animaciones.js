@@ -103,3 +103,50 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
+
+/* =====================================
+   ANIMACIONES - BOTONES DE PACIENTES
+   RESPETANDO LOS ESTILOS ORIGINALES
+===================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const botones = document.querySelectorAll(
+        ".pagina-listado .btn-nuevo-paciente, " +
+        ".pagina-listado .accion-tabla"
+    );
+
+    botones.forEach(boton => {
+
+        // Al pasar el mouse
+        boton.addEventListener("mouseenter", () => {
+            boton.style.transform = "translateY(-3px)";
+            boton.style.boxShadow =
+                "0 6px 15px rgba(20, 120, 135, 0.25)";
+        });
+
+        // Al retirar el mouse
+        boton.addEventListener("mouseleave", () => {
+            boton.style.transform = "";
+            boton.style.boxShadow = "";
+        });
+
+        // Al presionar
+        boton.addEventListener("mousedown", () => {
+            boton.style.transform = "scale(0.97)";
+        });
+
+        // Al soltar
+        boton.addEventListener("mouseup", () => {
+            boton.style.transform = "";
+        });
+
+        // Al perder el foco
+        boton.addEventListener("blur", () => {
+            boton.style.transform = "";
+            boton.style.boxShadow = "";
+        });
+
+    });
+
+});

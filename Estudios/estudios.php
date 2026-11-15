@@ -406,13 +406,10 @@ if (
             Trabajos
         </a>
 
-        <a href="../gestionar_relaciones.html">
+        <a href="../Relaciones/listar.php">
             Relaciones
         </a>
 
-        <a href="estudios.php">
-            Estudios
-        </a>
     </nav>
 
     <button type="button" id="btn-tema">
@@ -521,7 +518,6 @@ if (
 
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Estudio</th>
                     </tr>
                 </thead>
@@ -539,11 +535,6 @@ if (
                             ?>"
                         >
 
-                            <td>
-                                <?php
-                                    echo (int)$estudio["id_estudio"];
-                                ?>
-                            </td>
 
                             <td>
                                 <?php
@@ -588,9 +579,11 @@ if (
         </p>
 
         <p>
-            <a href="agregar.php">
-                Asignar estudios a un paciente
-            </a>
+
+    <a href="../Estudios/agregar.php"
+       class="btn-volver-pacientes">Asignar estudios a un paciente
+    </a>
+
         </p>
 
         <div class="tabla-contenedor">
@@ -815,11 +808,15 @@ if (
 
     </section>
 
-    <section class="tarjeta">
-        <a href="../Pacientes/listar.php">
-            Volver al listado de pacientes
-        </a>
-    </section>
+<section class="tarjeta">
+
+    <a href="../Pacientes/listar.php"
+       class="btn-volver-pacientes">
+        Volver al listado de pacientes
+    </a>
+
+</section>
+
 
 </main>
 

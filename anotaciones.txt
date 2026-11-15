@@ -3,10 +3,11 @@ BD:
 
 turnos pendientes
 
-hay que arreglar el cuil de los pacientes, se tienen qeu dejar poner los 
-guiones o que se pongan automaticament4e cuando se guardan los datos del paciente
 no abren las paginas desde el menu
 mejorar la descarga de docs
+hacer la otra pagina de estudios para editarlo eliminarlo etc
+ver como hacer para que se vean los turno pendientes mas cercanos en la pagina principal, respetando las dimenciones del cuadrado ya hecho
+hacer que ande el buscardor de pacientes en la ´pagiana principal y que se muestre en tipo pantall emergente al paciente buscado para que se pueda acceder a su historia
 
 Giu:
  seleccion y conexion de exposiciones y trabajos
