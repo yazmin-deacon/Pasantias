@@ -298,10 +298,6 @@ if (
                 Menú principal
             </a>
 
-            <a href="../Exposiciones/listar.php">
-                Exposiciones
-            </a>
-
             <a href="../Trabajos/listar.php">
                 Trabajos
             </a>

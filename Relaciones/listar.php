@@ -87,8 +87,49 @@ mysqli_stmt_close($stmt);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relaciones entre trabajos y exposiciones</title>
+    <link rel="stylesheet" href="../general/estilos.css">
 </head>
 <body>
+
+  <header>
+
+        <div class="logo">
+
+            <img
+                id="logo"
+                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+                alt="Logo DUCA"
+                height="150"
+                width="175"
+            >
+
+        </div>
+
+        <nav>
+
+            <a href="../inicio sesion/index.php">
+                Menú principal
+            </a>
+
+            <a href="../Trabajos/listar.php">
+                Trabajos
+            </a>
+
+            <a href="../Relaciones/listar.php">
+                Relaciones
+            </a>
+
+            <a href="../Estudios/estudios.php">
+                Estudios
+            </a>
+
+        </nav>
+
+        <button type="button" id="btn-tema">
+            Modo oscuro
+        </button>
+
+    </header>
 
     <h1>Exposiciones por trabajo</h1>
 
@@ -185,6 +226,10 @@ mysqli_stmt_close($stmt);
     <br><br>
     
     <a href="../general/index.html">Volver al inicio</a>
+
+    <script src="../general/script.js"></script>
+    <script src="../general/modooscuro.js"></script>
+    <script src="../general/animaciones.js"></script>
 
 </body>
 </html>

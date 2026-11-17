@@ -330,19 +330,15 @@ if (isset($_GET["mensaje"]) && is_string($_GET["mensaje"])) {
                 Menú principal
             </a>
 
-            <a href="../gestionar_exposiciones.html">
+            <a href="../Exposiciones/listar.php">
                 Exposiciones
             </a>
 
-            <a href="listar.php">
-                Trabajos
-            </a>
-
-            <a href="../gestionar_relaciones.html">
+            <a href="../Relaciones/listar.php">
                 Relaciones
             </a>
 
-            <a href="../gestionar_estudios.html">
+            <a href="../Estudios/listar.php">
                 Estudios
             </a>
 

@@ -2849,3 +2849,254 @@ body.modo-oscuro main.gestion-contenido .btn-cancelar-paciente:hover {
 main.gestion-contenido .btn-cancelar-paciente:active {
     transform: scale(0.97);
 }
+
+
+/* =========================================
+   RELACIONES ENTRE TRABAJOS Y EXPOSICIONES
+========================================= */
+
+/* TÍTULO PRINCIPAL */
+
+body:has(form[action="guardar.php"]) h1 {
+    padding: 25px 30px;
+    margin-bottom: 25px;
+    background: linear-gradient(120deg, #123f55, #167d89);
+    color: white;
+    border-radius: 14px;
+    font-size: 25px;
+    box-shadow: 0 5px 18px rgba(20, 65, 80, 0.15);
+}
+
+/* TÍTULO SECUNDARIO */
+
+body:has(form[action="guardar.php"]) h2 {
+    color: #14566b;
+    font-size: 19px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #d8eff0;
+}
+
+/* FORMULARIOS */
+
+body:has(form[action="guardar.php"]) form {
+    background: white;
+    border: 1px solid #dce9ed;
+    border-radius: 14px;
+    padding: 25px;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 15px rgba(30, 75, 90, 0.06);
+}
+
+/* TEXTO DE LOS FORMULARIOS */
+
+body:has(form[action="guardar.php"]) form p {
+    color: #365563;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+/* SELECTOR DE TRABAJO */
+
+body:has(form[action="guardar.php"]) select {
+    display: block;
+    width: 100%;
+    max-width: 450px;
+    margin-top: 10px;
+    padding: 12px 14px;
+    border: 1px solid #cbdde2;
+    border-radius: 8px;
+    background: #f8fbfc;
+    color: #263d4a;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s ease;
+}
+
+body:has(form[action="guardar.php"]) select:focus {
+    border-color: #168c9b;
+    box-shadow: 0 0 0 3px rgba(22, 140, 155, 0.12);
+}
+
+/* OPCIONES DE EXPOSICIONES */
+
+body:has(form[action="guardar.php"]) form[action="guardar.php"] p:has(input[type="checkbox"]) {
+    display: flex;
+    align-items: center;
+    padding: 13px 15px;
+    margin-bottom: 10px;
+    background: #f3f9fa;
+    border: 1px solid #e0edef;
+    border-left: 4px solid #1995a0;
+    border-radius: 8px;
+    transition: 0.25s ease;
+}
+
+body:has(form[action="guardar.php"]) form[action="guardar.php"] p:has(input[type="checkbox"]):hover {
+    background: #eaf5f6;
+    transform: translateX(3px);
+}
+
+/* CHECKBOX */
+
+body:has(form[action="guardar.php"]) input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    margin-right: 10px;
+    accent-color: #168b78;
+    cursor: pointer;
+}
+
+body:has(form[action="guardar.php"]) label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #365563;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* BOTÓN GUARDAR */
+
+body:has(form[action="guardar.php"]) input[type="submit"] {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 12px 20px;
+    background: linear-gradient(120deg, #176d82, #15999b);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.25s ease;
+}
+
+body:has(form[action="guardar.php"]) input[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(20, 120, 135, 0.25);
+}
+
+/* ENLACES */
+
+body:has(form[action="guardar.php"]) a {
+    display: inline-block;
+    margin: 5px 0;
+    color: #168b78;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.25s ease;
+}
+
+body:has(form[action="guardar.php"]) a:hover {
+    color: #14566b;
+    text-decoration: underline;
+}
+
+/* SEPARADOR */
+
+body:has(form[action="guardar.php"]) hr {
+    border: none;
+    height: 1px;
+    background: #dce9ed;
+    margin: 25px 0;
+}
+
+/* =========================================
+   MODO OSCURO
+========================================= */
+
+body.modo-oscuro:has(form[action="guardar.php"]) h2 {
+    color: #b8e5ec;
+    border-color: #40535e;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) form {
+    background: #24343f;
+    border-color: #40535e;
+    color: #eeeeee;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) form p,
+body.modo-oscuro:has(form[action="guardar.php"]) label {
+    color: #e0eaf0;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) select {
+    background: #30434f;
+    color: white;
+    border-color: #607783;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) select:focus {
+    background: #38515e;
+    border-color: #48b9c4;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) form[action="guardar.php"] p:has(input[type="checkbox"]) {
+    background: #30434f;
+    border-color: #405763;
+    border-left-color: #48b9c4;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) form[action="guardar.php"] p:has(input[type="checkbox"]):hover {
+    background: #38515e;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) a {
+    color: #72d6c3;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) a:hover {
+    color: #b8e5ec;
+}
+
+body.modo-oscuro:has(form[action="guardar.php"]) hr {
+    background: #40535e;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 550px) {
+
+    body:has(form[action="guardar.php"]) {
+        padding: 12px;
+    }
+
+    body:has(form[action="guardar.php"]) h1 {
+        padding: 20px;
+        font-size: 21px;
+    }
+
+    body:has(form[action="guardar.php"]) form {
+        padding: 17px;
+    }
+
+    body:has(form[action="guardar.php"]) select {
+        max-width: 100%;
+    }
+
+    body:has(form[action="guardar.php"]) input[type="submit"] {
+        width: 100%;
+    }
+}
+
+/* --- ENLACES DE EXPOSICIONES POR TRABAJO --- */
+
+body:has(form[action="guardar.php"]) a:not(header nav a) {
+    color: #168b78 !important;
+    text-decoration: none !important;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+body:has(form[action="guardar.php"]) a:not(header nav a):hover {
+    color: #14566b !important;
+    text-decoration: underline !important;
+}

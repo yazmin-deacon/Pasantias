@@ -31,3 +31,10 @@ falta estilos en los botones nuevos
 el tema no se mantiene en las paginas individiuales
 el checkbox esta desentrado, me da toc la vdd.
 no esta cargada la ruedita en ningun lao(incluyendo la pag princi), por ende, la actualizacion de claro o oscuro esta para el tuje
+
+hay que sacar el link del navegar de trabajo en la pagina
+de pacientes a relaciones no hay css
+
+arreglar los navegadores de tds las paginas
+
+agregar una casita que te lleve directamente a menu
