@@ -5,7 +5,7 @@ require_once __DIR__ . "/conexion.php";
 /** @var mysqli $conexion */
 
 // =========================================
-// CONSULTAR PACIENTES
+// CONSULTAR SOLO PACIENTES ACTIVOS
 // =========================================
 
 $sql = "SELECT
@@ -32,6 +32,8 @@ $sql = "SELECT
         LEFT JOIN trabajo t
             ON p.id_trabajo = t.id_trabajo
 
+        WHERE p.estado = 'activo'
+
         ORDER BY p.apellido, p.nombre_p";
 
 $resultado = mysqli_query($conexion, $sql);
@@ -54,16 +56,10 @@ function escapar($valor) {
     );
 }
 
-// =========================================
 // DNI CON PUNTOS
-// =========================================
 
 function formatoDNI($dni) {
-    $dni = preg_replace(
-        '/\D/',
-        '',
-        (string)$dni
-    );
+    $dni = preg_replace('/\D/', '', (string)$dni);
 
     return preg_replace(
         '/\B(?=(\d{3})+(?!\d))/',
@@ -72,16 +68,10 @@ function formatoDNI($dni) {
     );
 }
 
-// =========================================
 // CUIL CON GUIONES
-// =========================================
 
 function formatoCUIL($cuil) {
-    $cuil = preg_replace(
-        '/\D/',
-        '',
-        (string)$cuil
-    );
+    $cuil = preg_replace('/\D/', '', (string)$cuil);
 
     if (strlen($cuil) !== 11) {
         return $cuil;
@@ -92,16 +82,10 @@ function formatoCUIL($cuil) {
            substr($cuil, 10, 1);
 }
 
-// =========================================
 // NÚMERO ARGENTINO
-// =========================================
 
 function formatoNumeroArgentino($numero) {
-    $numero = preg_replace(
-        '/\D/',
-        '',
-        (string)$numero
-    );
+    $numero = preg_replace('/\D/', '', (string)$numero);
 
     if (strlen($numero) !== 10) {
         return $numero;
@@ -123,30 +107,19 @@ function formatoNumeroArgentino($numero) {
                substr($numero, 6, 4);
     }
 
-    // Otros códigos de área:
-    // conservar los dígitos.
-
     return $numero;
 }
 
-// =========================================
-// FORMATO COMPLETO DEL TELÉFONO
-// =========================================
+// TELÉFONO INTERNACIONAL
 
 function formatoTelefono($telefono) {
-    $telefono = trim(
-        (string)($telefono ?? "")
-    );
+    $telefono = trim((string)($telefono ?? ""));
 
     if ($telefono === "") {
         return "";
     }
 
-    $numeros = preg_replace(
-        '/\D/',
-        '',
-        $telefono
-    );
+    $numeros = preg_replace('/\D/', '', $telefono);
 
     if ($numeros === "") {
         return $telefono;
@@ -162,9 +135,7 @@ function formatoTelefono($telefono) {
         return $telefono;
     }
 
-    // Celulares argentinos:
-    // +5492994123456
-    // +54 9 299 412-3456
+    // Celulares argentinos: +54 9
 
     if (
         substr($numeros, 0, 3) === "549" &&
@@ -176,8 +147,7 @@ function formatoTelefono($telefono) {
                );
     }
 
-    // Teléfonos argentinos anteriores
-    // que no tenían el 9 internacional.
+    // Teléfonos argentinos antiguos: +54
 
     if (
         substr($numeros, 0, 2) === "54" &&
@@ -189,7 +159,7 @@ function formatoTelefono($telefono) {
                );
     }
 
-    // Países permitidos.
+    // Otros países
 
     $codigos = [
         "598",
@@ -206,39 +176,39 @@ function formatoTelefono($telefono) {
 
     foreach ($codigos as $codigo) {
         if (
-            substr(
-                $numeros,
-                0,
-                strlen($codigo)
-            ) === $codigo
+            substr($numeros, 0, strlen($codigo))
+            === $codigo
         ) {
-            $numeroNacional = substr(
-                $numeros,
-                strlen($codigo)
-            );
-
-            return "+" .
-                   $codigo .
-                   " " .
-                   $numeroNacional;
+            return "+" . $codigo . " " .
+                   substr($numeros, strlen($codigo));
         }
     }
 
     return $telefono;
 }
 
-// =========================================
 // MOSTRAR LOCALIDAD
-// =========================================
 
 function mostrarLocalidad($localidad) {
-    $localidad = trim(
-        (string)($localidad ?? "")
-    );
+    $localidad = trim((string)($localidad ?? ""));
 
     return $localidad !== ""
         ? $localidad
         : "Sin registrar";
+}
+
+// MENSAJES DEL ARCHIVADO Y REACTIVACIÓN
+
+$mensaje = "";
+
+if (isset($_GET["archivado"]) &&
+    $_GET["archivado"] === "1") {
+    $mensaje = "El paciente fue archivado correctamente.";
+}
+
+if (isset($_GET["reactivado"]) &&
+    $_GET["reactivado"] === "1") {
+    $mensaje = "El paciente fue reactivado correctamente.";
 }
 ?>
 
@@ -247,7 +217,6 @@ function mostrarLocalidad($localidad) {
 
 <head>
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
@@ -259,6 +228,25 @@ function mostrarLocalidad($localidad) {
         rel="stylesheet"
         href="../general/estilos.css"
     >
+
+    <style>
+        .mensaje-operacion {
+            padding: 15px 20px;
+            border: 1px solid #8fc3a4;
+            border-radius: 9px;
+            background: rgba(70, 160, 100, 0.12);
+            margin-bottom: 20px;
+        }
+
+        .accion-archivar {
+            background: #f3e2cb;
+            color: #68451c;
+        }
+
+        .accion-archivar:hover {
+            background: #e9d0ae;
+        }
+    </style>
 </head>
 
 <body>
@@ -266,6 +254,7 @@ function mostrarLocalidad($localidad) {
 <header>
 
     <div class="logo">
+
         <img
             id="logo"
             src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
@@ -273,10 +262,10 @@ function mostrarLocalidad($localidad) {
             height="150"
             width="175"
         >
+
     </div>
 
     <nav>
-
         <a href="../inicio sesion/index.php">
             Menú principal
         </a>
@@ -296,7 +285,6 @@ function mostrarLocalidad($localidad) {
         <a href="../Estudios/index.php">
             Estudios
         </a>
-
     </nav>
 
     <button
@@ -319,8 +307,8 @@ function mostrarLocalidad($localidad) {
             <h1>Listado de pacientes</h1>
 
             <p>
-                Administración y consulta de los pacientes registrados
-                en el sistema.
+                Administración y consulta
+                de los pacientes activos.
             </p>
 
         </div>
@@ -338,15 +326,23 @@ function mostrarLocalidad($localidad) {
 
     <section class="tarjeta bloque-listado">
 
+        <?php if ($mensaje !== "") { ?>
+
+            <div class="mensaje-operacion">
+                <?php echo escapar($mensaje); ?>
+            </div>
+
+        <?php } ?>
+
         <div class="titulo-listado">
 
             <div>
 
-                <h2>Pacientes registrados</h2>
+                <h2>Pacientes activos</h2>
 
                 <p>
-                    Consultá los datos y administrá la información
-                    de cada paciente.
+                    Consultá y administrá los pacientes
+                    que actualmente reciben atención.
                 </p>
 
             </div>
@@ -369,18 +365,16 @@ function mostrarLocalidad($localidad) {
 
             <div class="mensaje-listado-vacio">
 
-                <h3>No hay pacientes registrados</h3>
+                <h3>No hay pacientes activos</h3>
 
                 <p>
-                    Todavía no se cargaron pacientes
-                    en el sistema.
+                    Todavía no se registraron pacientes
+                    o todos se encuentran archivados.
                 </p>
 
             </div>
 
         <?php } else { ?>
-
-            <!-- TABLA DE PACIENTES -->
 
             <div class="tabla-contenedor">
 
@@ -399,7 +393,7 @@ function mostrarLocalidad($localidad) {
                             <th>Obra social</th>
                             <th>Trabajo</th>
                             <th>Editar</th>
-                            <th>Eliminar</th>
+                            <th>Archivar</th>
                             <th>Historial médico</th>
                         </tr>
 
@@ -416,9 +410,7 @@ function mostrarLocalidad($localidad) {
                             <td>
                                 <?php
                                     echo escapar(
-                                        formatoDNI(
-                                            $fila["dni_p"]
-                                        )
+                                        formatoDNI($fila["dni_p"])
                                     );
                                 ?>
                             </td>
@@ -427,9 +419,7 @@ function mostrarLocalidad($localidad) {
 
                             <td>
                                 <?php
-                                    echo escapar(
-                                        $fila["nombre_p"]
-                                    );
+                                    echo escapar($fila["nombre_p"]);
                                 ?>
                             </td>
 
@@ -437,9 +427,7 @@ function mostrarLocalidad($localidad) {
 
                             <td>
                                 <?php
-                                    echo escapar(
-                                        $fila["apellido"]
-                                    );
+                                    echo escapar($fila["apellido"]);
                                 ?>
                             </td>
 
@@ -448,9 +436,7 @@ function mostrarLocalidad($localidad) {
                             <td>
                                 <?php
                                     echo escapar(
-                                        formatoCUIL(
-                                            $fila["cuil"]
-                                        )
+                                        formatoCUIL($fila["cuil"])
                                     );
                                 ?>
                             </td>
@@ -460,9 +446,7 @@ function mostrarLocalidad($localidad) {
                             <td>
                                 <?php
                                     echo escapar(
-                                        formatoTelefono(
-                                            $fila["telefono"]
-                                        )
+                                        formatoTelefono($fila["telefono"])
                                     );
                                 ?>
                             </td>
@@ -471,13 +455,11 @@ function mostrarLocalidad($localidad) {
 
                             <td>
                                 <?php
-                                    echo escapar(
-                                        $fila["mail"]
-                                    );
+                                    echo escapar($fila["mail"]);
                                 ?>
                             </td>
 
-                            <!-- SOLO LOCALIDAD -->
+                            <!-- LOCALIDAD -->
 
                             <td>
                                 <?php
@@ -493,9 +475,7 @@ function mostrarLocalidad($localidad) {
 
                             <td>
                                 <?php
-                                    echo escapar(
-                                        $fila["obra_social"]
-                                    );
+                                    echo escapar($fila["obra_social"]);
                                 ?>
                             </td>
 
@@ -515,27 +495,23 @@ function mostrarLocalidad($localidad) {
                                 <a
                                     class="accion-tabla accion-editar"
                                     href="editar.php?dni_p=<?php
-                                        echo urlencode(
-                                            $fila["dni_p"]
-                                        );
+                                        echo urlencode($fila["dni_p"]);
                                     ?>"
                                 >
                                     Editar
                                 </a>
                             </td>
 
-                            <!-- ELIMINAR -->
+                            <!-- ARCHIVAR -->
 
                             <td>
                                 <a
-                                    class="accion-tabla accion-eliminar"
+                                    class="accion-tabla accion-archivar"
                                     href="eliminar.php?dni_p=<?php
-                                        echo urlencode(
-                                            $fila["dni_p"]
-                                        );
+                                        echo urlencode($fila["dni_p"]);
                                     ?>"
                                 >
-                                    Eliminar
+                                    Archivar
                                 </a>
                             </td>
 
@@ -545,9 +521,7 @@ function mostrarLocalidad($localidad) {
                                 <a
                                     class="accion-tabla accion-historial"
                                     href="../historial/historial.php?dni_p=<?php
-                                        echo urlencode(
-                                            $fila["dni_p"]
-                                        );
+                                        echo urlencode($fila["dni_p"]);
                                     ?>"
                                 >
                                     Ver historial

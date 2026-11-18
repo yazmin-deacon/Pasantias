@@ -1,4 +1,6 @@
+
 <?php
+
 // ==========================================
 // 1. VERIFICAR SESIÓN
 // ==========================================
@@ -19,17 +21,15 @@ date_default_timezone_set("America/Argentina/Salta");
 function escapar($valor)
 {
     return htmlspecialchars(
-        (string) ($valor ?? ""),
+        (string)($valor ?? ""),
         ENT_QUOTES,
         "UTF-8"
     );
 }
 
 // ==========================================
-// 2. BUSCADOR AJAX DE PACIENTES
+// 2. BUSCADOR AJAX DE PACIENTES ACTIVOS
 // ==========================================
-// El propio index.php recibe las búsquedas
-// y responde sin recargar la página.
 
 if (isset($_GET["buscar_ajax"])) {
 
@@ -37,7 +37,7 @@ if (isset($_GET["buscar_ajax"])) {
     header("Cache-Control: no-store");
 
     $busqueda = trim(
-        (string) $_GET["buscar_ajax"]
+        (string)$_GET["buscar_ajax"]
     );
 
     $busqueda = mb_substr(
@@ -64,6 +64,11 @@ if (isset($_GET["buscar_ajax"])) {
         ? "%" . $numeros . "%"
         : $textoLike;
 
+    // IMPORTANTE:
+    // Solo buscar pacientes activos.
+    // Los archivados quedan fuera del
+    // buscador habitual.
+
     $sql = "SELECT
                 dni_p,
                 nombre_p,
@@ -71,14 +76,17 @@ if (isset($_GET["buscar_ajax"])) {
 
             FROM paciente
 
-            WHERE nombre_p LIKE ?
-               OR apellido LIKE ?
-               OR CONCAT(
-                    nombre_p,
-                    ' ',
-                    apellido
-                  ) LIKE ?
-               OR CAST(dni_p AS CHAR) LIKE ?
+            WHERE estado = 'activo'
+              AND (
+                    nombre_p LIKE ?
+                    OR apellido LIKE ?
+                    OR CONCAT(
+                        nombre_p,
+                        ' ',
+                        apellido
+                    ) LIKE ?
+                    OR CAST(dni_p AS CHAR) LIKE ?
+              )
 
             ORDER BY nombre_p, apellido
 
@@ -87,10 +95,13 @@ if (isset($_GET["buscar_ajax"])) {
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
+
         http_response_code(500);
+
         echo json_encode([
             "error" => "No se pudo realizar la búsqueda."
         ]);
+
         exit;
     }
 
@@ -104,7 +115,9 @@ if (isset($_GET["buscar_ajax"])) {
     );
 
     if (!mysqli_stmt_execute($stmt)) {
+
         mysqli_stmt_close($stmt);
+
         http_response_code(500);
 
         echo json_encode([
@@ -139,6 +152,9 @@ if (isset($_GET["buscar_ajax"])) {
 $turnosPendientes = [];
 $errorTurnos = false;
 
+// Mostrar únicamente turnos de pacientes
+// que todavía estén activos.
+
 $sql = "SELECT
             t.id_turno,
             t.dni_paciente,
@@ -153,12 +169,17 @@ $sql = "SELECT
         INNER JOIN paciente p
             ON t.dni_paciente = p.dni_p
 
-        WHERE t.estado IN (
-            'Pendiente',
-            'Confirmado'
-        )
+        WHERE p.estado = 'activo'
 
-        AND TIMESTAMP(t.fecha, t.hora) >= NOW()
+          AND t.estado IN (
+              'Pendiente',
+              'Confirmado'
+          )
+
+          AND TIMESTAMP(
+              t.fecha,
+              t.hora
+          ) >= NOW()
 
         ORDER BY t.fecha ASC, t.hora ASC
 
@@ -173,10 +194,12 @@ if ($stmt) {
         $resultado = mysqli_stmt_get_result($stmt);
 
         if ($resultado) {
+
             $turnosPendientes = mysqli_fetch_all(
                 $resultado,
                 MYSQLI_ASSOC
             );
+
         } else {
             $errorTurnos = true;
         }
@@ -192,21 +215,30 @@ if ($stmt) {
 }
 
 mysqli_close($conexion);
+
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Menú Principal - DUCCA</title>
 
-    <link rel="stylesheet" href="../general/estilos.css">
+    <link
+        rel="stylesheet"
+        href="../general/estilos.css"
+    >
 
     <style>
+
         /* ====================================
            BUSCADOR DEL MENÚ PRINCIPAL
         ==================================== */
@@ -215,10 +247,6 @@ mysqli_close($conexion);
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-
-            /* Mantiene contenido dentro
-               del espacio de la tarjeta */
-
             max-height: 340px;
             overflow: hidden;
             min-width: 0;
@@ -240,11 +268,9 @@ mysqli_close($conexion);
             list-style: none;
             padding: 0;
             margin: 4px 0;
-
             max-height: 100px;
             overflow-y: auto;
             overflow-x: hidden;
-
             border-radius: 7px;
             box-sizing: border-box;
         }
@@ -258,12 +284,10 @@ mysqli_close($conexion);
             display: block;
             width: 100%;
             padding: 7px 9px;
-
             background: transparent;
             color: inherit;
             border: 1px solid #ddd;
             border-radius: 6px;
-
             font: inherit;
             text-align: left;
             cursor: pointer;
@@ -291,13 +315,10 @@ mysqli_close($conexion);
         .paciente-encontrado {
             padding: 9px;
             margin-top: 6px;
-
             border: 1px solid #ddd;
             border-radius: 8px;
-
             overflow-y: auto;
             max-height: 112px;
-
             box-sizing: border-box;
         }
 
@@ -343,10 +364,8 @@ mysqli_close($conexion);
             padding: 0;
             margin: 12px 0;
             width: 100%;
-
             max-height: 230px;
             min-height: 0;
-
             overflow-y: auto;
             overflow-x: hidden;
             box-sizing: border-box;
@@ -355,10 +374,8 @@ mysqli_close($conexion);
         .bloque-turnos .turno-item {
             padding: 12px;
             margin-bottom: 10px;
-
             border: 1px solid #dedede;
             border-radius: 10px;
-
             box-sizing: border-box;
         }
 
@@ -378,7 +395,6 @@ mysqli_close($conexion);
             display: inline-block;
             padding: 4px 9px;
             border-radius: 7px;
-
             font-size: 12px;
             font-weight: bold;
         }
@@ -409,7 +425,9 @@ mysqli_close($conexion);
             display: block;
             margin-top: auto;
         }
+
     </style>
+
 </head>
 
 <body>
@@ -422,8 +440,13 @@ mysqli_close($conexion);
 
         <div class="logo">
 
-            <img id="logo" src="../general/Logo minimalista DUCCA con hojas orgánicas.png" alt="Logo DUCCA" height="150"
-                width="175">
+            <img
+                id="logo"
+                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+                alt="Logo DUCCA"
+                height="150"
+                width="175"
+            >
 
         </div>
 
@@ -443,19 +466,36 @@ mysqli_close($conexion);
 
             </span>
 
+            <!-- =================================
+                 RUEDITA DE CONFIGURACIÓN
+                 ================================= -->
+
             <div class="contenedor-configuracion">
 
-                <button type="button" id="btn-configuracion" aria-label="Abrir configuración" aria-expanded="false">
+                <button
+                    type="button"
+                    id="btn-configuracion"
+                    aria-label="Abrir configuración"
+                    aria-expanded="false"
+                >
                     ⚙
                 </button>
 
-                <div id="menu-configuracion" class="menu-configuracion" hidden>
+                <div
+                    id="menu-configuracion"
+                    class="menu-configuracion"
+                    hidden
+                >
 
                     <p class="titulo-menu">
                         Administración
                     </p>
 
-                    <button type="button" id="btn-tema" class="opcion-configuracion">
+                    <button
+                        type="button"
+                        id="btn-tema"
+                        class="opcion-configuracion"
+                    >
                         ☽ Modo oscuro
                     </button>
 
@@ -473,7 +513,16 @@ mysqli_close($conexion);
                         Relaciones
                     </a>
 
-                    <a href="cerrar_sesion.php" class="cerrar-sesion-menu">
+                    <!-- NUEVA OPCIÓN -->
+
+                    <a href="../Pacientes/acceso_archivados.php">
+                        Pacientes archivados
+                    </a>
+
+                    <a
+                        href="cerrar_sesion.php"
+                        class="cerrar-sesion-menu"
+                    >
                         Cerrar sesión
                     </a>
 
@@ -507,8 +556,15 @@ mysqli_close($conexion);
                         DNI, nombre o apellido:
                     </label>
 
-                    <input type="text" id="buscar-paciente" name="buscar" placeholder="Buscar paciente..."
-                        autocomplete="off" maxlength="60" required>
+                    <input
+                        type="text"
+                        id="buscar-paciente"
+                        name="buscar"
+                        placeholder="Buscar paciente..."
+                        autocomplete="off"
+                        maxlength="60"
+                        required
+                    >
 
                     <button type="submit">
                         BUSCAR
@@ -516,16 +572,29 @@ mysqli_close($conexion);
 
                 </form>
 
-                <!-- SUGERENCIAS EN EL RECUADRO -->
+                <!-- SUGERENCIAS -->
 
-                <ul id="resultados-pacientes" class="resultados-buscador" aria-label="Pacientes encontrados" hidden>
-                </ul>
+                <ul
+                    id="resultados-pacientes"
+                    class="resultados-buscador"
+                    aria-label="Pacientes encontrados"
+                    hidden
+                ></ul>
 
-                <p id="mensaje-busqueda" class="mensaje-busqueda" aria-live="polite" hidden></p>
+                <p
+                    id="mensaje-busqueda"
+                    class="mensaje-busqueda"
+                    aria-live="polite"
+                    hidden
+                ></p>
 
-                <!-- FICHA DENTRO DEL MISMO RECUADRO -->
+                <!-- PACIENTE SELECCIONADO -->
 
-                <div id="paciente-encontrado" class="paciente-encontrado" hidden>
+                <div
+                    id="paciente-encontrado"
+                    class="paciente-encontrado"
+                    hidden
+                >
 
                     <h3 id="nombre-encontrado"></h3>
 
@@ -550,7 +619,10 @@ mysqli_close($conexion);
 
                 <h2>TURNOS PENDIENTES</h2>
 
-                <ul class="lista-turnos" id="lista-turnos-db">
+                <ul
+                    class="lista-turnos"
+                    id="lista-turnos-db"
+                >
 
                     <?php if ($errorTurnos) { ?>
 
@@ -577,8 +649,7 @@ mysqli_close($conexion);
 
                                     <?php
                                     echo escapar(
-                                        $turno["nombre_p"] .
-                                        " " .
+                                        $turno["nombre_p"] . " " .
                                         $turno["apellido"]
                                     );
                                     ?>
@@ -586,8 +657,6 @@ mysqli_close($conexion);
                                 </span>
 
                                 <span class="turno-fecha">
-
-                                
 
                                     <?php
                                     echo escapar(
@@ -619,12 +688,12 @@ mysqli_close($conexion);
                                 <?php
                                 $claseEstado =
                                     $turno["estado"] === "Confirmado"
-                                    ? "estado-confirmado"
-                                    : "estado-pendiente";
+                                        ? "estado-confirmado"
+                                        : "estado-pendiente";
                                 ?>
 
                                 <span class="turno-estado <?php
-                                echo $claseEstado;
+                                    echo $claseEstado;
                                 ?>">
 
                                     <?php
@@ -635,11 +704,14 @@ mysqli_close($conexion);
 
                                 </span>
 
-                                <a class="turno-historial" href="../historial/historial.php?dni_p=<?php
-                                echo urlencode(
-                                    $turno["dni_paciente"]
-                                );
-                                ?>">
+                                <a
+                                    class="turno-historial"
+                                    href="../historial/historial.php?dni_p=<?php
+                                        echo urlencode(
+                                            $turno["dni_paciente"]
+                                        );
+                                    ?>"
+                                >
                                     Ver historial del paciente
                                 </a>
 
@@ -651,7 +723,10 @@ mysqli_close($conexion);
 
                 </ul>
 
-                <a href="../turnos/listar.php" class="ver-turnos">
+                <a
+                    href="../turnos/listar.php"
+                    class="ver-turnos"
+                >
                     Ver todos los turnos →
                 </a>
 
@@ -667,7 +742,12 @@ mysqli_close($conexion);
 
             <div class="opciones-menu">
 
-                <a href="../Pacientes/alta.php" class="tarjeta opcion-menu">
+                <!-- CARGAR PACIENTE -->
+
+                <a
+                    href="../Pacientes/alta.php"
+                    class="tarjeta opcion-menu"
+                >
 
                     <div class="icono-menu"></div>
 
@@ -683,7 +763,12 @@ mysqli_close($conexion);
 
                 </a>
 
-                <a href="../Pacientes/listar.php" class="tarjeta opcion-menu">
+                <!-- VER PACIENTES -->
+
+                <a
+                    href="../Pacientes/listar.php"
+                    class="tarjeta opcion-menu"
+                >
 
                     <div class="icono-menu"></div>
 
@@ -699,7 +784,12 @@ mysqli_close($conexion);
 
                 </a>
 
-                <a href="../Estudios/estudios.php" class="tarjeta opcion-menu">
+                <!-- ESTUDIOS -->
+
+                <a
+                    href="../Estudios/estudios.php"
+                    class="tarjeta opcion-menu"
+                >
 
                     <div class="icono-menu"></div>
 
@@ -721,8 +811,16 @@ mysqli_close($conexion);
 
     </main>
 
+    <!-- ================================= -->
+    <!-- PIE DE PÁGINA -->
+    <!-- ================================= -->
+
     <footer>
-        <p>Proyecto Web Clínica - EPET N°20 (2026)</p>
+
+        <p>
+            Proyecto Web Clínica - EPET N°20 (2026)
+        </p>
+
     </footer>
 
     <!-- ================================= -->
@@ -730,6 +828,7 @@ mysqli_close($conexion);
     <!-- ================================= -->
 
     <script>
+
         document.addEventListener("DOMContentLoaded", function () {
 
             const formulario = document.getElementById(
@@ -768,6 +867,8 @@ mysqli_close($conexion);
             let temporizador = null;
             let controlador = null;
 
+            // FORMATEAR DNI
+
             function formatearDNI(valor) {
                 return String(valor)
                     .replace(/\D/g, "")
@@ -777,16 +878,22 @@ mysqli_close($conexion);
                     );
             }
 
+            // MOSTRAR MENSAJE
+
             function mostrarMensaje(texto) {
                 mensaje.textContent = texto;
                 mensaje.hidden = !texto;
             }
+
+            // LIMPIAR RESULTADOS
 
             function limpiarResultados() {
                 lista.replaceChildren();
                 lista.hidden = true;
                 pacientesActuales = [];
             }
+
+            // SELECCIONAR PACIENTE
 
             function seleccionarPaciente(paciente) {
 
@@ -809,6 +916,8 @@ mysqli_close($conexion);
                 mostrarMensaje("");
             }
 
+            // MOSTRAR COINCIDENCIAS
+
             function mostrarResultados(pacientes) {
 
                 limpiarResultados();
@@ -816,9 +925,11 @@ mysqli_close($conexion);
                 pacientesActuales = pacientes;
 
                 if (pacientes.length === 0) {
+
                     mostrarMensaje(
                         "No se encontraron pacientes."
                     );
+
                     return;
                 }
 
@@ -860,15 +971,22 @@ mysqli_close($conexion);
                     boton.appendChild(dni);
 
                     boton.addEventListener("click", () => {
-                    window.location.href =
-                    "../historial/historial.php?dni_p=" +
-                    encodeURIComponent(paciente.dni_p);
+
+                        window.location.href =
+                            "../historial/historial.php?dni_p=" +
+                            encodeURIComponent(
+                                paciente.dni_p
+                            );
+
                     });
 
                     elemento.appendChild(boton);
                     lista.appendChild(elemento);
+
                 });
             }
+
+            // BUSCAR PACIENTES
 
             async function buscarPacientes() {
 
@@ -879,8 +997,10 @@ mysqli_close($conexion);
                 }
 
                 if (!busqueda) {
+
                     limpiarResultados();
                     mostrarMensaje("");
+
                     return;
                 }
 
@@ -896,20 +1016,25 @@ mysqli_close($conexion);
                         encodeURIComponent(busqueda);
 
                     const respuesta = await fetch(url, {
+
                         signal: actual.signal,
                         credentials: "same-origin",
                         cache: "no-store"
+
                     });
 
                     if (!respuesta.ok) {
+
                         throw new Error(
                             "Error al buscar pacientes."
                         );
                     }
 
-                    const pacientes = await respuesta.json();
+                    const pacientes =
+                        await respuesta.json();
 
                     if (!Array.isArray(pacientes)) {
+
                         throw new Error(
                             "Respuesta no válida."
                         );
@@ -928,13 +1053,14 @@ mysqli_close($conexion);
                     }
 
                     limpiarResultados();
+
                     mostrarMensaje(
                         "No se pudo realizar la búsqueda."
                     );
                 }
             }
 
-            // Buscar mientras se escribe.
+            // BUSCAR MIENTRAS SE ESCRIBE
 
             campo.addEventListener("input", function () {
 
@@ -947,8 +1073,10 @@ mysqli_close($conexion);
                 ficha.hidden = true;
 
                 if (!campo.value.trim()) {
+
                     limpiarResultados();
                     mostrarMensaje("");
+
                     return;
                 }
 
@@ -956,10 +1084,11 @@ mysqli_close($conexion);
                     buscarPacientes,
                     200
                 );
+
             });
 
-            // El botón Buscar selecciona el
-            // primer resultado si hay coincidencias.
+            // EL BOTÓN BUSCAR SELECCIONA
+            // EL PRIMER RESULTADO
 
             formulario.addEventListener(
                 "submit",
@@ -969,28 +1098,29 @@ mysqli_close($conexion);
 
                     clearTimeout(temporizador);
 
-                    if (
-                        pacientesActuales.length > 0
-                    ) {
+                    if (pacientesActuales.length > 0) {
+
                         seleccionarPaciente(
                             pacientesActuales[0]
                         );
+
                         return;
                     }
 
                     await buscarPacientes();
 
-                    if (
-                        pacientesActuales.length > 0
-                    ) {
+                    if (pacientesActuales.length > 0) {
+
                         seleccionarPaciente(
                             pacientesActuales[0]
                         );
                     }
+
                 }
             );
 
         });
+
     </script>
 
     <!-- SCRIPTS ORIGINALES -->
@@ -1001,5 +1131,4 @@ mysqli_close($conexion);
     <script src="../general/configuracion.js"></script>
 
 </body>
-
 </html>

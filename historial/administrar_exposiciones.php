@@ -1,12 +1,26 @@
 
 <?php
-session_start();
+
+// =========================================
+// DUCCA - ADMINISTRAR EXPOSICIONES
+// =========================================
+
+// VERIFICAR INICIO DE SESIÓN
+
+require_once __DIR__ . "/../inicio sesion/verificar_sesion.php";
 
 require_once __DIR__ . "/../Pacientes/conexion.php";
 
 /** @var mysqli $conexion */
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
+
+// =========================================
+// FUNCIONES
+// =========================================
 
 function escapar($valor) {
     return htmlspecialchars(
@@ -17,17 +31,27 @@ function escapar($valor) {
 }
 
 function limpiar($valor) {
-    return trim(preg_replace('/\s+/u', ' ', (string)$valor));
+    return trim(
+        preg_replace('/\s+/u', ' ', (string)$valor)
+    );
 }
 
 function normalizar($valor) {
-    return mb_strtolower(limpiar($valor), "UTF-8");
+    return mb_strtolower(
+        limpiar($valor),
+        "UTF-8"
+    );
 }
 
 function consultar($conexion, $sql, $dni) {
     $stmt = mysqli_prepare($conexion, $sql);
 
-    mysqli_stmt_bind_param($stmt, "i", $dni);
+    mysqli_stmt_bind_param(
+        $stmt,
+        "i",
+        $dni
+    );
+
     mysqli_stmt_execute($stmt);
 
     $resultado = mysqli_stmt_get_result($stmt);
@@ -43,40 +67,70 @@ function consultar($conexion, $sql, $dni) {
 }
 
 // =========================================
-// OBTENER PACIENTE
+// VALIDAR MÉTODO Y DNI
 // =========================================
 
-$dni = filter_input(
-    INPUT_GET,
-    "dni_p",
-    FILTER_VALIDATE_INT
+$metodo = $_SERVER["REQUEST_METHOD"];
+
+if ($metodo !== "GET" && $metodo !== "POST") {
+    http_response_code(405);
+    header("Allow: GET, POST");
+    exit("Método no permitido.");
+}
+
+$dniTexto = (string)(
+    $metodo === "POST"
+        ? ($_POST["dni_p"] ?? "")
+        : ($_GET["dni_p"] ?? "")
 );
 
-if (!$dni) {
-    $dni = filter_input(
-        INPUT_POST,
-        "dni_p",
-        FILTER_VALIDATE_INT
-    );
+if (
+    !ctype_digit($dniTexto) ||
+    strlen($dniTexto) > 8 ||
+    (int)$dniTexto <= 0
+) {
+    http_response_code(400);
+    exit("DNI no válido.");
 }
 
-if (!$dni || $dni <= 0) {
-    die("DNI no válido.");
-}
+$dni = (int)$dniTexto;
+
+// =========================================
+// BUSCAR PACIENTE
+// =========================================
 
 $pacientes = consultar(
     $conexion,
-    "SELECT dni_p, nombre_p, apellido
+    "SELECT
+        dni_p,
+        nombre_p,
+        apellido,
+        estado
      FROM paciente
      WHERE dni_p = ?",
     $dni
 );
 
 if (!$pacientes) {
-    die("No se encontró el paciente.");
+    http_response_code(404);
+    exit("No se encontró el paciente.");
 }
 
 $paciente = $pacientes[0];
+
+// =========================================
+// BLOQUEAR PACIENTES ARCHIVADOS
+// =========================================
+
+if ($paciente["estado"] !== "activo") {
+    http_response_code(403);
+
+    exit(
+        "Este paciente está archivado. " .
+        "Sus exposiciones son de solo lectura. " .
+        "Para modificarlas, primero debés reactivarlo."
+    );
+}
 
 // =========================================
 // TOKEN DE SEGURIDAD
@@ -88,29 +142,76 @@ if (empty($_SESSION["csrf_exposiciones_paciente"])) {
 }
 
 $token = $_SESSION["csrf_exposiciones_paciente"];
+
 $error = "";
 
 // =========================================
 // PROCESAR ACCIONES
 // =========================================
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+if ($metodo === "POST") {
 
-    if (
-        !hash_equals(
-            $token,
-            (string)($_POST["csrf"] ?? "")
-        )
-    ) {
+    $tokenEnviado = (string)(
+        $_POST["csrf"] ?? ""
+    );
+
+    if (!hash_equals($token, $tokenEnviado)) {
         http_response_code(403);
-        die("Solicitud no válida.");
+        exit("Solicitud no válida.");
     }
 
-    $accion = (string)($_POST["accion"] ?? "");
+    $accion = (string)(
+        $_POST["accion"] ?? ""
+    );
+
+    $transaccionIniciada = false;
 
     try {
 
         mysqli_begin_transaction($conexion);
+        $transaccionIniciada = true;
+
+        // =================================
+        // VOLVER A COMPROBAR EL ESTADO
+        // =================================
+
+        // Bloquear la fila del paciente
+        // durante toda la operación.
+
+        $stmt = mysqli_prepare(
+            $conexion,
+            "SELECT estado
+             FROM paciente
+             WHERE dni_p = ?
+             FOR UPDATE"
+        );
+
+        mysqli_stmt_bind_param(
+            $stmt,
+            "i",
+            $dni
+        );
+
+        mysqli_stmt_execute($stmt);
+
+        $resultado = mysqli_stmt_get_result($stmt);
+        $pacienteActual = mysqli_fetch_assoc($resultado);
+
+        mysqli_stmt_close($stmt);
+
+        if (
+            !$pacienteActual ||
+            $pacienteActual["estado"] !== "activo"
+        ) {
+            throw new RuntimeException(
+                "El paciente está archivado o ya no existe.",
+                403
+            );
+        }
+
+        // =================================
+        // ACCIÓN: AGREGAR EXPOSICIÓN
+        // =================================
 
         if ($accion === "agregar") {
 
@@ -130,18 +231,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
             }
 
-            // Buscar si ya existe
+            // Buscar si la exposición
+            // ya existe en el catálogo.
 
             $resultado = mysqli_query(
                 $conexion,
-                "SELECT id_exposicion, nombre_ex
+                "SELECT
+                    id_exposicion,
+                    nombre_ex
                  FROM exposicion
                  FOR UPDATE"
             );
 
             $idExposicion = null;
 
-            while ($fila = mysqli_fetch_assoc($resultado)) {
+            while (
+                $fila = mysqli_fetch_assoc($resultado)
+            ) {
 
                 if (
                     normalizar($fila["nombre_ex"]) ===
@@ -157,13 +263,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             mysqli_free_result($resultado);
 
-            // Crear exposición nueva si hace falta
+            // =================================
+            // CREAR EXPOSICIÓN SI NO EXISTE
+            // =================================
 
             if ($idExposicion === null) {
 
                 $stmt = mysqli_prepare(
                     $conexion,
-                    "INSERT INTO exposicion (nombre_ex)
+                    "INSERT INTO exposicion
+                        (nombre_ex)
                      VALUES (?)"
                 );
 
@@ -181,7 +290,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 mysqli_stmt_close($stmt);
             }
 
-            // Asignar al paciente
+            // =================================
+            // ASIGNAR EXPOSICIÓN AL PACIENTE
+            // =================================
+
+            // Si ya está asignada,
+            // no se vuelve a duplicar.
 
             $stmt = mysqli_prepare(
                 $conexion,
@@ -200,6 +314,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             mysqli_stmt_execute($stmt);
             mysqli_stmt_close($stmt);
 
+        // =================================
+        // ACCIÓN: QUITAR EXPOSICIÓN
+        // =================================
+
         } elseif ($accion === "quitar") {
 
             $id = filter_var(
@@ -207,11 +325,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 FILTER_VALIDATE_INT
             );
 
-            if (!$id) {
+            if (!$id || $id <= 0) {
                 throw new Exception(
                     "Exposición no válida."
                 );
             }
+
+            // Quitar únicamente la relación
+            // entre el paciente y la exposición.
+            //
+            // NO borrar la exposición del
+            // catálogo general.
 
             $stmt = mysqli_prepare(
                 $conexion,
@@ -237,53 +361,103 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
         }
 
+        // =================================
+        // CONFIRMAR CAMBIOS
+        // =================================
+
         mysqli_commit($conexion);
+        $transaccionIniciada = false;
 
         header(
             "Location: administrar_exposiciones.php?dni_p=" .
-            urlencode($dni) .
+            urlencode((string)$dni) .
             "&guardado=1"
         );
+
         exit;
 
     } catch (Throwable $e) {
 
-        mysqli_rollback($conexion);
-        $error = $e->getMessage();
+        if ($transaccionIniciada) {
+            try {
+                mysqli_rollback($conexion);
+            } catch (Throwable $errorRollback) {
+                error_log(
+                    "DUCCA - Error de rollback: " .
+                    $errorRollback->getMessage()
+                );
+            }
+        }
+
+        if ((int)$e->getCode() === 403) {
+            http_response_code(403);
+
+            exit(
+                "Este paciente está archivado. " .
+                "No se permite modificar sus exposiciones."
+            );
+        }
+
+        error_log(
+            "DUCCA - Administrar exposiciones: " .
+            $e->getMessage()
+        );
+
+        if (
+            $e instanceof Exception &&
+            !($e instanceof mysqli_sql_exception)
+        ) {
+            $error = $e->getMessage();
+        } else {
+            $error =
+                "No se pudieron guardar los cambios.";
+        }
     }
 }
 
 // =========================================
-// CONSULTAR CATÁLOGO Y ASIGNACIONES
+// CONSULTAR CATÁLOGO GENERAL
 // =========================================
 
 $catalogo = mysqli_query(
     $conexion,
-    "SELECT id_exposicion, nombre_ex
+    "SELECT
+        id_exposicion,
+        nombre_ex
      FROM exposicion
      ORDER BY nombre_ex"
 );
+
+// =========================================
+// CONSULTAR EXPOSICIONES ASIGNADAS
+// =========================================
 
 $asignadas = consultar(
     $conexion,
     "SELECT
         e.id_exposicion,
         e.nombre_ex
+
      FROM paciente_exposicion pe
+
      INNER JOIN exposicion e
         ON pe.id_exposicion = e.id_exposicion
+
      WHERE pe.dni_paciente = ?
+
      ORDER BY e.nombre_ex",
     $dni
 );
 
 mysqli_close($conexion);
+
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -291,7 +465,7 @@ mysqli_close($conexion);
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Administrar exposiciones</title>
+    <title>Administrar exposiciones - DUCCA</title>
 
     <link
         rel="stylesheet"
@@ -299,6 +473,7 @@ mysqli_close($conexion);
     >
 
     <style>
+
         .campo-exposicion {
             width: 100%;
             max-width: 430px;
@@ -308,13 +483,37 @@ mysqli_close($conexion);
 
         .mensaje-error {
             color: #b12e2e;
+            font-weight: 600;
         }
+
+        .mensaje-exito {
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: rgba(70, 160, 100, 0.12);
+        }
+
+        .acciones-exposicion {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .acciones-exposicion form {
+            display: inline-block;
+        }
+
     </style>
+
 </head>
 
 <body>
 
 <main class="gestion-contenido">
+
+    <!-- =====================================
+         ENCABEZADO
+    ===================================== -->
 
     <section class="bienvenida">
 
@@ -322,29 +521,35 @@ mysqli_close($conexion);
 
         <p>
             Paciente:
+
             <strong>
                 <?php
-                    echo escapar(
-                        $paciente["nombre_p"] . " " .
-                        $paciente["apellido"]
-                    );
+                echo escapar(
+                    $paciente["nombre_p"] . " " .
+                    $paciente["apellido"]
+                );
                 ?>
             </strong>
         </p>
 
         <p>
-            DNI: <?php echo escapar($dni); ?>
+            DNI:
+            <?php echo escapar($dni); ?>
         </p>
 
         <p>
             <a href="historial.php?dni_p=<?php
-                echo urlencode($dni);
+                echo urlencode((string)$dni);
             ?>">
                 Volver al historial
             </a>
         </p>
 
     </section>
+
+    <!-- =====================================
+         AGREGAR EXPOSICIÓN
+    ===================================== -->
 
     <section class="tarjeta">
 
@@ -354,9 +559,14 @@ mysqli_close($conexion);
                 <?php echo escapar($error); ?>
             </p>
 
-        <?php } elseif (isset($_GET["guardado"])) { ?>
+        <?php } elseif (
+            isset($_GET["guardado"]) &&
+            $_GET["guardado"] === "1"
+        ) { ?>
 
-            <p>Los cambios se guardaron correctamente.</p>
+            <p class="mensaje-exito">
+                Los cambios se guardaron correctamente.
+            </p>
 
         <?php } ?>
 
@@ -407,7 +617,9 @@ mysqli_close($conexion);
 
             <datalist id="catalogo_exposiciones">
 
-                <?php while ($fila = mysqli_fetch_assoc($catalogo)) { ?>
+                <?php while (
+                    $fila = mysqli_fetch_assoc($catalogo)
+                ) { ?>
 
                     <option
                         value="<?php
@@ -439,6 +651,10 @@ mysqli_close($conexion);
 
     </section>
 
+    <!-- =====================================
+         EXPOSICIONES ASIGNADAS
+    ===================================== -->
+
     <section class="tarjeta">
 
         <h2>Exposiciones asignadas</h2>
@@ -465,68 +681,74 @@ mysqli_close($conexion);
 
                     <tbody>
 
-                    <?php foreach ($asignadas as $fila) { ?>
+                        <?php foreach (
+                            $asignadas as $fila
+                        ) { ?>
 
-                        <tr>
+                            <tr>
 
-                            <td>
-                                <?php
+                                <td>
+                                    <?php
                                     echo escapar(
                                         $fila["nombre_ex"]
                                     );
-                                ?>
-                            </td>
+                                    ?>
+                                </td>
 
-                            <td>
+                                <td>
 
-                                <form
-                                    method="POST"
-                                    onsubmit="return confirm(
-                                        '¿Quitar esta exposición del paciente?'
-                                    );"
-                                >
+                                    <div class="acciones-exposicion">
 
-                                    <input
-                                        type="hidden"
-                                        name="dni_p"
-                                        value="<?php
-                                            echo escapar($dni);
-                                        ?>"
-                                    >
+                                        <form
+                                            method="POST"
+                                            onsubmit="return confirm(
+                                                '¿Quitar esta exposición del paciente?'
+                                            );"
+                                        >
 
-                                    <input
-                                        type="hidden"
-                                        name="csrf"
-                                        value="<?php
-                                            echo escapar($token);
-                                        ?>"
-                                    >
+                                            <input
+                                                type="hidden"
+                                                name="dni_p"
+                                                value="<?php
+                                                    echo escapar($dni);
+                                                ?>"
+                                            >
 
-                                    <input
-                                        type="hidden"
-                                        name="accion"
-                                        value="quitar"
-                                    >
+                                            <input
+                                                type="hidden"
+                                                name="csrf"
+                                                value="<?php
+                                                    echo escapar($token);
+                                                ?>"
+                                            >
 
-                                    <input
-                                        type="hidden"
-                                        name="id_exposicion"
-                                        value="<?php
-                                            echo (int)$fila["id_exposicion"];
-                                        ?>"
-                                    >
+                                            <input
+                                                type="hidden"
+                                                name="accion"
+                                                value="quitar"
+                                            >
 
-                                    <button type="submit">
-                                        Quitar
-                                    </button>
+                                            <input
+                                                type="hidden"
+                                                name="id_exposicion"
+                                                value="<?php
+                                                    echo (int)$fila["id_exposicion"];
+                                                ?>"
+                                            >
 
-                                </form>
+                                            <button type="submit">
+                                                Quitar
+                                            </button>
 
-                            </td>
+                                        </form>
 
-                        </tr>
+                                    </div>
 
-                    <?php } ?>
+                                </td>
+
+                            </tr>
+
+                        <?php } ?>
 
                     </tbody>
 

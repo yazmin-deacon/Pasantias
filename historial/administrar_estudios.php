@@ -1,12 +1,23 @@
 
 <?php
-session_start();
 
+// =========================================
+// DUCCA - ADMINISTRAR ESTUDIOS DEL PACIENTE
+// =========================================
+
+require_once __DIR__ . "/../inicio sesion/verificar_sesion.php";
 require_once __DIR__ . "/../Pacientes/conexion.php";
 
 /** @var mysqli $conexion */
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
+
+// =========================================
+// FUNCIONES
+// =========================================
 
 function escapar($valor) {
     return htmlspecialchars(
@@ -17,11 +28,16 @@ function escapar($valor) {
 }
 
 function limpiar($valor) {
-    return trim(preg_replace('/\s+/u', ' ', (string)$valor));
+    return trim(
+        preg_replace('/\s+/u', ' ', (string)$valor)
+    );
 }
 
 function normalizar($valor) {
-    return mb_strtolower(limpiar($valor), "UTF-8");
+    return mb_strtolower(
+        limpiar($valor),
+        "UTF-8"
+    );
 }
 
 function consultar($conexion, $sql, $dni) {
@@ -30,46 +46,89 @@ function consultar($conexion, $sql, $dni) {
     mysqli_stmt_execute($stmt);
 
     $resultado = mysqli_stmt_get_result($stmt);
-    $filas = mysqli_fetch_all($resultado, MYSQLI_ASSOC);
+    $filas = mysqli_fetch_all(
+        $resultado,
+        MYSQLI_ASSOC
+    );
 
     mysqli_stmt_close($stmt);
+
     return $filas;
 }
 
-$dni = filter_input(
-    INPUT_GET,
-    "dni_p",
-    FILTER_VALIDATE_INT
+// =========================================
+// VALIDAR DNI
+// =========================================
+
+$metodo = $_SERVER["REQUEST_METHOD"];
+
+if ($metodo !== "GET" && $metodo !== "POST") {
+    http_response_code(405);
+    header("Allow: GET, POST");
+    exit("Método no permitido.");
+}
+
+$dniTexto = (string)(
+    $metodo === "POST"
+        ? ($_POST["dni_p"] ?? "")
+        : ($_GET["dni_p"] ?? "")
 );
 
-if (!$dni) {
-    $dni = filter_input(
-        INPUT_POST,
-        "dni_p",
-        FILTER_VALIDATE_INT
-    );
+if (
+    !ctype_digit($dniTexto) ||
+    strlen($dniTexto) > 8 ||
+    (int)$dniTexto <= 0
+) {
+    http_response_code(400);
+    exit("DNI no válido.");
 }
 
-if (!$dni || $dni <= 0) {
-    die("DNI no válido.");
-}
+$dni = (int)$dniTexto;
 
-// Verificar paciente
+// =========================================
+// COMPROBAR PACIENTE
+// =========================================
 
 $pacientes = consultar(
     $conexion,
-    "SELECT dni_p, nombre_p, apellido
-     FROM paciente WHERE dni_p = ?",
+    "SELECT
+        dni_p,
+        nombre_p,
+        apellido,
+        estado
+     FROM paciente
+     WHERE dni_p = ?",
     $dni
 );
 
 if (!$pacientes) {
-    die("No se encontró el paciente.");
+    http_response_code(404);
+    exit("No se encontró el paciente.");
 }
 
 $paciente = $pacientes[0];
 
-// Token para proteger las operaciones POST
+// =========================================
+// BLOQUEAR PACIENTES ARCHIVADOS
+// =========================================
+
+// También se comprueba durante el POST,
+// dentro de una transacción, para evitar
+// modificaciones si el estado cambió.
+
+if ($paciente["estado"] !== "activo") {
+    http_response_code(403);
+
+    exit(
+        "Este paciente está archivado. " .
+        "Sus estudios son de solo lectura. " .
+        "Para modificarlos, primero debés reactivarlo."
+    );
+}
+
+// =========================================
+// TOKEN CSRF
+// =========================================
 
 if (empty($_SESSION["csrf_estudios_paciente"])) {
     $_SESSION["csrf_estudios_paciente"] =
@@ -77,29 +136,73 @@ if (empty($_SESSION["csrf_estudios_paciente"])) {
 }
 
 $token = $_SESSION["csrf_estudios_paciente"];
+
 $error = "";
 
 // =========================================
 // PROCESAR ACCIONES
 // =========================================
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+if ($metodo === "POST") {
 
-    if (
-        !hash_equals(
-            $token,
-            (string)($_POST["csrf"] ?? "")
-        )
-    ) {
+    $tokenEnviado = (string)(
+        $_POST["csrf"] ?? ""
+    );
+
+    if (!hash_equals($token, $tokenEnviado)) {
         http_response_code(403);
-        die("Solicitud no válida.");
+        exit("Solicitud no válida.");
     }
 
-    $accion = (string)($_POST["accion"] ?? "");
+    $accion = (string)(
+        $_POST["accion"] ?? ""
+    );
+
+    $transaccionIniciada = false;
 
     try {
 
         mysqli_begin_transaction($conexion);
+        $transaccionIniciada = true;
+
+        // =================================
+        // VOLVER A COMPROBAR EL ESTADO
+        // =================================
+
+        $stmt = mysqli_prepare(
+            $conexion,
+            "SELECT estado
+             FROM paciente
+             WHERE dni_p = ?
+             FOR UPDATE"
+        );
+
+        mysqli_stmt_bind_param(
+            $stmt,
+            "i",
+            $dni
+        );
+
+        mysqli_stmt_execute($stmt);
+
+        $resultado = mysqli_stmt_get_result($stmt);
+        $pacienteActual = mysqli_fetch_assoc($resultado);
+
+        mysqli_stmt_close($stmt);
+
+        if (
+            !$pacienteActual ||
+            $pacienteActual["estado"] !== "activo"
+        ) {
+            throw new RuntimeException(
+                "El paciente está archivado o ya no existe.",
+                403
+            );
+        }
+
+        // =================================
+        // ACCIÓN: AGREGAR ESTUDIO
+        // =================================
 
         if ($accion === "agregar") {
 
@@ -113,13 +216,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
             }
 
-            if (mb_strlen($nombre, "UTF-8") > 50) {
+            if (
+                mb_strlen($nombre, "UTF-8") > 50
+            ) {
                 throw new Exception(
                     "El nombre no puede superar 50 caracteres."
                 );
             }
 
-            // Buscar si ya existe en el catálogo
+            // Buscar en el catálogo.
 
             $resultado = mysqli_query(
                 $conexion,
@@ -130,7 +235,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $idEstudio = null;
 
-            while ($fila = mysqli_fetch_assoc($resultado)) {
+            while (
+                $fila = mysqli_fetch_assoc($resultado)
+            ) {
                 if (
                     normalizar($fila["nombre_es"]) ===
                     normalizar($nombre)
@@ -142,7 +249,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             mysqli_free_result($resultado);
 
-            // Crear en el catálogo si no existe
+            // Si no existe, crearlo.
 
             if ($idEstudio === null) {
 
@@ -165,8 +272,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 mysqli_stmt_close($stmt);
             }
 
-            // Asignar al paciente sin cambiar
-            // el estado si ya estaba asignado
+            // Asignarlo al paciente.
+            // No cambiar el estado si ya existe.
 
             $stmt = mysqli_prepare(
                 $conexion,
@@ -186,6 +293,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             mysqli_stmt_execute($stmt);
             mysqli_stmt_close($stmt);
+
+        // =================================
+        // ACCIÓN: CAMBIAR ESTADO
+        // =================================
 
         } elseif ($accion === "estado") {
 
@@ -228,13 +339,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
 
             mysqli_stmt_execute($stmt);
-
-            if (mysqli_stmt_affected_rows($stmt) === 0) {
-                // Puede ser el mismo estado, en cuyo
-                // caso no hay modificaciones.
-            }
-
             mysqli_stmt_close($stmt);
+
+        // =================================
+        // ACCIÓN: QUITAR ESTUDIO
+        // =================================
 
         } elseif ($accion === "quitar") {
 
@@ -249,7 +358,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
             }
 
-            // Proteger estudios con registros históricos
+            // Comprobar que no tenga registros
+            // asociados en el historial.
 
             $stmt = mysqli_prepare(
                 $conexion,
@@ -280,6 +390,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
             }
 
+            // Quitar solamente la asignación
+            // de este paciente.
+
             $stmt = mysqli_prepare(
                 $conexion,
                 "DELETE FROM paciente_estudio
@@ -303,25 +416,57 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
         }
 
+        // =================================
+        // CONFIRMAR CAMBIOS
+        // =================================
+
         mysqli_commit($conexion);
+        $transaccionIniciada = false;
 
         header(
             "Location: administrar_estudios.php?dni_p=" .
-            urlencode($dni) .
+            urlencode((string)$dni) .
             "&guardado=1"
         );
+
         exit;
 
     } catch (Throwable $e) {
 
-        mysqli_rollback($conexion);
+        if ($transaccionIniciada) {
+            mysqli_rollback($conexion);
+        }
 
-        $error = $e->getMessage();
+        if ((int)$e->getCode() === 403) {
+            http_response_code(403);
+            exit(
+                "Este paciente está archivado. " .
+                "No se permite modificar sus estudios."
+            );
+        }
+
+        error_log(
+            "DUCCA - Administrar estudios: " .
+            $e->getMessage()
+        );
+
+        // Errores de validación propios
+        // del formulario.
+
+        if (
+            $e instanceof Exception &&
+            !($e instanceof mysqli_sql_exception)
+        ) {
+            $error = $e->getMessage();
+        } else {
+            $error =
+                "No se pudieron guardar los cambios.";
+        }
     }
 }
 
 // =========================================
-// CONSULTAS PARA MOSTRAR
+// CONSULTAR CATÁLOGO GENERAL
 // =========================================
 
 $catalogo = mysqli_query(
@@ -330,6 +475,10 @@ $catalogo = mysqli_query(
      FROM estudio
      ORDER BY nombre_es"
 );
+
+// =========================================
+// CONSULTAR ESTUDIOS ASIGNADOS
+// =========================================
 
 $asignados = consultar(
     $conexion,
@@ -346,6 +495,7 @@ $asignados = consultar(
 );
 
 mysqli_close($conexion);
+
 ?>
 
 <!DOCTYPE html>
@@ -353,12 +503,13 @@ mysqli_close($conexion);
 
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Administrar estudios del paciente</title>
+    <title>Administrar estudios del paciente - DUCCA</title>
 
     <link
         rel="stylesheet"
@@ -386,13 +537,25 @@ mysqli_close($conexion);
 
         .mensaje-error {
             color: #b12e2e;
+            font-weight: 600;
+        }
+
+        .mensaje-exito {
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: rgba(70, 160, 100, 0.12);
         }
     </style>
+
 </head>
 
 <body>
 
 <main class="gestion-contenido">
+
+    <!-- =====================================
+         ENCABEZADO
+    ===================================== -->
 
     <section class="bienvenida">
 
@@ -402,27 +565,32 @@ mysqli_close($conexion);
             Paciente:
             <strong>
                 <?php
-                    echo escapar(
-                        $paciente["nombre_p"] . " " .
-                        $paciente["apellido"]
-                    );
+                echo escapar(
+                    $paciente["nombre_p"] . " " .
+                    $paciente["apellido"]
+                );
                 ?>
             </strong>
         </p>
 
         <p>
-            DNI: <?php echo escapar($dni); ?>
+            DNI:
+            <?php echo escapar($dni); ?>
         </p>
 
         <p>
             <a href="historial.php?dni_p=<?php
-                echo urlencode($dni);
+                echo urlencode((string)$dni);
             ?>">
                 Volver al historial
             </a>
         </p>
 
     </section>
+
+    <!-- =====================================
+         AGREGAR ESTUDIO
+    ===================================== -->
 
     <section class="tarjeta">
 
@@ -432,9 +600,14 @@ mysqli_close($conexion);
                 <?php echo escapar($error); ?>
             </p>
 
-        <?php } elseif (isset($_GET["guardado"])) { ?>
+        <?php } elseif (
+            isset($_GET["guardado"]) &&
+            $_GET["guardado"] === "1"
+        ) { ?>
 
-            <p>Los cambios se guardaron correctamente.</p>
+            <p class="mensaje-exito">
+                Los cambios se guardaron correctamente.
+            </p>
 
         <?php } ?>
 
@@ -485,7 +658,9 @@ mysqli_close($conexion);
 
             <datalist id="catalogo_estudios">
 
-                <?php while ($estudio = mysqli_fetch_assoc($catalogo)) { ?>
+                <?php while (
+                    $estudio = mysqli_fetch_assoc($catalogo)
+                ) { ?>
 
                     <option
                         value="<?php
@@ -517,6 +692,10 @@ mysqli_close($conexion);
 
     </section>
 
+    <!-- =====================================
+         ESTUDIOS ASIGNADOS
+    ===================================== -->
+
     <section class="tarjeta">
 
         <h2>Estudios asignados</h2>
@@ -544,23 +723,25 @@ mysqli_close($conexion);
 
                     <tbody>
 
-                        <?php foreach ($asignados as $estudio) { ?>
+                        <?php foreach (
+                            $asignados as $estudio
+                        ) { ?>
 
                             <tr>
 
                                 <td>
                                     <?php
-                                        echo escapar(
-                                            $estudio["nombre_es"]
-                                        );
+                                    echo escapar(
+                                        $estudio["nombre_es"]
+                                    );
                                     ?>
                                 </td>
 
                                 <td>
                                     <?php
-                                        echo escapar(
-                                            $estudio["estado"]
-                                        );
+                                    echo escapar(
+                                        $estudio["estado"]
+                                    );
                                     ?>
                                 </td>
 
@@ -575,13 +756,17 @@ mysqli_close($conexion);
                                             <input
                                                 type="hidden"
                                                 name="dni_p"
-                                                value="<?php echo escapar($dni); ?>"
+                                                value="<?php
+                                                    echo escapar($dni);
+                                                ?>"
                                             >
 
                                             <input
                                                 type="hidden"
                                                 name="csrf"
-                                                value="<?php echo escapar($token); ?>"
+                                                value="<?php
+                                                    echo escapar($token);
+                                                ?>"
                                             >
 
                                             <input
@@ -609,13 +794,11 @@ mysqli_close($conexion);
                                             >
 
                                             <button type="submit">
-
                                                 <?php
-                                                    echo $estudio["estado"] === "Realizado"
-                                                        ? "Marcar pendiente"
-                                                        : "Marcar realizado";
+                                                echo $estudio["estado"] === "Realizado"
+                                                    ? "Marcar pendiente"
+                                                    : "Marcar realizado";
                                                 ?>
-
                                             </button>
 
                                         </form>
@@ -632,13 +815,17 @@ mysqli_close($conexion);
                                             <input
                                                 type="hidden"
                                                 name="dni_p"
-                                                value="<?php echo escapar($dni); ?>"
+                                                value="<?php
+                                                    echo escapar($dni);
+                                                ?>"
                                             >
 
                                             <input
                                                 type="hidden"
                                                 name="csrf"
-                                                value="<?php echo escapar($token); ?>"
+                                                value="<?php
+                                                    echo escapar($token);
+                                                ?>"
                                             >
 
                                             <input

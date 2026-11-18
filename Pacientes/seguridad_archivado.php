@@ -1,21 +1,6 @@
-
 <?php
 
 return [
-
-    // Nombre de la variable de sesión
-    // que utiliza DUCCA al iniciar sesión.
-    //
-    // La completaremos después de revisar
-    // el código de autenticación.
-
-    "sesion_clave" => "",
-
-    // Hash seguro de la contraseña especial.
-    //
-    // No escribir acá la contraseña real.
-    // Se completa con password_hash().
-
-    "password_hash" => ""
-
+    "sesion_clave" => "dni",
+    "password_hash" => '$2y$10$cya6iVpMlcU/8dp4vtzJ3OT07AUEsUmMzLWB0Q9WX5EWd1RoJuUPe'
 ];
