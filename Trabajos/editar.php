@@ -115,9 +115,7 @@ mysqli_close($conexion);
     <!-- ESTILOS GENERALES -->
 
     <link
-        rel="stylesheet"
-        href="../general/estilos.css"
-    >
+        rel="stylesheet" href="../general/estilos.css">
 
     <style>
 
@@ -275,6 +273,11 @@ mysqli_close($conexion);
     <main class="gestion-contenido">
 
         <section class="bienvenida">
+
+            <a class="flecha-volver" href="listar.php"
+   aria-label="Volver a trabajos" title="Volver a trabajos">
+    <span aria-hidden="true">←</span>
+</a>
 
             <h1>Editar trabajo</h1>
 

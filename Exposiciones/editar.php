@@ -236,6 +236,11 @@ mysqli_close($conexion);
 
         <section class="bienvenida">
 
+        <a class="flecha-volver" href="listar.php"
+   aria-label="Volver a exposiciones" title="Volver a exposiciones">
+    <span aria-hidden="true">←</span>
+</a>
+
             <h1>Editar exposición</h1>
 
             <p>
