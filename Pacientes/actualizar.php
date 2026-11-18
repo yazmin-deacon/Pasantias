@@ -1,6 +1,5 @@
 
 <?php
-
 require_once __DIR__ . "/conexion.php";
 
 /** @var mysqli $conexion */
@@ -55,13 +54,10 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
     $resultado = mysqli_query($conexion, $sql);
 
     if (!$resultado) {
-        throw new Exception(
-            mysqli_error($conexion)
-        );
+        throw new Exception(mysqli_error($conexion));
     }
 
     while ($fila = mysqli_fetch_assoc($resultado)) {
-
         if (
             normalizarNombre($fila["nombre_t"]) ===
             normalizarNombre($nombre)
@@ -69,22 +65,19 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
             $id = (int)$fila["id_trabajo"];
 
             mysqli_free_result($resultado);
-
             return $id;
         }
     }
 
     mysqli_free_result($resultado);
 
-    $sql = "INSERT INTO trabajo (nombre_t)
-            VALUES (?)";
-
-    $stmt = mysqli_prepare($conexion, $sql);
+    $stmt = mysqli_prepare(
+        $conexion,
+        "INSERT INTO trabajo (nombre_t) VALUES (?)"
+    );
 
     if (!$stmt) {
-        throw new Exception(
-            mysqli_error($conexion)
-        );
+        throw new Exception(mysqli_error($conexion));
     }
 
     mysqli_stmt_bind_param(
@@ -96,7 +89,6 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
     ejecutar($stmt);
 
     $id = mysqli_insert_id($conexion);
-
     mysqli_stmt_close($stmt);
 
     return $id;
@@ -111,7 +103,6 @@ function resolverObraSocial(
     $nombre,
     $idObraAnterior
 ) {
-
     $nombre = limpiarNombre($nombre);
 
     if ($nombre === "") {
@@ -143,13 +134,10 @@ function resolverObraSocial(
     $resultado = mysqli_query($conexion, $sql);
 
     if (!$resultado) {
-        throw new Exception(
-            mysqli_error($conexion)
-        );
+        throw new Exception(mysqli_error($conexion));
     }
 
     while ($fila = mysqli_fetch_assoc($resultado)) {
-
         if (
             normalizarNombre($fila["nombre_os"]) ===
             normalizarNombre($nombre)
@@ -174,16 +162,15 @@ function resolverObraSocial(
 
     mysqli_free_result($resultado);
 
-    $sql = "INSERT INTO obra_social
-                (nombre_os, activa)
-            VALUES (?, 1)";
-
-    $stmt = mysqli_prepare($conexion, $sql);
+    $stmt = mysqli_prepare(
+        $conexion,
+        "INSERT INTO obra_social
+            (nombre_os, activa)
+         VALUES (?, 1)"
+    );
 
     if (!$stmt) {
-        throw new Exception(
-            mysqli_error($conexion)
-        );
+        throw new Exception(mysqli_error($conexion));
     }
 
     mysqli_stmt_bind_param(
@@ -195,7 +182,6 @@ function resolverObraSocial(
     ejecutar($stmt);
 
     $id = mysqli_insert_id($conexion);
-
     mysqli_stmt_close($stmt);
 
     return $id;
@@ -211,17 +197,15 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 // =========================================
-// RECIBIR DATOS
+// DATOS PERSONALES
 // =========================================
 
-// DNI: quitar puntos.
 $dni = preg_replace(
     '/\D/',
     '',
     (string)($_POST["dni_p"] ?? "")
 );
 
-// CUIL: quitar guiones.
 $cuil = preg_replace(
     '/\D/',
     '',
@@ -236,13 +220,100 @@ $apellido = limpiarNombre(
     $_POST["apellido"] ?? ""
 );
 
-$telefono = trim(
-    (string)($_POST["telefono"] ?? "")
-);
-
 $mail = trim(
     (string)($_POST["mail"] ?? "")
 );
+
+// =========================================
+// TELÉFONO INTERNACIONAL
+// =========================================
+
+$codigosPermitidos = [
+    "54", "56", "598", "591", "55",
+    "595", "57", "51", "58", "593"
+];
+
+$codigoTelefono = (string)(
+    $_POST["telefono_codigo"] ?? "54"
+);
+
+$telefonoNacional = preg_replace(
+    '/\D/',
+    '',
+    (string)($_POST["telefono"] ?? "")
+);
+
+if (
+    !in_array(
+        $codigoTelefono,
+        $codigosPermitidos,
+        true
+    )
+) {
+    die("El país del teléfono no es válido.");
+}
+
+if (
+    $codigoTelefono === "54" &&
+    strlen($telefonoNacional) !== 10
+) {
+    die(
+        "El celular argentino debe contener " .
+        "10 dígitos nacionales."
+    );
+}
+
+if (
+    $codigoTelefono !== "54" &&
+    (
+        strlen($telefonoNacional) < 6 ||
+        strlen($telefonoNacional) > 12 ||
+        strlen($codigoTelefono . $telefonoNacional) > 15
+    )
+) {
+    die("La longitud del teléfono no es válida.");
+}
+
+$telefono = "+" .
+    $codigoTelefono .
+    ($codigoTelefono === "54" ? "9" : "") .
+    $telefonoNacional;
+
+// =========================================
+// DOMICILIO
+// =========================================
+
+$domicilioCalle = limpiarNombre(
+    $_POST["domicilio_calle"] ?? ""
+);
+
+$domicilioAltura = limpiarNombre(
+    $_POST["domicilio_altura"] ?? ""
+);
+
+$domicilioPisoDepto = limpiarNombre(
+    $_POST["domicilio_piso_depto"] ?? ""
+);
+
+$domicilioLocalidad = limpiarNombre(
+    $_POST["domicilio_localidad"] ?? ""
+);
+
+$domicilioProvincia = limpiarNombre(
+    $_POST["domicilio_provincia"] ?? ""
+);
+
+$domicilioCodigoPostal = limpiarNombre(
+    $_POST["domicilio_codigo_postal"] ?? ""
+);
+
+$domicilioPais = limpiarNombre(
+    $_POST["domicilio_pais"] ?? ""
+);
+
+// =========================================
+// OTROS DATOS
+// =========================================
 
 $obraNombre = limpiarNombre(
     $_POST["obra_social_nombre"] ?? ""
@@ -274,7 +345,6 @@ if (
 if (
     $nombre === "" ||
     $apellido === "" ||
-    $telefono === "" ||
     $mail === "" ||
     $obraNombre === ""
 ) {
@@ -290,11 +360,45 @@ if (
     mb_strlen($apellido, "UTF-8") > 30 ||
     strlen($telefono) > 20 ||
     strlen($mail) > 100 ||
-    mb_strlen($trabajoNombre, "UTF-8") > 50
+    mb_strlen($trabajoNombre, "UTF-8") > 50 ||
+    mb_strlen($domicilioCalle, "UTF-8") > 100 ||
+    mb_strlen($domicilioAltura, "UTF-8") > 15 ||
+    mb_strlen($domicilioPisoDepto, "UTF-8") > 30 ||
+    mb_strlen($domicilioLocalidad, "UTF-8") > 100 ||
+    mb_strlen($domicilioProvincia, "UTF-8") > 100 ||
+    mb_strlen($domicilioCodigoPostal, "UTF-8") > 15 ||
+    mb_strlen($domicilioPais, "UTF-8") > 100
+) {
+    die("Alguno de los datos supera el tamaño permitido.");
+}
+
+// Se permiten direcciones antiguas vacías.
+// Si se comienza a cargar un domicilio,
+// deben completarse sus campos principales.
+
+$domicilioIniciado =
+    $domicilioCalle !== "" ||
+    $domicilioAltura !== "" ||
+    $domicilioLocalidad !== "" ||
+    $domicilioProvincia !== "" ||
+    $domicilioCodigoPostal !== "" ||
+    $domicilioPais !== "" ||
+    $domicilioPisoDepto !== "";
+
+if (
+    $domicilioIniciado &&
+    (
+        $domicilioCalle === "" ||
+        $domicilioAltura === "" ||
+        $domicilioLocalidad === "" ||
+        $domicilioProvincia === "" ||
+        $domicilioCodigoPostal === "" ||
+        $domicilioPais === ""
+    )
 ) {
     die(
-        "Alguno de los datos supera " .
-        "el tamaño permitido."
+        "Si cargás un domicilio, completá calle, " .
+        "altura, localidad, provincia, código postal y país."
     );
 }
 
@@ -308,21 +412,18 @@ try {
 
     mysqli_begin_transaction($conexion);
 
-    // =====================================
     // 1. VERIFICAR PACIENTE
-    // =====================================
 
-    $sql = "SELECT id_obra_social
-            FROM paciente
-            WHERE dni_p = ?
-            FOR UPDATE";
-
-    $stmt = mysqli_prepare($conexion, $sql);
+    $stmt = mysqli_prepare(
+        $conexion,
+        "SELECT id_obra_social
+         FROM paciente
+         WHERE dni_p = ?
+         FOR UPDATE"
+    );
 
     if (!$stmt) {
-        throw new Exception(
-            mysqli_error($conexion)
-        );
+        throw new Exception(mysqli_error($conexion));
     }
 
     mysqli_stmt_bind_param(
@@ -334,10 +435,7 @@ try {
     ejecutar($stmt);
 
     $resultado = mysqli_stmt_get_result($stmt);
-
-    $pacienteActual = mysqli_fetch_assoc(
-        $resultado
-    );
+    $pacienteActual = mysqli_fetch_assoc($resultado);
 
     mysqli_stmt_close($stmt);
 
@@ -351,9 +449,7 @@ try {
         $pacienteActual["id_obra_social"] ?? 0
     );
 
-    // =====================================
     // 2. OBRA SOCIAL
-    // =====================================
 
     $idObraSocial = resolverObraSocial(
         $conexion,
@@ -361,18 +457,14 @@ try {
         $idObraAnterior
     );
 
-    // =====================================
     // 3. TRABAJO
-    // =====================================
 
     $idTrabajo = obtenerOCrearTrabajo(
         $conexion,
         $trabajoNombre
     );
 
-    // =====================================
-    // 4. ACTUALIZAR DATOS PERSONALES
-    // =====================================
+    // 4. ACTUALIZAR DATOS Y DOMICILIO
 
     $sql = "UPDATE paciente
 
@@ -383,21 +475,26 @@ try {
                 telefono = ?,
                 mail = ?,
                 id_obra_social = ?,
-                id_trabajo = ?
+                id_trabajo = ?,
+                domicilio_calle = ?,
+                domicilio_altura = ?,
+                domicilio_piso_depto = ?,
+                domicilio_localidad = ?,
+                domicilio_provincia = ?,
+                domicilio_codigo_postal = ?,
+                domicilio_pais = ?
 
             WHERE dni_p = ?";
 
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        throw new Exception(
-            mysqli_error($conexion)
-        );
+        throw new Exception(mysqli_error($conexion));
     }
 
     mysqli_stmt_bind_param(
         $stmt,
-        "sssssiii",
+        "sssssiisssssssi",
         $nombre,
         $apellido,
         $cuil,
@@ -405,27 +502,25 @@ try {
         $mail,
         $idObraSocial,
         $idTrabajo,
+        $domicilioCalle,
+        $domicilioAltura,
+        $domicilioPisoDepto,
+        $domicilioLocalidad,
+        $domicilioProvincia,
+        $domicilioCodigoPostal,
+        $domicilioPais,
         $dniNumero
     );
 
     ejecutar($stmt);
-
     mysqli_stmt_close($stmt);
 
-    // =====================================
-    // IMPORTANTE
-    // =====================================
+    // No modificar los datos médicos:
+    // paciente_estudio
+    // paciente_exposicion
+    // historial_medico
 
-    // NO modificar paciente_estudio.
-    // NO modificar paciente_exposicion.
-    // NO modificar historial_medico.
-    //
-    // Los estudios y exposiciones se
-    // administran desde el historial.
-
-    // =====================================
     // 5. CONFIRMAR CAMBIOS
-    // =====================================
 
     mysqli_commit($conexion);
 
@@ -447,10 +542,9 @@ try {
     ) . "</p>";
 
     echo '<p><a href="listar.php">
-            Volver al listado de pacientes
-          </a></p>';
+        Volver al listado de pacientes
+    </a></p>';
 }
 
 mysqli_close($conexion);
-
 ?>

@@ -4,6 +4,10 @@ require_once __DIR__ . "/conexion.php";
 
 /** @var mysqli $conexion */
 
+// =========================================
+// FUNCIONES
+// =========================================
+
 function consultarTodos($conexion, $sql) {
     $resultado = mysqli_query($conexion, $sql);
 
@@ -25,7 +29,9 @@ function escapar($valor) {
     );
 }
 
+// =========================================
 // CATÁLOGOS
+// =========================================
 
 $trabajos = consultarTodos(
     $conexion,
@@ -51,7 +57,9 @@ $estudios = consultarTodos(
      FROM estudio ORDER BY nombre_es"
 );
 
+// =========================================
 // RELACIONES DE TRABAJOS
+// =========================================
 
 $exposicionesTrabajo = [];
 $estudiosTrabajo = [];
@@ -208,6 +216,138 @@ mysqli_close($conexion);
                 padding: 20px !important;
             }
         }
+
+        /* =====================================
+           TELÉFONO INTERNACIONAL
+           ===================================== */
+
+        .telefono-ducca {
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+            gap: 0;
+            position: relative;
+            margin-top: 5px;
+        }
+
+        .telefono-ducca .telefono-pais {
+            flex: none;
+            width: 94px !important;
+            max-width: 94px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            border: 1px solid #a5b8c4;
+            border-radius: 8px 0 0 8px;
+            background: #e8f2f6;
+            color: #17475c;
+            cursor: pointer;
+            padding: 8px 5px;
+        }
+
+        .telefono-ducca .telefono-pais strong {
+            font-size: 14px;
+        }
+
+        .telefono-ducca .telefono-pais small {
+            display: block;
+            font-size: 10px;
+        }
+
+        .telefono-ducca #telefono {
+            flex: 1;
+            min-width: 0;
+            width: 100% !important;
+            margin: 0 !important;
+            border-radius: 0 8px 8px 0 !important;
+        }
+
+        .telefono-ducca .telefono-lista {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 50;
+            width: 260px;
+            max-height: 235px;
+            overflow: auto;
+            background: white;
+            border: 1px solid #a5b8c4;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px #0002;
+        }
+
+        .telefono-ducca .telefono-lista[hidden] {
+            display: none !important;
+        }
+
+        .telefono-ducca .telefono-opcion {
+            display: block;
+            width: 100%;
+            border: 0;
+            padding: 10px;
+            text-align: left;
+            background: transparent;
+            color: #243744;
+            cursor: pointer;
+        }
+
+        .telefono-ducca .telefono-opcion:hover {
+            background: #dcecf3;
+        }
+
+        body.modo-oscuro .telefono-ducca .telefono-pais,
+        body.modo-oscuro .telefono-ducca .telefono-lista {
+            background: #243c47;
+            color: white;
+        }
+
+        body.modo-oscuro .telefono-ducca .telefono-opcion {
+            color: white;
+        }
+
+        body.modo-oscuro .telefono-ducca .telefono-opcion:hover {
+            background: #345b69;
+        }
+
+        /* =====================================
+           DOMICILIO DEL PACIENTE
+           ===================================== */
+
+        .domicilio-ducca {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px 20px;
+            margin: 18px 0 25px;
+        }
+
+        .domicilio-ducca .campo-domicilio {
+            min-width: 0;
+        }
+
+        .domicilio-ducca .campo-domicilio label {
+            display: block;
+            margin-bottom: 7px;
+        }
+
+        .domicilio-ducca .campo-domicilio input {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .domicilio-ducca .campo-ancho {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 600px) {
+            .domicilio-ducca {
+                grid-template-columns: 1fr;
+            }
+
+            .domicilio-ducca .campo-ancho {
+                grid-column: auto;
+            }
+        }
     </style>
 </head>
 
@@ -225,25 +365,11 @@ mysqli_close($conexion);
     </div>
 
     <nav>
-        <a href="../inicio sesion/index.php">
-            Menú principal
-        </a>
-
-        <a href="../Exposiciones/listar.php">
-            Exposiciones
-        </a>
-
-        <a href="../Trabajos/listar.php">
-            Trabajos
-        </a>
-
-        <a href="../Relaciones/listar.php">
-            Relaciones
-        </a>
-
-        <a href="../Estudios/index.php">
-            Estudios
-        </a>
+        <a href="../inicio sesion/index.php">Menú principal</a>
+        <a href="../Exposiciones/listar.php">Exposiciones</a>
+        <a href="../Trabajos/listar.php">Trabajos</a>
+        <a href="../Relaciones/listar.php">Relaciones</a>
+        <a href="../Estudios/index.php">Estudios</a>
     </nav>
 
     <button type="button" id="btn-tema">
@@ -255,7 +381,6 @@ mysqli_close($conexion);
 
     <section class="bienvenida">
         <h1>Agregar paciente</h1>
-
         <p>
             Registrá un paciente y sus datos correspondientes.
         </p>
@@ -269,6 +394,8 @@ mysqli_close($conexion);
             id="formPaciente"
             class="form-gestion"
         >
+
+            <!-- DATOS PERSONALES -->
 
             <h2>Datos personales</h2>
 
@@ -323,17 +450,59 @@ mysqli_close($conexion);
                 >
             </p>
 
-            <p>
-                <label for="telefono">Teléfono</label>
+            <!-- CELULAR INTERNACIONAL -->
 
-                <input
-                    type="text"
-                    id="telefono"
-                    name="telefono"
-                    maxlength="20"
-                    required
-                >
-            </p>
+            <div>
+                <label for="telefono">Teléfono celular</label>
+
+                <div class="telefono-ducca">
+
+                    <input
+                        type="hidden"
+                        id="telefono_codigo"
+                        name="telefono_codigo"
+                        value="54"
+                    >
+
+                    <button
+                        type="button"
+                        id="telefono_pais"
+                        class="telefono-pais"
+                        aria-expanded="false"
+                        aria-controls="telefono_lista"
+                    >
+                        <span>
+                            <strong id="telefono_prefijo">+54</strong>
+                            <small id="telefono_sigla">ARG</small>
+                        </span>
+
+                        <span aria-hidden="true">⌄</span>
+                    </button>
+
+                    <div
+                        id="telefono_lista"
+                        class="telefono-lista"
+                        hidden
+                    ></div>
+
+                    <input
+                        type="tel"
+                        id="telefono"
+                        name="telefono"
+                        inputmode="numeric"
+                        autocomplete="tel-national"
+                        maxlength="20"
+                        placeholder="299 412-3456"
+                        required
+                    >
+
+                </div>
+
+                <p class="ayuda">
+                    Para Argentina, el +54 9 se agrega automáticamente.
+                    Ingresá solo los 10 dígitos nacionales.
+                </p>
+            </div>
 
             <p>
                 <label for="mail">Mail</label>
@@ -348,6 +517,129 @@ mysqli_close($conexion);
             </p>
 
             <hr>
+
+            <!-- =================================
+                 DOMICILIO DEL PACIENTE
+                 ================================= -->
+
+            <h2>Domicilio del paciente</h2>
+
+            <p class="ayuda">
+                Completá los datos del domicilio.
+                El listado de pacientes mostrará solamente la localidad.
+            </p>
+
+            <div class="domicilio-ducca">
+
+                <div class="campo-domicilio campo-ancho">
+                    <label for="domicilio_calle">
+                        Calle
+                    </label>
+
+                    <input
+                        type="text"
+                        id="domicilio_calle"
+                        name="domicilio_calle"
+                        maxlength="100"
+                        placeholder="Ej. Avenida Argentina"
+                        required
+                    >
+                </div>
+
+                <div class="campo-domicilio">
+                    <label for="domicilio_altura">
+                        Altura
+                    </label>
+
+                    <input
+                        type="text"
+                        id="domicilio_altura"
+                        name="domicilio_altura"
+                        maxlength="15"
+                        placeholder="Ej. 1234"
+                        required
+                    >
+                </div>
+
+                <div class="campo-domicilio">
+                    <label for="domicilio_piso_depto">
+                        Piso / departamento (opcional)
+                    </label>
+
+                    <input
+                        type="text"
+                        id="domicilio_piso_depto"
+                        name="domicilio_piso_depto"
+                        maxlength="30"
+                        placeholder="Ej. 2° B"
+                    >
+                </div>
+
+                <div class="campo-domicilio">
+                    <label for="domicilio_localidad">
+                        Ciudad / localidad
+                    </label>
+
+                    <input
+                        type="text"
+                        id="domicilio_localidad"
+                        name="domicilio_localidad"
+                        maxlength="100"
+                        placeholder="Ej. Neuquén"
+                        required
+                    >
+                </div>
+
+                <div class="campo-domicilio">
+                    <label for="domicilio_provincia">
+                        Provincia / región
+                    </label>
+
+                    <input
+                        type="text"
+                        id="domicilio_provincia"
+                        name="domicilio_provincia"
+                        maxlength="100"
+                        placeholder="Ej. Neuquén"
+                        required
+                    >
+                </div>
+
+                <div class="campo-domicilio">
+                    <label for="domicilio_codigo_postal">
+                        Código postal
+                    </label>
+
+                    <input
+                        type="text"
+                        id="domicilio_codigo_postal"
+                        name="domicilio_codigo_postal"
+                        maxlength="15"
+                        placeholder="Ej. 8300"
+                        required
+                    >
+                </div>
+
+                <div class="campo-domicilio">
+                    <label for="domicilio_pais">
+                        País
+                    </label>
+
+                    <input
+                        type="text"
+                        id="domicilio_pais"
+                        name="domicilio_pais"
+                        maxlength="100"
+                        value="Argentina"
+                        required
+                    >
+                </div>
+
+            </div>
+
+            <hr>
+
+            <!-- OBRA SOCIAL -->
 
             <h2>Obra social</h2>
 
@@ -385,6 +677,8 @@ mysqli_close($conexion);
             </p>
 
             <hr>
+
+            <!-- TRABAJO -->
 
             <h2>Trabajo</h2>
 
@@ -427,6 +721,8 @@ mysqli_close($conexion);
             </p>
 
             <hr>
+
+            <!-- EXPOSICIONES -->
 
             <h2>Exposiciones del paciente</h2>
 
@@ -500,6 +796,8 @@ mysqli_close($conexion);
 
             <hr>
 
+            <!-- ESTUDIOS -->
+
             <h2>Estudios del paciente</h2>
 
             <p class="ayuda">
@@ -569,6 +867,8 @@ mysqli_close($conexion);
 
             <hr>
 
+            <!-- BOTONES -->
+
             <div class="acciones-paciente">
 
                 <button
@@ -590,11 +890,13 @@ mysqli_close($conexion);
         </form>
 
     </section>
-
 </main>
 
 <script>
+
+// ======================================
 // DATOS DE LOS CATÁLOGOS
+// ======================================
 
 const trabajos = <?php echo json_encode(
     $trabajos,
@@ -629,7 +931,7 @@ function normalizar(texto) {
 }
 
 // ======================================
-// FORMATO AUTOMÁTICO DNI Y CUIL
+// DNI Y CUIL
 // ======================================
 
 function soloNumeros(texto, maximo) {
@@ -639,29 +941,26 @@ function soloNumeros(texto, maximo) {
 }
 
 function formatoDNI(texto) {
-    const numeros = soloNumeros(texto, 8);
-
-    return numeros.replace(
+    return soloNumeros(texto, 8).replace(
         /\B(?=(\d{3})+(?!\d))/g,
         "."
     );
 }
 
 function formatoCUIL(texto) {
-    const numeros = soloNumeros(texto, 11);
+    const n = soloNumeros(texto, 11);
 
-    if (numeros.length > 10) {
-        return numeros.slice(0, 2) + "-" +
-               numeros.slice(2, 10) + "-" +
-               numeros.slice(10);
+    if (n.length > 10) {
+        return n.slice(0, 2) + "-" +
+               n.slice(2, 10) + "-" +
+               n.slice(10);
     }
 
-    if (numeros.length > 2) {
-        return numeros.slice(0, 2) + "-" +
-               numeros.slice(2);
+    if (n.length > 2) {
+        return n.slice(0, 2) + "-" + n.slice(2);
     }
 
-    return numeros;
+    return n;
 }
 
 function activarFormato(campo, formatear) {
@@ -674,7 +973,6 @@ function activarFormato(campo, formatear) {
             .length;
 
         const nuevo = formatear(this.value);
-
         this.value = nuevo;
 
         let indice = 0;
@@ -700,6 +998,203 @@ const campoCUIL = document.getElementById("cuil");
 
 activarFormato(campoDNI, formatoDNI);
 activarFormato(campoCUIL, formatoCUIL);
+
+// ======================================
+// TELÉFONO INTERNACIONAL
+// ======================================
+
+const telefonosPaises = [
+    ["54", "ARG", "Argentina"],
+    ["56", "CHL", "Chile"],
+    ["598", "URY", "Uruguay"],
+    ["591", "BOL", "Bolivia"],
+    ["55", "BRA", "Brasil"],
+    ["595", "PRY", "Paraguay"],
+    ["57", "COL", "Colombia"],
+    ["51", "PER", "Perú"],
+    ["58", "VEN", "Venezuela"],
+    ["593", "ECU", "Ecuador"]
+];
+
+const telefonoCodigo = document.getElementById(
+    "telefono_codigo"
+);
+
+const telefonoCampo = document.getElementById(
+    "telefono"
+);
+
+const telefonoBoton = document.getElementById(
+    "telefono_pais"
+);
+
+const telefonoLista = document.getElementById(
+    "telefono_lista"
+);
+
+function telefonoFormateado(valor) {
+    const n = String(valor).replace(/\D/g, "");
+
+    if (telefonoCodigo.value !== "54") {
+        return n;
+    }
+
+    // Buenos Aires: 11 1234-5678
+
+    if (n.startsWith("11")) {
+        if (n.length <= 2) return n;
+
+        if (n.length <= 6) {
+            return n.slice(0, 2) + " " + n.slice(2);
+        }
+
+        return n.slice(0, 2) + " " +
+               n.slice(2, 6) + "-" +
+               n.slice(6);
+    }
+
+    // Neuquén: 299 412-3456
+
+    if (n.startsWith("299")) {
+        if (n.length <= 3) return n;
+
+        if (n.length <= 6) {
+            return n.slice(0, 3) + " " + n.slice(3);
+        }
+
+        return n.slice(0, 3) + " " +
+               n.slice(3, 6) + "-" +
+               n.slice(6);
+    }
+
+    // No inventar agrupaciones para otros códigos.
+
+    return n;
+}
+
+function configurarPaisTelefono(codigo) {
+    const pais = telefonosPaises.find(
+        p => p[0] === codigo
+    ) || telefonosPaises[0];
+
+    telefonoCodigo.value = pais[0];
+
+    document.getElementById(
+        "telefono_prefijo"
+    ).textContent = "+" + pais[0];
+
+    document.getElementById(
+        "telefono_sigla"
+    ).textContent = pais[1];
+
+    telefonoCampo.placeholder =
+        pais[0] === "54"
+            ? "299 412-3456"
+            : "Número nacional";
+
+    telefonoCampo.value = telefonoFormateado(
+        telefonoCampo.value
+    );
+
+    telefonoLista.hidden = true;
+
+    telefonoBoton.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+}
+
+for (const pais of telefonosPaises) {
+    const opcion = document.createElement("button");
+
+    opcion.type = "button";
+    opcion.className = "telefono-opcion";
+
+    opcion.textContent =
+        pais[2] + " (+" + pais[0] + ")";
+
+    opcion.addEventListener("click", () => {
+        telefonoCampo.value = "";
+
+        configurarPaisTelefono(pais[0]);
+
+        telefonoCampo.focus();
+    });
+
+    telefonoLista.appendChild(opcion);
+}
+
+telefonoBoton.addEventListener("click", () => {
+    telefonoLista.hidden = !telefonoLista.hidden;
+
+    telefonoBoton.setAttribute(
+        "aria-expanded",
+        String(!telefonoLista.hidden)
+    );
+});
+
+document.addEventListener("click", evento => {
+    if (!evento.target.closest(".telefono-ducca")) {
+        telefonoLista.hidden = true;
+
+        telefonoBoton.setAttribute(
+            "aria-expanded",
+            "false"
+        );
+    }
+});
+
+telefonoCampo.addEventListener("input", () => {
+    const maximo =
+        telefonoCodigo.value === "54" ? 10 : 12;
+
+    const numeros = telefonoCampo.value
+        .replace(/\D/g, "")
+        .slice(0, maximo);
+
+    telefonoCampo.value = telefonoFormateado(numeros);
+});
+
+function validarTelefono() {
+    const numeros = telefonoCampo.value.replace(/\D/g, "");
+
+    if (
+        telefonoCodigo.value === "54" &&
+        numeros.length !== 10
+    ) {
+        alert(
+            "El celular argentino debe contener " +
+            "10 dígitos nacionales."
+        );
+
+        telefonoCampo.focus();
+        return false;
+    }
+
+    if (
+        telefonoCodigo.value !== "54" &&
+        (
+            numeros.length < 6 ||
+            numeros.length > 12 ||
+            telefonoCodigo.value.length +
+                numeros.length > 15
+        )
+    ) {
+        alert(
+            "Revisá la longitud del número " +
+            "del país seleccionado."
+        );
+
+        telefonoCampo.focus();
+        return false;
+    }
+
+    telefonoCampo.value = numeros;
+
+    return true;
+}
+
+configurarPaisTelefono("54");
 
 // ======================================
 // OBRA SOCIAL
@@ -745,10 +1240,15 @@ function mostrarObras() {
     sugerenciasObras.replaceChildren();
 
     const coincidencias = nombresObras
-        .filter(nombre => normalizar(nombre).includes(texto))
+        .filter(
+            nombre => normalizar(nombre).includes(texto)
+        )
         .sort((a, b) => {
-            const aInicio = normalizar(a).startsWith(texto);
-            const bInicio = normalizar(b).startsWith(texto);
+            const aInicio =
+                normalizar(a).startsWith(texto);
+
+            const bInicio =
+                normalizar(b).startsWith(texto);
 
             if (aInicio !== bInicio) {
                 return aInicio ? -1 : 1;
@@ -767,6 +1267,7 @@ function mostrarObras() {
 
         opcion.addEventListener("click", () => {
             campoObra.value = nombre;
+
             sugerenciasObras.style.display = "none";
             actualizarObra();
         });
@@ -829,9 +1330,6 @@ function actualizarTrabajo() {
 
     const exp = expTrabajo[trabajo.id_trabajo] || [];
     const est = estTrabajo[trabajo.id_trabajo] || [];
-
-    // Agregar estudios y exposiciones habituales
-    // sin borrar las selecciones manuales.
 
     document.querySelectorAll("[data-exposicion]")
         .forEach(casilla => {
@@ -1072,12 +1570,15 @@ document.getElementById("formPaciente")
             return;
         }
 
+        if (!validarTelefono()) {
+            evento.preventDefault();
+            return;
+        }
+
         incorporarExposicion();
         incorporarEstudio();
 
-        // Los separadores son solo visuales.
-        // PHP también normaliza ambos campos.
-
+        // Separadores solo visuales.
         campoDNI.value = dniNumeros;
         campoCUIL.value = cuilNumeros;
     });

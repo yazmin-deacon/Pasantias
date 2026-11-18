@@ -4,7 +4,9 @@ require_once __DIR__ . "/conexion.php";
 
 /** @var mysqli $conexion */
 
+// =========================================
 // CONSULTAR PACIENTES
+// =========================================
 
 $sql = "SELECT
             p.dni_p,
@@ -13,6 +15,7 @@ $sql = "SELECT
             p.cuil,
             p.telefono,
             p.mail,
+            p.domicilio_localidad,
 
             COALESCE(
                 os.nombre_os,
@@ -39,12 +42,203 @@ if (!$resultado) {
 
 $cantidad = mysqli_num_rows($resultado);
 
+// =========================================
+// FUNCIONES
+// =========================================
+
 function escapar($valor) {
     return htmlspecialchars(
         (string)($valor ?? ""),
         ENT_QUOTES,
         "UTF-8"
     );
+}
+
+// =========================================
+// DNI CON PUNTOS
+// =========================================
+
+function formatoDNI($dni) {
+    $dni = preg_replace(
+        '/\D/',
+        '',
+        (string)$dni
+    );
+
+    return preg_replace(
+        '/\B(?=(\d{3})+(?!\d))/',
+        '.',
+        $dni
+    );
+}
+
+// =========================================
+// CUIL CON GUIONES
+// =========================================
+
+function formatoCUIL($cuil) {
+    $cuil = preg_replace(
+        '/\D/',
+        '',
+        (string)$cuil
+    );
+
+    if (strlen($cuil) !== 11) {
+        return $cuil;
+    }
+
+    return substr($cuil, 0, 2) . "-" .
+           substr($cuil, 2, 8) . "-" .
+           substr($cuil, 10, 1);
+}
+
+// =========================================
+// NÚMERO ARGENTINO
+// =========================================
+
+function formatoNumeroArgentino($numero) {
+    $numero = preg_replace(
+        '/\D/',
+        '',
+        (string)$numero
+    );
+
+    if (strlen($numero) !== 10) {
+        return $numero;
+    }
+
+    // Buenos Aires: 11 1234-5678
+
+    if (substr($numero, 0, 2) === "11") {
+        return substr($numero, 0, 2) . " " .
+               substr($numero, 2, 4) . "-" .
+               substr($numero, 6, 4);
+    }
+
+    // Neuquén: 299 412-3456
+
+    if (substr($numero, 0, 3) === "299") {
+        return substr($numero, 0, 3) . " " .
+               substr($numero, 3, 3) . "-" .
+               substr($numero, 6, 4);
+    }
+
+    // Otros códigos de área:
+    // conservar los dígitos.
+
+    return $numero;
+}
+
+// =========================================
+// FORMATO COMPLETO DEL TELÉFONO
+// =========================================
+
+function formatoTelefono($telefono) {
+    $telefono = trim(
+        (string)($telefono ?? "")
+    );
+
+    if ($telefono === "") {
+        return "";
+    }
+
+    $numeros = preg_replace(
+        '/\D/',
+        '',
+        $telefono
+    );
+
+    if ($numeros === "") {
+        return $telefono;
+    }
+
+    // Teléfonos antiguos sin prefijo.
+
+    if (substr($telefono, 0, 1) !== "+") {
+        if (strlen($numeros) === 10) {
+            return formatoNumeroArgentino($numeros);
+        }
+
+        return $telefono;
+    }
+
+    // Celulares argentinos:
+    // +5492994123456
+    // +54 9 299 412-3456
+
+    if (
+        substr($numeros, 0, 3) === "549" &&
+        strlen($numeros) === 13
+    ) {
+        return "+54 9 " .
+               formatoNumeroArgentino(
+                   substr($numeros, 3)
+               );
+    }
+
+    // Teléfonos argentinos anteriores
+    // que no tenían el 9 internacional.
+
+    if (
+        substr($numeros, 0, 2) === "54" &&
+        strlen($numeros) === 12
+    ) {
+        return "+54 " .
+               formatoNumeroArgentino(
+                   substr($numeros, 2)
+               );
+    }
+
+    // Países permitidos.
+
+    $codigos = [
+        "598",
+        "591",
+        "595",
+        "593",
+        "54",
+        "56",
+        "55",
+        "57",
+        "51",
+        "58"
+    ];
+
+    foreach ($codigos as $codigo) {
+        if (
+            substr(
+                $numeros,
+                0,
+                strlen($codigo)
+            ) === $codigo
+        ) {
+            $numeroNacional = substr(
+                $numeros,
+                strlen($codigo)
+            );
+
+            return "+" .
+                   $codigo .
+                   " " .
+                   $numeroNacional;
+        }
+    }
+
+    return $telefono;
+}
+
+// =========================================
+// MOSTRAR LOCALIDAD
+// =========================================
+
+function mostrarLocalidad($localidad) {
+    $localidad = trim(
+        (string)($localidad ?? "")
+    );
+
+    return $localidad !== ""
+        ? $localidad
+        : "Sin registrar";
 }
 ?>
 
@@ -53,58 +247,66 @@ function escapar($valor) {
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Listado de pacientes</title>
 
-    <link rel="stylesheet" href="../general/estilos.css">
+    <link
+        rel="stylesheet"
+        href="../general/estilos.css"
+    >
 </head>
 
 <body>
 
 <header>
 
-        <div class="logo">
+    <div class="logo">
+        <img
+            id="logo"
+            src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+            alt="Logo DUCA"
+            height="150"
+            width="175"
+        >
+    </div>
 
-            <img
-                id="logo"
-                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
-                alt="Logo DUCA"
-                height="150"
-                width="175"
-            >
+    <nav>
 
-        </div>
+        <a href="../inicio sesion/index.php">
+            Menú principal
+        </a>
 
-        <nav>
+        <a href="../Exposiciones/listar.php">
+            Exposiciones
+        </a>
 
-            <a href="../inicio sesion/index.php">
-                Menú principal
-            </a>
+        <a href="../Trabajos/listar.php">
+            Trabajos
+        </a>
 
-            <a href="../Exposiciones/listar.php">
-                Exposiciones
-            </a>
+        <a href="../Relaciones/listar.php">
+            Relaciones
+        </a>
 
-            <a href="../Trabajos/listar.php">
-                Trabajos
-            </a>
+        <a href="../Estudios/index.php">
+            Estudios
+        </a>
 
-            <a href="../Relaciones/listar.php">
-                Relaciones
-            </a>
+    </nav>
 
-            <a href="../Estudios/index.php">
-                Estudios
-            </a>
+    <button
+        type="button"
+        id="btn-tema"
+    >
+        Modo oscuro
+    </button>
 
-        </nav>
-
-        <button type="button" id="btn-tema">
-            Modo oscuro
-        </button>
-
-    </header>
+</header>
 
 <main class="gestion-contenido pagina-listado">
 
@@ -113,20 +315,24 @@ function escapar($valor) {
     <section class="bienvenida encabezado-listado">
 
         <div>
+
             <h1>Listado de pacientes</h1>
 
             <p>
                 Administración y consulta de los pacientes registrados
                 en el sistema.
             </p>
+
         </div>
 
-        <a href="alta.php" class="btn-nuevo-paciente">
+        <a
+            href="alta.php"
+            class="btn-nuevo-paciente"
+        >
             + Nuevo paciente
         </a>
 
     </section>
-
 
     <!-- CONTENIDO PRINCIPAL -->
 
@@ -135,21 +341,29 @@ function escapar($valor) {
         <div class="titulo-listado">
 
             <div>
+
                 <h2>Pacientes registrados</h2>
 
                 <p>
                     Consultá los datos y administrá la información
                     de cada paciente.
                 </p>
+
             </div>
 
             <span class="contador-pacientes">
+
                 <?php echo $cantidad; ?>
-                <?php echo ($cantidad == 1) ? "paciente" : "pacientes"; ?>
+
+                <?php
+                    echo ($cantidad == 1)
+                        ? "paciente"
+                        : "pacientes";
+                ?>
+
             </span>
 
         </div>
-
 
         <?php if ($cantidad == 0) { ?>
 
@@ -158,13 +372,13 @@ function escapar($valor) {
                 <h3>No hay pacientes registrados</h3>
 
                 <p>
-                    Todavía no se cargaron pacientes en el sistema.
+                    Todavía no se cargaron pacientes
+                    en el sistema.
                 </p>
 
             </div>
 
         <?php } else { ?>
-
 
             <!-- TABLA DE PACIENTES -->
 
@@ -173,6 +387,7 @@ function escapar($valor) {
                 <table class="tabla-gestion tabla-pacientes">
 
                     <thead>
+
                         <tr>
                             <th>DNI</th>
                             <th>Nombre</th>
@@ -180,12 +395,14 @@ function escapar($valor) {
                             <th>CUIL</th>
                             <th>Teléfono</th>
                             <th>Mail</th>
+                            <th>Localidad</th>
                             <th>Obra social</th>
                             <th>Trabajo</th>
                             <th>Editar</th>
                             <th>Eliminar</th>
                             <th>Historial médico</th>
                         </tr>
+
                     </thead>
 
                     <tbody>
@@ -194,67 +411,143 @@ function escapar($valor) {
 
                         <tr>
 
-                            <td>
-                                <?php echo escapar($fila["dni_p"]); ?>
-                            </td>
+                            <!-- DNI -->
 
                             <td>
-                                <?php echo escapar($fila["nombre_p"]); ?>
+                                <?php
+                                    echo escapar(
+                                        formatoDNI(
+                                            $fila["dni_p"]
+                                        )
+                                    );
+                                ?>
                             </td>
 
-                            <td>
-                                <?php echo escapar($fila["apellido"]); ?>
-                            </td>
+                            <!-- NOMBRE -->
 
                             <td>
-                                <?php echo escapar($fila["cuil"]); ?>
+                                <?php
+                                    echo escapar(
+                                        $fila["nombre_p"]
+                                    );
+                                ?>
                             </td>
 
-                            <td>
-                                <?php echo escapar($fila["telefono"]); ?>
-                            </td>
+                            <!-- APELLIDO -->
 
                             <td>
-                                <?php echo escapar($fila["mail"]); ?>
+                                <?php
+                                    echo escapar(
+                                        $fila["apellido"]
+                                    );
+                                ?>
                             </td>
 
-                            <td>
-                                <?php echo escapar($fila["obra_social"]); ?>
-                            </td>
+                            <!-- CUIL -->
 
                             <td>
-                                <?php echo escapar(
-                                    $fila["trabajo"] ?? "Sin asignar"
-                                ); ?>
+                                <?php
+                                    echo escapar(
+                                        formatoCUIL(
+                                            $fila["cuil"]
+                                        )
+                                    );
+                                ?>
                             </td>
+
+                            <!-- TELÉFONO -->
+
+                            <td>
+                                <?php
+                                    echo escapar(
+                                        formatoTelefono(
+                                            $fila["telefono"]
+                                        )
+                                    );
+                                ?>
+                            </td>
+
+                            <!-- MAIL -->
+
+                            <td>
+                                <?php
+                                    echo escapar(
+                                        $fila["mail"]
+                                    );
+                                ?>
+                            </td>
+
+                            <!-- SOLO LOCALIDAD -->
+
+                            <td>
+                                <?php
+                                    echo escapar(
+                                        mostrarLocalidad(
+                                            $fila["domicilio_localidad"]
+                                        )
+                                    );
+                                ?>
+                            </td>
+
+                            <!-- OBRA SOCIAL -->
+
+                            <td>
+                                <?php
+                                    echo escapar(
+                                        $fila["obra_social"]
+                                    );
+                                ?>
+                            </td>
+
+                            <!-- TRABAJO -->
+
+                            <td>
+                                <?php
+                                    echo escapar(
+                                        $fila["trabajo"] ?? "Sin asignar"
+                                    );
+                                ?>
+                            </td>
+
+                            <!-- EDITAR -->
 
                             <td>
                                 <a
                                     class="accion-tabla accion-editar"
                                     href="editar.php?dni_p=<?php
-                                        echo urlencode($fila["dni_p"]);
+                                        echo urlencode(
+                                            $fila["dni_p"]
+                                        );
                                     ?>"
                                 >
                                     Editar
                                 </a>
                             </td>
 
+                            <!-- ELIMINAR -->
+
                             <td>
                                 <a
                                     class="accion-tabla accion-eliminar"
                                     href="eliminar.php?dni_p=<?php
-                                        echo urlencode($fila["dni_p"]);
+                                        echo urlencode(
+                                            $fila["dni_p"]
+                                        );
                                     ?>"
                                 >
                                     Eliminar
                                 </a>
                             </td>
 
+                            <!-- HISTORIAL -->
+
                             <td>
                                 <a
                                     class="accion-tabla accion-historial"
                                     href="../historial/historial.php?dni_p=<?php
-                                        echo urlencode($fila["dni_p"]);
+                                        echo urlencode(
+                                            $fila["dni_p"]
+                                        );
                                     ?>"
                                 >
                                     Ver historial
@@ -277,10 +570,10 @@ function escapar($valor) {
 
 </main>
 
+<script src="../general/animaciones.js"></script>
+<script src="../general/modooscuro.js"></script>
+<script src="../general/script.js"></script>
 
-    <script src="../general/animaciones.js"></script>
-    <script src="../general/modooscuro.js"></script>
-    <script src="../general/script.js"></script>
 </body>
 </html>
 

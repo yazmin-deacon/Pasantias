@@ -21,6 +21,16 @@ function escapar($valor) {
     );
 }
 
+function formatoDNI($dni) {
+    $dni = preg_replace('/\D/', '', (string)$dni);
+
+    return preg_replace(
+        '/\B(?=(\d{3})+(?!\d))/',
+        '.',
+        $dni
+    );
+}
+
 function consultar($conexion, $sql, $dni) {
     $stmt = mysqli_prepare($conexion, $sql);
 
@@ -330,7 +340,7 @@ mysqli_close($conexion);
 
         <p>
             DNI:
-            <?php echo escapar($paciente["dni_p"]); ?>
+            <?php echo escapar(formatoDNI($paciente["dni_p"])); ?>
         </p>
 
         <p>
@@ -340,7 +350,7 @@ mysqli_close($conexion);
         </p>
 
     </section>
-    
+
 <!-- DESCARGAS DEL HISTORIAL -->
 
 <h3>Descargar documentación</h3>
