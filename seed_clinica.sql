@@ -452,3 +452,34 @@ ALTER TABLE paciente
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- =========================================
+-- DUCCA - SISTEMA DE PACIENTES ARCHIVADOS
+-- =========================================
+
+-- 1. AGREGAR ESTADO DEL PACIENTE
+
+ALTER TABLE paciente
+ADD COLUMN estado ENUM('activo', 'archivado')
+NOT NULL DEFAULT 'activo';
+
+-- 2. REGISTRAR FECHA DE ARCHIVADO
+
+ALTER TABLE paciente
+ADD COLUMN fecha_archivado DATETIME NULL;
+
+-- 3. CREAR HISTORIAL DE ACCIONES
+
+CREATE TABLE auditoria_pacientes (
+    id_auditoria INT AUTO_INCREMENT PRIMARY KEY,
+
+    dni_paciente INT NOT NULL,
+
+    accion ENUM('archivar', 'reactivar') NOT NULL,
+
+    fecha_accion DATETIME NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    usuario_responsable VARCHAR(100) NULL
+
+);

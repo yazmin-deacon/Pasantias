@@ -1,11 +1,13 @@
 
 <?php
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+return [
 
-if (!isset($_SESSION["dni"])) {
-    header("Location: /pasantias/inicio%20sesion/login.html");
-    exit();
-}
+    // Variable de sesión utilizada por DUCCA
+    "sesion_clave" => "dni",
+
+    // Contraseña especial de archivado.
+    // Todavía falta generar y colocar su hash.
+    "password_hash" => ""
+
+];
