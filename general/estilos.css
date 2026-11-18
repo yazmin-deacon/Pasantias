@@ -3100,3 +3100,57 @@ body:has(form[action="guardar.php"]) a:not(header nav a):hover {
     color: #14566b !important;
     text-decoration: underline !important;
 }
+
+
+/* ==========================================
+   DUCCA - CORRECCIÓN ENLACES MENÚ SUPERIOR
+========================================== */
+
+/* ENLACES BLANCOS EN AMBOS MODOS */
+
+body header nav a,
+body header nav a:link,
+body header nav a:visited,
+body.modo-oscuro header nav a,
+body.modo-oscuro header nav a:visited {
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-weight: 600;
+}
+
+/* ANIMACIÓN AL PASAR EL MOUSE */
+
+body header nav a:hover,
+body.modo-oscuro header nav a:hover {
+    color: #d5f0f2 !important;
+    transform: translateY(-2px);
+}
+
+/* TRANSICIÓN SUAVE */
+
+body header nav a {
+    display: inline-block;
+    transition:
+        color 0.3s ease,
+        transform 0.25s ease;
+}
+
+
+/* ==========================================
+   DUCCA - TEXTO BLANCO BOTONES ADMINISTRAR
+========================================== */
+
+main.gestion-contenido a.btn-administrar,
+main.gestion-contenido a.btn-administrar:link,
+main.gestion-contenido a.btn-administrar:visited,
+main.gestion-contenido a.btn-administrar:hover,
+main.gestion-contenido a.btn-administrar:active,
+
+body.modo-oscuro main.gestion-contenido a.btn-administrar,
+body.modo-oscuro main.gestion-contenido a.btn-administrar:link,
+body.modo-oscuro main.gestion-contenido a.btn-administrar:visited,
+body.modo-oscuro main.gestion-contenido a.btn-administrar:hover,
+body.modo-oscuro main.gestion-contenido a.btn-administrar:active {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}

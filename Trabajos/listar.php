@@ -338,7 +338,7 @@ if (isset($_GET["mensaje"]) && is_string($_GET["mensaje"])) {
                 Relaciones
             </a>
 
-            <a href="../Estudios/listar.php">
+            <a href="../Estudios/index.php">
                 Estudios
             </a>
 
