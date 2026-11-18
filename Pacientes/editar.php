@@ -289,9 +289,56 @@ mysqli_close($conexion);
 
 <body>
 
+<header>
+
+<a class="flecha-volver" href="listar.php"
+   aria-label="Volver a pacientes" title="Volver a pacientes">
+    <img src="../general/flechita.png" alt="Flecha volver" width="30" height="30">
+</a>
+
+<div class="logo">
+    <img
+        id="logo"
+        src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+        alt="Logo DUCA"
+        height="150"
+        width="175"
+    >
+</div>
+        <nav>
+
+            <a href="../inicio sesion/index.php">
+                Menú principal
+            </a>
+
+            <a href="../gestionar_exposiciones.html">
+                Exposiciones
+            </a>
+
+            <a href="listar.php">
+                Trabajos
+            </a>
+
+            <a href="../gestionar_relaciones.html">
+                Relaciones
+            </a>
+
+            <a href="../gestionar_estudios.html">
+                Estudios
+            </a>
+
+        </nav>
+
+        <button type="button" id="btn-tema">
+            Modo oscuro
+        </button>
+
+    </header>
+
 <main class="gestion-contenido">
 
     <section class="bienvenida">
+
         <h1>Editar paciente</h1>
 
         <p>
@@ -656,13 +703,13 @@ mysqli_close($conexion);
             ></p>
 
             <p>
-                <a
-                    href="../Obra%20Social/listar.php"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Administrar obras sociales
-                </a>
+                <!-- Administrar obra social -->
+<button
+    type="button"
+    class="btn-administrar"
+    onclick="window.location.href='../Obra%20Social/listar.php'">
+    Administrar obras sociales
+</button>
             </p>
 
             <hr>
@@ -704,12 +751,17 @@ mysqli_close($conexion);
 
             </datalist>
 
-            <p
-                id="mensaje_trabajo"
-                class="ayuda"
-            ></p>
+            <p id="mensaje_trabajo" class="ayuda"></p>
 
-            <!-- BOTONES -->
+            <p>
+                <a
+                    href="../Trabajos/listar.php"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Administrar trabajos
+                </a>
+            </p>
 
             <div class="acciones-finales">
 
@@ -717,9 +769,13 @@ mysqli_close($conexion);
                     Guardar cambios
                 </button>
 
-                <a href="listar.php">
-                    Cancelar
-                </a>
+                <!-- Cancelar -->
+<button
+    type="button"
+    class="btn-cancelar-paciente"
+    onclick="window.location.href='listar.php'">
+    Cancelar
+</button>
 
             </div>
 
@@ -1238,6 +1294,10 @@ document.getElementById("formPaciente")
     });
 
 </script>
+
+<script src="../general/script.js"></script>
+    <script src="../general/modooscuro.js"></script>
+    <script src="../general/animaciones.js"></script>
 
 </body>
 </html>

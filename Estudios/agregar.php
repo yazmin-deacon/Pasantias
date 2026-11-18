@@ -218,6 +218,14 @@ if (!$resultadoPacientes) {
 <main class="gestion-contenido">
 
     <section class="bienvenida">
+
+        <?php if ($modoEdicion) { ?>
+    <a class="flecha-volver" href="estudios.php"
+       aria-label="Volver a estudios" title="Volver a estudios">
+        <span aria-hidden="true">←</span>
+    </a>
+<?php } ?>
+
         <h1><?php echo $modoEdicion ? "Editar estudios del paciente" : "Asignar estudios al paciente"; ?></h1>
         <p>Seleccioná un paciente y marcá los estudios que correspondan.</p>
     </section>

@@ -3154,3 +3154,194 @@ body.modo-oscuro main.gestion-contenido a.btn-administrar:active {
     color: #ffffff !important;
     text-decoration: none !important;
 }
+
+/* FLECHA PARA VOLVER */
+
+.flecha-volver {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin-bottom: 14px;
+    border-radius: 50%;
+    background: #e4f1f3;
+    color: #14566b !important;
+    text-decoration: none !important;
+    font-size: 27px;
+    font-weight: 600;
+    line-height: 1;
+    transition: 0.2s;
+}
+
+.flecha-volver:hover {
+    background: #cce5e8;
+    color: #123f55 !important;
+    text-decoration: none !important;
+    transform: translateX(-3px);
+}
+
+/* MODO OSCURO */
+
+body.modo-oscuro .flecha-volver {
+    background: #294b55;
+    color: #d8f3f0 !important;
+}
+
+body.modo-oscuro .flecha-volver:hover {
+    background: #35616c;
+    color: #ffffff !important;
+}
+
+/* MODO OSCURO - EDITAR PACIENTE */
+
+body.modo-oscuro .form-gestion input,
+body.modo-oscuro .form-gestion select,
+body.modo-oscuro .form-gestion textarea {
+    background: #30434f;
+    color: #ffffff;
+    border-color: #607783;
+}
+
+body.modo-oscuro .form-gestion input:focus,
+body.modo-oscuro .form-gestion select:focus {
+    background: #38515e;
+    border-color: #48b9c4;
+    outline: none;
+}
+
+body.modo-oscuro .form-gestion label {
+    color: #e0eaf0;
+}
+
+body.modo-oscuro .form-gestion .ayuda {
+    color: #c0d0d8;
+}
+
+body.modo-oscuro .form-gestion a {
+    color: #72d6c3;
+}
+
+body.modo-oscuro .form-gestion hr {
+    border-color: #40535e;
+}
+.logo-con-flecha {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+header {
+    position: relative;
+}
+
+.logo-con-flecha {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.logo-con-flecha .btn-volver {
+    align-self: flex-start;
+}
+
+.logo-con-flecha #logo {
+    display: block;
+    width: 175px;
+    height: 100px;
+    object-fit: contain;
+}
+
+header {
+    position: relative;
+}
+
+.flecha-volver {
+    position: absolute;
+    top: 20px;
+    left: 25px;
+    transform: none;
+    z-index: 10;
+}
+
+/* =====================================
+   BOTONES ADMINISTRAR - EDITAR PACIENTE
+===================================== */
+
+main.gestion-contenido button.btn-administrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: fit-content;
+    min-height: 44px;
+    padding: 12px 20px;
+
+    background: linear-gradient(
+        120deg,
+        #176d82,
+        #15999b
+    );
+
+    color: #ffffff;
+    border: 1px solid transparent;
+    border-radius: 8px;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        background-color 0.7s ease,
+        color 0.7s ease;
+}
+
+main.gestion-contenido button.btn-administrar:hover {
+    background: linear-gradient(
+        120deg,
+        #123f55,
+        #176d82
+    );
+
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(20, 120, 135, 0.25);
+}
+
+main.gestion-contenido button.btn-administrar:active {
+    transform: scale(0.97);
+}
+
+/* MODO OSCURO */
+
+body.modo-oscuro main.gestion-contenido button.btn-administrar {
+    background: linear-gradient(
+        120deg,
+        #176d82,
+        #15999b
+    );
+
+    color: #ffffff;
+    border-color: #40535e;
+}
+
+body.modo-oscuro main.gestion-contenido button.btn-administrar:hover {
+    background: linear-gradient(
+        120deg,
+        #123f55,
+        #176d82
+    );
+}
+
+/* Invertir flechita en modo oscuro */
+body.modo-oscuro .flecha-volver img {
+    filter: invert(1);
+}

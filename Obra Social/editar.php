@@ -101,6 +101,11 @@ if (!function_exists("escapar")) {
 </head>
 
 <body>
+    
+<a class="flecha-volver" href="listar.php"
+   aria-label="Volver a obras sociales" title="Volver a obras sociales">
+    <span aria-hidden="true">←</span>
+</a>
 
 <h1>Editar obra social</h1>
 

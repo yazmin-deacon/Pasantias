@@ -1,0 +1,19 @@
+BD:
+
+arreglar limite de nunmeros de telefono al agregar un paciente
+agregar direccion cuando se carga al paciente
+arreglar la pagina de administrar estudios porque esta todo junto, hay que hacer 2 paginas diferentes, 
+una para cargarles y verles el estado de los estudios a los pacientes, y otra
+para tener administracion de que estudios se pueden asignar y cuales hay que eliminar y asi
+
+
+
+
+Giu:
+
+    hay que ver porque no anduvieron los estilos en alta.php de pacientes (creo que en los demas tmb)
+    hay que agregar el animaciones.js porqeu se ven horrible las paginas
+    agregar flechita para retroceder a la pagina anterior y una casita que lleve directamente al menu principal
+    falta estilos en los botones nuevos
+    el tema no se mantiene en las paginas individiuales
+    hay que hacer el ss de todas las paginas de historial, las de turnos
