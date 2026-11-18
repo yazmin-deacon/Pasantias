@@ -261,7 +261,7 @@ mysqli_close($conexion);
         </nav>
 
         <button type="button" id="btn-tema">
-            Modo oscuro
+           🌙 Modo oscuro
         </button>
 
     </header>
