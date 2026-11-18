@@ -11,9 +11,7 @@ para tener administracion de que estudios se pueden asignar y cuales hay que eli
 
 Giu:
 
-    hay que ver porque no anduvieron los estilos en alta.php de pacientes (creo que en los demas tmb)
     hay que agregar el animaciones.js porqeu se ven horrible las paginas
-    agregar flechita para retroceder a la pagina anterior y una casita que lleve directamente al menu principal
-    falta estilos en los botones nuevos
     el tema no se mantiene en las paginas individiuales
     hay que hacer el ss de todas las paginas de historial, las de turnos
+    
