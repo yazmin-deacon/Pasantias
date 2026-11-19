@@ -4,8 +4,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Inicio de Sesión - DUCCA</title>
 
@@ -36,55 +38,75 @@
 
             <h2>INICIO DE SESIÓN</h2>
 
-            <p id="mensaje-error"
-               class="login-descripcion"></p>
+            <p
+                id="mensaje-error"
+                class="login-descripcion"
+                role="alert"
+            ></p>
 
             <form action="login.php" method="POST">
 
                 <div class="campo">
-                    <label for="nombre">Usuario:</label>
+
+                    <label for="nombre">
+                        Usuario:
+                    </label>
+
                     <input
                         type="text"
                         id="nombre"
                         name="nombre"
+                        maxlength="30"
                         placeholder="Ingrese su usuario"
                         autocomplete="username"
                         required
                     >
+
                 </div>
 
                 <div class="campo">
-                    <label for="dni">DNI:</label>
+
+                    <label for="dni">
+                        DNI:
+                    </label>
+
                     <input
                         type="text"
                         id="dni"
                         name="dni"
-                        placeholder="Ingrese su DNI"
-                        pattern="[0-9]{7,8}"
-                        maxlength="8"
+                        placeholder="12.345.678"
+                        maxlength="10"
                         inputmode="numeric"
+                        autocomplete="off"
                         required
                     >
+
                 </div>
 
                 <div class="campo">
+
                     <label for="correo">
                         Correo electrónico:
                     </label>
+
                     <input
                         type="email"
                         id="correo"
                         name="correo"
+                        maxlength="100"
                         placeholder="Ingrese su correo"
                         autocomplete="email"
                         required
                     >
+
                 </div>
 
                 <div class="campo">
+
                     <label for="contrasena">
                         Contraseña:
                     </label>
+
                     <input
                         type="password"
                         id="contrasena"
@@ -93,6 +115,7 @@
                         autocomplete="current-password"
                         required
                     >
+
                 </div>
 
                 <button type="submit">
@@ -123,6 +146,25 @@
             ).textContent =
                 "Los datos ingresados son incorrectos.";
         }
+
+        // Formato automático del DNI.
+
+        const campoDNI = document.getElementById("dni");
+
+        function formatearDNI(valor) {
+            const numeros = valor
+                .replace(/\D/g, "")
+                .slice(0, 8);
+
+            return numeros.replace(
+                /\B(?=(\d{3})+(?!\d))/g,
+                "."
+            );
+        }
+
+        campoDNI.addEventListener("input", function () {
+            this.value = formatearDNI(this.value);
+        });
     </script>
 
     <script src="../general/modooscuro.js"></script>
