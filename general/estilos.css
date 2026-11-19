@@ -12,7 +12,6 @@ body {
     color: #263d4a;
     padding: 25px;
     transition: background-color 0.7s ease, color 0.7s ease;
-    
 }
 
 /* --- ENCABEZADO --- */
@@ -3345,4 +3344,532 @@ body.modo-oscuro main.gestion-contenido button.btn-administrar:hover {
 /* Invertir flechita en modo oscuro */
 body.modo-oscuro .flecha-volver img {
     filter: invert(1);
+}
+
+
+/* =====================================================
+    esta cagada no se si esta biien
+   DUCCA - HISTORIAL MÉDICO
+   Estilos centralizados para todos los archivos PHP
+===================================================== */
+
+/* ---------- TABLAS Y DATOS ---------- */
+
+.lista-datos {
+    padding-left: 20px;
+}
+
+.lista-datos li {
+    margin-bottom: 10px;
+}
+
+.tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.tabla-gestion {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.tabla-gestion th,
+.tabla-gestion td {
+    padding: 12px;
+    border: 1px solid #dce9ed;
+    text-align: left;
+    vertical-align: top;
+}
+
+.tabla-gestion th {
+    background: #eaf4f6;
+    color: #14566b;
+    font-weight: 700;
+}
+
+.tabla-gestion tr:nth-child(even) {
+    background: #f7fbfc;
+}
+
+/* ---------- ESTADOS ---------- */
+
+.estado {
+    display: inline-block;
+    padding: 5px 10px;
+    margin-left: 8px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.estado-pendiente {
+    background: #fff0cf;
+    color: #8b5900;
+}
+
+.estado-realizado {
+    background: #d7f3e2;
+    color: #17663c;
+}
+
+.estado-confirmado {
+    background: #dce9ff;
+    color: #174a9c;
+}
+
+.estado-otro {
+    background: #e9edf0;
+    color: #394550;
+}
+
+/* ---------- ENLACES Y ACCIONES ---------- */
+
+.enlace-administrar {
+    display: inline-block;
+    margin: 10px 0 15px;
+}
+
+.acciones-historial a,
+.acciones-turnos a {
+    display: inline-block;
+    margin: 3px;
+}
+
+.btn-eliminar {
+    color: #b12e2e !important;
+}
+
+.aviso-turno {
+    font-weight: 600;
+}
+
+.enlaces-descarga a {
+    display: inline-block;
+    margin: 6px 0;
+}
+
+/* ---------- AVISOS ---------- */
+
+.aviso-archivado {
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #d9b878;
+    border-radius: 10px;
+    background: rgba(220, 170, 80, 0.12);
+}
+
+.aviso-archivado p {
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+.etiqueta-archivado {
+    display: inline-block;
+    padding: 7px 12px;
+    margin: 10px 0;
+    border-radius: 18px;
+    background: rgba(130, 140, 150, 0.2);
+    font-weight: 600;
+}
+
+.mensaje-proteccion {
+    display: inline-block;
+    margin-top: 10px;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.mensaje-error {
+    color: #b12e2e;
+    font-weight: 600;
+}
+
+.mensaje-exito {
+    padding: 12px 15px;
+    border-radius: 8px;
+    background: rgba(70, 160, 100, 0.12);
+}
+
+/* ---------- ADMINISTRAR ESTUDIOS Y EXPOSICIONES ---------- */
+
+.campo-estudio,
+.campo-exposicion {
+    width: 100%;
+    max-width: 430px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.acciones-estudio,
+.acciones-exposicion {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.acciones-estudio form,
+.acciones-exposicion form {
+    display: inline-block;
+}
+
+/* ---------- FORMULARIO AGREGAR HISTORIAL ---------- */
+
+.agregar-historial-contenido,
+.editar-historial-contenido {
+    width: calc(100% - 30px);
+    max-width: 760px;
+    margin: 35px auto;
+    box-sizing: border-box;
+}
+
+.agregar-historial-tarjeta,
+.editar-historial-tarjeta {
+    padding: 30px;
+}
+
+.agregar-historial-campo,
+.editar-historial-campo {
+    margin-bottom: 20px;
+}
+
+.agregar-historial-campo label,
+.editar-historial-campo label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.agregar-historial-campo input,
+.agregar-historial-campo select,
+.agregar-historial-campo textarea,
+.editar-historial-campo input,
+.editar-historial-campo select,
+.editar-historial-campo textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px;
+}
+
+.agregar-historial-campo textarea,
+.editar-historial-campo textarea {
+    resize: vertical;
+}
+
+.agregar-historial-acciones,
+.editar-historial-acciones {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 25px;
+}
+
+.agregar-historial-acciones button,
+.editar-historial-acciones button {
+    padding: 12px 20px;
+    cursor: pointer;
+}
+
+.agregar-historial-aviso {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 9px;
+    background: rgba(130, 140, 150, 0.12);
+}
+
+/* ---------- CONFIRMAR ELIMINACIÓN ---------- */
+
+.eliminar-pagina {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.eliminar-tarjeta {
+    width: 100%;
+    max-width: 580px;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+.eliminar-datos {
+    padding: 18px;
+    margin: 20px 0;
+    border-radius: 9px;
+    background: rgba(130, 140, 150, 0.12);
+}
+
+.eliminar-advertencia {
+    padding: 18px;
+    margin: 20px 0;
+    border: 1px solid #d9b878;
+    border-radius: 9px;
+    background: rgba(220, 170, 80, 0.12);
+}
+
+.eliminar-acciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 22px;
+}
+
+.eliminar-acciones button {
+    padding: 12px 18px;
+    cursor: pointer;
+}
+
+/* ---------- MODO OSCURO ---------- */
+
+body.modo-oscuro .tabla-gestion th {
+    background: #304b57;
+    color: #d8f3f0;
+    border-color: #405763;
+}
+
+body.modo-oscuro .tabla-gestion td {
+    color: #e0eaf0;
+    border-color: #405763;
+}
+
+body.modo-oscuro .tabla-gestion tr:nth-child(even) {
+    background: #293e49;
+}
+
+body.modo-oscuro .estado-pendiente {
+    background: #594b2e;
+    color: #ffe0a0;
+}
+
+body.modo-oscuro .estado-realizado {
+    background: #244d3b;
+    color: #a8e8c2;
+}
+
+body.modo-oscuro .estado-confirmado {
+    background: #2d4568;
+    color: #c4d9ff;
+}
+
+body.modo-oscuro .estado-otro {
+    background: #3b4850;
+    color: #e0eaf0;
+}
+
+body.modo-oscuro .agregar-historial-aviso,
+body.modo-oscuro .eliminar-datos {
+    background: #30434f;
+    color: #e0eaf0;
+}
+
+body.modo-oscuro .mensaje-exito {
+    background: rgba(70, 160, 100, 0.2);
+    color: #b8e8c9;
+}
+
+body.modo-oscuro .aviso-archivado,
+body.modo-oscuro .eliminar-advertencia {
+    background: rgba(170, 125, 50, 0.15);
+    border-color: #806b43;
+    color: #f0dfbd;
+}
+
+body.modo-oscuro .mensaje-error {
+    color: #ff9c9c;
+}
+
+body.modo-oscuro .btn-eliminar {
+    color: #ff9999 !important;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 600px) {
+    .agregar-historial-tarjeta,
+    .editar-historial-tarjeta,
+    .eliminar-tarjeta {
+        padding: 20px;
+    }
+
+    .agregar-historial-acciones,
+    .editar-historial-acciones,
+    .eliminar-acciones {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .agregar-historial-acciones button,
+    .editar-historial-acciones button,
+    .eliminar-acciones button {
+        width: 100%;
+    }
+
+    .tabla-gestion {
+        min-width: 650px;
+    }
+}
+
+/* =====================================================
+   DUCCA - ESTILOS DEL PDF
+   Se aplican solamente al documento PDF
+===================================================== */
+
+@page {
+    margin: 38px 42px 46px;
+}
+
+body.pdf-ducca {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 10px;
+    line-height: 1.55;
+    color: #304456;
+}
+
+.pdf-ducca .encabezado {
+    border-bottom: 3px solid #486d88;
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+}
+
+.pdf-ducca .tabla-encabezado {
+    width: 100%;
+    border: none;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+}
+
+.pdf-ducca .tabla-encabezado td {
+    border: none;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.pdf-ducca .celda-logo {
+    width: 105px;
+}
+
+.pdf-ducca .logo {
+    width: 90px;
+    height: auto;
+}
+
+.pdf-ducca .celda-consultorio {
+    padding-left: 15px !important;
+}
+
+.pdf-ducca .nombre-consultorio {
+    font-size: 24px;
+    font-weight: bold;
+    color: #25445d;
+    margin-bottom: 4px;
+}
+
+.pdf-ducca .subtitulo-consultorio {
+    font-size: 10px;
+    color: #64798b;
+}
+
+.pdf-ducca .titulo {
+    font-size: 20px;
+    color: #25445d;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.pdf-ducca .subtitulo {
+    color: #687c8d;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.pdf-ducca .fecha-emision {
+    color: #64798b;
+    font-size: 9px;
+    margin-bottom: 20px;
+}
+
+.pdf-ducca .datos-paciente {
+    background: #f0f5f9;
+    padding: 14px;
+    margin-bottom: 20px;
+}
+
+.pdf-ducca .datos-paciente p {
+    margin: 3px 0;
+}
+
+.pdf-ducca h2 {
+    color: #25445d;
+    font-size: 13px;
+    border-bottom: 1px solid #cddbe5;
+    padding-bottom: 6px;
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+.pdf-ducca .tabla-datos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 18px;
+    table-layout: fixed;
+}
+
+.pdf-ducca .tabla-datos th {
+    text-align: left;
+    background: #e8f0f6;
+    color: #25445d;
+    padding: 9px;
+    border: 1px solid #d2dee8;
+}
+
+.pdf-ducca .tabla-datos td {
+    border: 1px solid #d2dee8;
+    padding: 9px;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+.pdf-ducca .tabla-datos tr {
+    page-break-inside: avoid;
+}
+
+.pdf-ducca ul {
+    padding-left: 19px;
+}
+
+.pdf-ducca li {
+    margin-bottom: 7px;
+}
+
+.pdf-ducca .sin-datos {
+    color: #748494;
+    font-style: italic;
+}
+
+.pdf-ducca .aviso-final {
+    border-top: 1px solid #cddbe5;
+    padding-top: 12px;
+    margin-top: 30px;
+    color: #64798b;
+    font-size: 9px;
+}
+
+.pdf-ducca .pie {
+    color: #8794a1;
+    font-size: 8px;
+    margin-top: 12px;
 }

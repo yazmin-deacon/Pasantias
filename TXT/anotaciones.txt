@@ -14,4 +14,6 @@ Giu:
     hay que agregar el animaciones.js porqeu se ven horrible las paginas
     el tema no se mantiene en las paginas individiuales
     hay que hacer el ss de todas las paginas de historial, las de turnos
-    
+
+
+    de estilos.css desde a pagina 3347 no estoy segura de que funcione
