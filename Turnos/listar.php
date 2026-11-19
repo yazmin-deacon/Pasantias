@@ -1,12 +1,19 @@
 
 <?php
-session_start();
 
+// =========================================
+// DUCCA - LISTADO DE TURNOS
+// =========================================
+
+require_once __DIR__ . "/../inicio sesion/verificar_sesion.php";
 require_once __DIR__ . "/../Pacientes/conexion.php";
 
 /** @var mysqli $conexion */
 
 date_default_timezone_set("America/Argentina/Salta");
+
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
 
 // =========================================
 // FUNCIONES
@@ -17,6 +24,16 @@ function escapar($valor) {
         (string)($valor ?? ""),
         ENT_QUOTES,
         "UTF-8"
+    );
+}
+
+function formatoDNI($dni) {
+    $dni = preg_replace('/\D/', '', (string)$dni);
+
+    return preg_replace(
+        '/\B(?=(\d{3})+(?!\d))/',
+        '.',
+        $dni
     );
 }
 
@@ -33,7 +50,6 @@ function avisoTurno($turno) {
     }
 
     $hoy = new DateTimeImmutable("today");
-
     $fecha = new DateTimeImmutable($turno["fecha"]);
 
     $dias = (int)$hoy->diff(
@@ -60,7 +76,8 @@ function avisoTurno($turno) {
 // =========================================
 
 if (empty($_SESSION["csrf_turnos"])) {
-    $_SESSION["csrf_turnos"] = bin2hex(random_bytes(32));
+    $_SESSION["csrf_turnos"] =
+        bin2hex(random_bytes(32));
 }
 
 $token = $_SESSION["csrf_turnos"];
@@ -84,10 +101,16 @@ $filtroEstado = trim(
 );
 
 if (!in_array($filtroEstado, $estados, true)) {
-    die("El estado seleccionado no es válido.");
+    http_response_code(400);
+    exit("El estado seleccionado no es válido.");
 }
 
-$filtroDni = trim(
+// Permitir escribir el DNI con puntos
+// y consultar en MySQL solo los números.
+
+$filtroDni = preg_replace(
+    '/\D/',
+    '',
     (string)($_GET["dni_p"] ?? "")
 );
 
@@ -99,11 +122,12 @@ if (
         (int)$filtroDni <= 0
     )
 ) {
-    die("El DNI ingresado no es válido.");
+    http_response_code(400);
+    exit("El DNI ingresado no es válido.");
 }
 
 // =========================================
-// ARMAR CONSULTA SQL
+// CONSULTAR SOLAMENTE PACIENTES ACTIVOS
 // =========================================
 
 $sql = "SELECT
@@ -122,9 +146,11 @@ $sql = "SELECT
         INNER JOIN paciente p
             ON p.dni_p = t.dni_paciente
 
-        WHERE 1 = 1";
+        WHERE p.estado = 'activo'";
 
-// Filtrar por DNI, si se ingresó uno.
+// =========================================
+// FILTRO POR DNI
+// =========================================
 
 $usarDni = ($filtroDni !== "");
 
@@ -132,7 +158,9 @@ if ($usarDni) {
     $sql .= " AND t.dni_paciente = ?";
 }
 
-// Filtrar por estado.
+// =========================================
+// FILTRO POR ESTADO
+// =========================================
 
 $usarEstado = false;
 
@@ -146,11 +174,12 @@ if ($filtroEstado === "Activos") {
 } elseif ($filtroEstado !== "Todos") {
 
     $sql .= " AND t.estado = ?";
-
     $usarEstado = true;
 }
 
-// Ordenar por fecha y hora.
+// =========================================
+// ORDENAR RESULTADOS
+// =========================================
 
 $sql .= " ORDER BY
             t.fecha ASC,
@@ -164,10 +193,9 @@ $sql .= " ORDER BY
 $stmt = mysqli_prepare($conexion, $sql);
 
 if (!$stmt) {
-    die("No se pudieron consultar los turnos.");
+    http_response_code(500);
+    exit("No se pudieron consultar los turnos.");
 }
-
-// Vincular solamente los filtros utilizados.
 
 $dniNumero = (int)$filtroDni;
 
@@ -198,7 +226,8 @@ if ($usarDni && $usarEstado) {
 }
 
 if (!mysqli_stmt_execute($stmt)) {
-    die("Error al buscar los turnos.");
+    http_response_code(500);
+    exit("Error al buscar los turnos.");
 }
 
 $resultado = mysqli_stmt_get_result($stmt);
@@ -210,6 +239,7 @@ $turnos = mysqli_fetch_all(
 
 mysqli_stmt_close($stmt);
 mysqli_close($conexion);
+
 ?>
 
 <!DOCTYPE html>
@@ -223,7 +253,7 @@ mysqli_close($conexion);
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Turnos de pacientes</title>
+    <title>Turnos de pacientes - DUCCA</title>
 
     <link
         rel="stylesheet"
@@ -231,6 +261,7 @@ mysqli_close($conexion);
     >
 
     <style>
+
         .filtros-turnos {
             display: flex;
             flex-wrap: wrap;
@@ -274,17 +305,31 @@ mysqli_close($conexion);
             padding: 10px;
             border: 1px solid #ccc;
             text-align: left;
+            vertical-align: top;
         }
 
         .aviso-importante {
             font-weight: bold;
         }
+
+        .mensaje-informativo {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            background: rgba(130, 140, 150, 0.12);
+        }
+
     </style>
+
 </head>
 
 <body>
 
 <main class="gestion-contenido">
+
+    <!-- =====================================
+         ENCABEZADO
+    ===================================== -->
 
     <section class="bienvenida">
 
@@ -309,11 +354,23 @@ mysqli_close($conexion);
 
     </section>
 
-    <!-- BUSCAR TURNOS -->
+    <!-- =====================================
+         BUSCAR TURNOS
+    ===================================== -->
 
     <section class="tarjeta">
 
         <h2>Buscar turnos</h2>
+
+        <div class="mensaje-informativo">
+
+            Este listado muestra únicamente
+            los turnos de pacientes activos.
+
+            Los turnos de pacientes archivados
+            se conservan en sus registros médicos.
+
+        </div>
 
         <form
             method="GET"
@@ -321,7 +378,10 @@ mysqli_close($conexion);
             class="filtros-turnos"
         >
 
+            <!-- FILTRO POR DNI -->
+
             <div>
+
                 <label for="dni_p">
                     DNI del paciente
                 </label>
@@ -331,15 +391,21 @@ mysqli_close($conexion);
                     id="dni_p"
                     name="dni_p"
                     inputmode="numeric"
-                    maxlength="8"
+                    maxlength="10"
                     value="<?php
-                        echo escapar($filtroDni);
+                        echo escapar(
+                            formatoDNI($filtroDni)
+                        );
                     ?>"
                     placeholder="Todos los pacientes"
                 >
+
             </div>
 
+            <!-- FILTRO POR ESTADO -->
+
             <div>
+
                 <label for="estado">
                     Estado
                 </label>
@@ -361,13 +427,18 @@ mysqli_close($conexion);
                                     : "";
                             ?>
                         >
-                            <?php echo escapar($estado); ?>
+                            <?php
+                                echo escapar($estado);
+                            ?>
                         </option>
 
                     <?php } ?>
 
                 </select>
+
             </div>
+
+            <!-- BOTÓN BUSCAR -->
 
             <button type="submit">
                 Buscar
@@ -379,6 +450,8 @@ mysqli_close($conexion);
 
         </form>
 
+        <!-- CANTIDAD DE TURNOS -->
+
         <p>
             Turnos encontrados:
             <strong>
@@ -386,7 +459,9 @@ mysqli_close($conexion);
             </strong>
         </p>
 
-        <!-- RESULTADOS -->
+        <!-- =================================
+             RESULTADOS
+        ================================= -->
 
         <?php if (!$turnos) { ?>
 
@@ -402,6 +477,7 @@ mysqli_close($conexion);
                 <table class="tabla-turnos">
 
                     <thead>
+
                         <tr>
                             <th>Paciente</th>
                             <th>DNI</th>
@@ -413,6 +489,7 @@ mysqli_close($conexion);
                             <th>Observaciones</th>
                             <th>Acciones</th>
                         </tr>
+
                     </thead>
 
                     <tbody>
@@ -420,6 +497,8 @@ mysqli_close($conexion);
                         <?php foreach ($turnos as $turno) { ?>
 
                             <tr>
+
+                                <!-- PACIENTE -->
 
                                 <td>
                                     <?php
@@ -430,44 +509,68 @@ mysqli_close($conexion);
                                     ?>
                                 </td>
 
+                                <!-- DNI -->
+
                                 <td>
                                     <?php
                                         echo escapar(
-                                            $turno["dni_paciente"]
+                                            formatoDNI(
+                                                $turno["dni_paciente"]
+                                            )
                                         );
                                     ?>
                                 </td>
+
+                                <!-- FECHA -->
 
                                 <td>
                                     <?php
                                         echo escapar(
                                             date(
                                                 "d/m/Y",
-                                                strtotime($turno["fecha"])
+                                                strtotime(
+                                                    $turno["fecha"]
+                                                )
                                             )
                                         );
                                     ?>
                                 </td>
 
+                                <!-- HORA -->
+
                                 <td>
                                     <?php
                                         echo escapar(
-                                            substr($turno["hora"], 0, 5)
+                                            substr(
+                                                $turno["hora"],
+                                                0,
+                                                5
+                                            )
                                         );
                                     ?>
                                 </td>
 
-                                <td>
-                                    <?php
-                                        echo escapar($turno["motivo"]);
-                                    ?>
-                                </td>
+                                <!-- MOTIVO -->
 
                                 <td>
                                     <?php
-                                        echo escapar($turno["estado"]);
+                                        echo escapar(
+                                            $turno["motivo"]
+                                        );
                                     ?>
                                 </td>
+
+                                <!-- ESTADO -->
+
+                                <td>
+                                    <?php
+                                        echo escapar(
+                                            $turno["estado"]
+                                        );
+                                    ?>
+                                </td>
+
+                                <!-- RECORDATORIO -->
 
                                 <td class="aviso-importante">
                                     <?php
@@ -476,6 +579,8 @@ mysqli_close($conexion);
                                         );
                                     ?>
                                 </td>
+
+                                <!-- OBSERVACIONES -->
 
                                 <td>
                                     <?php
@@ -487,9 +592,13 @@ mysqli_close($conexion);
                                     ?>
                                 </td>
 
+                                <!-- ACCIONES -->
+
                                 <td>
 
                                     <div class="acciones-turnos">
+
+                                        <!-- EDITAR -->
 
                                         <a href="formulario.php?id_turno=<?php
                                             echo (int)$turno["id_turno"];
@@ -497,11 +606,15 @@ mysqli_close($conexion);
                                             Editar
                                         </a>
 
+                                        <!-- HISTORIAL -->
+
                                         <a href="../historial/historial.php?dni_p=<?php
                                             echo (int)$turno["dni_paciente"];
                                         ?>">
                                             Historial
                                         </a>
+
+                                        <!-- ELIMINAR -->
 
                                         <form
                                             method="POST"
@@ -552,6 +665,8 @@ mysqli_close($conexion);
     </section>
 
 </main>
+
+<script src="../general/modooscuro.js"></script>
 
 </body>
 </html>

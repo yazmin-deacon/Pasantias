@@ -1,4 +1,3 @@
-
 <?php
 // BLOQUE 1 - Conexión
 require_once __DIR__ . "/../Pacientes/conexion.php";
@@ -83,11 +82,13 @@ mysqli_stmt_close($stmt);
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estudios por trabajo</title>
 </head>
+
 <body>
 
     <h1>Estudios por trabajo</h1>
@@ -102,14 +103,11 @@ mysqli_stmt_close($stmt);
 
                 <?php foreach ($trabajos as $trabajo) { ?>
 
-                    <option
-                        value="<?php echo $trabajo["id_trabajo"]; ?>"
-                        <?php
-                        if ($trabajo["id_trabajo"] == $id_trabajo) {
-                            echo "selected";
-                        }
-                        ?>
-                    >
+                    <option value="<?php echo $trabajo["id_trabajo"]; ?>" <?php
+                       if ($trabajo["id_trabajo"] == $id_trabajo) {
+                           echo "selected";
+                       }
+                       ?>>
                         <?php echo htmlspecialchars($trabajo["nombre_t"]); ?>
                     </option>
 
@@ -127,11 +125,7 @@ mysqli_stmt_close($stmt);
     <!-- Guardar las relaciones -->
     <form action="guardar_estudios.php" method="POST">
 
-        <input
-            type="hidden"
-            name="id_trabajo"
-            value="<?php echo $id_trabajo; ?>"
-        >
+        <input type="hidden" name="id_trabajo" value="<?php echo $id_trabajo; ?>">
 
         <?php if (count($estudios) > 0) { ?>
 
@@ -141,16 +135,11 @@ mysqli_stmt_close($stmt);
 
                 <p>
                     <label>
-                        <input
-                            type="checkbox"
-                            name="estudios[]"
-                            value="<?php echo $estudio["id_estudio"]; ?>"
-                            <?php
-                            if (in_array($estudio["id_estudio"], $seleccionados)) {
-                                echo "checked";
-                            }
-                            ?>
-                        >
+                        <input type="checkbox" name="estudios[]" value="<?php echo $estudio["id_estudio"]; ?>" <?php
+                           if (in_array($estudio["id_estudio"], $seleccionados)) {
+                               echo "checked";
+                           }
+                           ?>>
 
                         <?php echo htmlspecialchars($estudio["nombre_es"]); ?>
                     </label>
@@ -178,9 +167,12 @@ mysqli_stmt_close($stmt);
 
     <br><br>
 
-    <a href="../general/index.html">Volver al inicio</a>
+
+    <a href="../inicio%20sesion/index.php">Volver al inicio</a>
+
 
 </body>
+
 </html>
 
 <?php

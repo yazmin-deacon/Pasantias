@@ -1,8 +1,19 @@
 
 <?php
+
+// =========================================
+// DUCCA - EDITAR PACIENTE
+// =========================================
+
+require_once __DIR__ . "/../inicio sesion/verificar_sesion.php";
 require_once __DIR__ . "/conexion.php";
 
 /** @var mysqli $conexion */
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
 
 // =========================================
 // FUNCIONES
@@ -18,22 +29,37 @@ function escapar($valor) {
 
 function consultarTodos($conexion, $sql) {
     $resultado = mysqli_query($conexion, $sql);
-
-    if (!$resultado) {
-        die("Error al consultar los datos.");
-    }
-
-    $filas = mysqli_fetch_all(
-        $resultado,
-        MYSQLI_ASSOC
-    );
-
+    $filas = mysqli_fetch_all($resultado, MYSQLI_ASSOC);
     mysqli_free_result($resultado);
     return $filas;
 }
 
+function mostrarError($mensaje, $codigo = 400) {
+    http_response_code($codigo);
+
+    echo '<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Editar paciente - DUCCA</title>
+        <link rel="stylesheet" href="../general/estilos.css">
+    </head>
+    <body>
+        <main class="gestion-contenido">
+            <section class="tarjeta">
+                <h2>No se puede editar este paciente</h2>
+                <p>' . escapar($mensaje) . '</p>
+                <a href="listar.php">Volver al listado</a>
+            </section>
+        </main>
+    </body>
+    </html>';
+
+    exit;
+}
+
 // =========================================
-// OBTENER PACIENTE
+// VALIDAR DNI
 // =========================================
 
 $dni = preg_replace(
@@ -47,26 +73,23 @@ if (
     strlen($dni) > 8 ||
     (int)$dni <= 0
 ) {
-    die("DNI no válido.");
+    mostrarError("DNI no válido.");
 }
 
 $dniNumero = (int)$dni;
 
+// =========================================
+// BUSCAR PACIENTE
+// =========================================
+
 $stmt = mysqli_prepare(
     $conexion,
-    "SELECT * FROM paciente WHERE dni_p = ?"
+    "SELECT *
+     FROM paciente
+     WHERE dni_p = ?"
 );
 
-if (!$stmt) {
-    die("No se pudo consultar el paciente.");
-}
-
-mysqli_stmt_bind_param(
-    $stmt,
-    "i",
-    $dniNumero
-);
-
+mysqli_stmt_bind_param($stmt, "i", $dniNumero);
 mysqli_stmt_execute($stmt);
 
 $resultado = mysqli_stmt_get_result($stmt);
@@ -75,7 +98,22 @@ $paciente = mysqli_fetch_assoc($resultado);
 mysqli_stmt_close($stmt);
 
 if (!$paciente) {
-    die("No se encontró el paciente.");
+    mostrarError(
+        "No se encontró el paciente.",
+        404
+    );
+}
+
+// =========================================
+// BLOQUEAR PACIENTES ARCHIVADOS
+// =========================================
+
+if ($paciente["estado"] !== "activo") {
+    mostrarError(
+        "Este paciente está archivado. " .
+        "Para modificarlo, primero debés reactivarlo.",
+        403
+    );
 }
 
 // =========================================
@@ -85,13 +123,15 @@ if (!$paciente) {
 $obrasSociales = consultarTodos(
     $conexion,
     "SELECT id_obra_social, nombre_os
-     FROM obra_social ORDER BY nombre_os"
+     FROM obra_social
+     ORDER BY nombre_os"
 );
 
 $trabajos = consultarTodos(
     $conexion,
     "SELECT id_trabajo, nombre_t
-     FROM trabajo ORDER BY nombre_t"
+     FROM trabajo
+     ORDER BY nombre_t"
 );
 
 // =========================================
@@ -123,6 +163,20 @@ foreach ($trabajos as $trabajo) {
 }
 
 mysqli_close($conexion);
+
+// =========================================
+// TOKEN CSRF
+// =========================================
+
+// ESTE ES EL CAMPO QUE ESTABA FALLANDO.
+
+if (empty($_SESSION["csrf_editar_paciente"])) {
+    $_SESSION["csrf_editar_paciente"] =
+        bin2hex(random_bytes(32));
+}
+
+$csrfToken = $_SESSION["csrf_editar_paciente"];
+
 ?>
 
 <!DOCTYPE html>
@@ -130,6 +184,7 @@ mysqli_close($conexion);
 
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
@@ -247,7 +302,7 @@ mysqli_close($conexion);
             background: #345b69;
         }
 
-        /* DOMICILIO DEL PACIENTE */
+        /* DOMICILIO */
 
         .domicilio-ducca {
             display: grid;
@@ -291,49 +346,57 @@ mysqli_close($conexion);
 
 <header>
 
-<a class="flecha-volver" href="listar.php"
-   aria-label="Volver a pacientes" title="Volver a pacientes">
-    <img src="../general/flechita.png" alt="Flecha volver" width="30" height="30">
-</a>
-
-<div class="logo">
-    <img
-        id="logo"
-        src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
-        alt="Logo DUCA"
-        height="150"
-        width="175"
+    <a
+        class="flecha-volver"
+        href="listar.php"
+        aria-label="Volver a pacientes"
+        title="Volver a pacientes"
     >
-</div>
-        <nav>
+        <img
+            src="../general/flechita.png"
+            alt="Flecha volver"
+            width="30"
+            height="30"
+        >
+    </a>
 
-            <a href="../inicio sesion/index.php">
-                Menú principal
-            </a>
+    <div class="logo">
+        <img
+            id="logo"
+            src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
+            alt="Logo DUCCA"
+            height="150"
+            width="175"
+        >
+    </div>
 
-            <a href="../gestionar_exposiciones.html">
-                Exposiciones
-            </a>
+    <nav>
+        <a href="../inicio%20sesion/index.php">
+            Menú principal
+        </a>
 
-            <a href="listar.php">
-                Trabajos
-            </a>
+        <a href="../Exposiciones/listar.php">
+            Exposiciones
+        </a>
 
-            <a href="../gestionar_relaciones.html">
-                Relaciones
-            </a>
+        <a href="../Trabajos/listar.php">
+            Trabajos
+        </a>
 
-            <a href="../gestionar_estudios.html">
-                Estudios
-            </a>
+        <a href="../Relaciones/listar.php">
+            Relaciones
+        </a>
 
-        </nav>
+        <a href="../Estudios/estudios.php">
+            Estudios
+        </a>
+    </nav>
 
-        <button type="button" id="btn-tema">
-            Modo oscuro
-        </button>
+    <button type="button" id="btn-tema">
+        Modo oscuro
+    </button>
 
-    </header>
+</header>
 
 <main class="gestion-contenido">
 
@@ -343,8 +406,10 @@ mysqli_close($conexion);
 
         <p>
             Modificá los datos personales,
-            el domicilio, la obra social y el trabajo del paciente.
+            el domicilio, la obra social
+            y el trabajo del paciente.
         </p>
+
     </section>
 
     <section class="tarjeta">
@@ -356,12 +421,20 @@ mysqli_close($conexion);
             class="form-gestion"
         >
 
+            <!-- DNI DEL PACIENTE -->
+
             <input
                 type="hidden"
                 name="dni_p"
-                value="<?php
-                    echo escapar($paciente["dni_p"]);
-                ?>"
+                value="<?php echo escapar($paciente["dni_p"]); ?>"
+            >
+
+            <!-- TOKEN CSRF CORREGIDO -->
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="<?php echo escapar($csrfToken); ?>"
             >
 
             <h2>Datos personales</h2>
@@ -395,9 +468,7 @@ mysqli_close($conexion);
                     name="nombre_p"
                     maxlength="30"
                     required
-                    value="<?php
-                        echo escapar($paciente["nombre_p"]);
-                    ?>"
+                    value="<?php echo escapar($paciente["nombre_p"]); ?>"
                 >
             </p>
 
@@ -410,9 +481,7 @@ mysqli_close($conexion);
                     name="apellido"
                     maxlength="30"
                     required
-                    value="<?php
-                        echo escapar($paciente["apellido"]);
-                    ?>"
+                    value="<?php echo escapar($paciente["apellido"]); ?>"
                 >
             </p>
 
@@ -426,15 +495,14 @@ mysqli_close($conexion);
                     maxlength="13"
                     inputmode="numeric"
                     placeholder="20-12345678-3"
-                    value="<?php
-                        echo escapar($paciente["cuil"]);
-                    ?>"
+                    value="<?php echo escapar($paciente["cuil"]); ?>"
                 >
             </p>
 
             <!-- TELÉFONO CELULAR -->
 
             <div>
+
                 <label for="telefono">
                     Teléfono celular
                 </label>
@@ -455,6 +523,7 @@ mysqli_close($conexion);
                         aria-expanded="false"
                         aria-controls="telefono_lista"
                     >
+
                         <span>
                             <strong id="telefono_prefijo">
                                 +54
@@ -466,6 +535,7 @@ mysqli_close($conexion);
                         </span>
 
                         <span aria-hidden="true">⌄</span>
+
                     </button>
 
                     <div
@@ -487,12 +557,10 @@ mysqli_close($conexion);
 
                 </div>
 
-                <p
-                    class="ayuda"
-                    id="telefono_ayuda"
-                >
+                <p class="ayuda" id="telefono_ayuda">
                     Para Argentina se agrega el +54 9 automáticamente.
                 </p>
+
             </div>
 
             <p>
@@ -504,15 +572,13 @@ mysqli_close($conexion);
                     name="mail"
                     maxlength="100"
                     required
-                    value="<?php
-                        echo escapar($paciente["mail"]);
-                    ?>"
+                    value="<?php echo escapar($paciente["mail"]); ?>"
                 >
             </p>
 
             <hr>
 
-            <!-- DOMICILIO DEL PACIENTE -->
+            <!-- DOMICILIO -->
 
             <h2>Domicilio del paciente</h2>
 
@@ -524,132 +590,78 @@ mysqli_close($conexion);
 
             <div class="domicilio-ducca">
 
-                <div class="campo-domicilio campo-ancho">
-                    <label for="domicilio_calle">
-                        Calle
-                    </label>
+                <?php
 
-                    <input
-                        type="text"
-                        id="domicilio_calle"
-                        name="domicilio_calle"
-                        maxlength="100"
-                        value="<?php
-                            echo escapar(
-                                $paciente["domicilio_calle"] ?? ""
-                            );
-                        ?>"
-                    >
-                </div>
+                $camposDomicilio = [
+                    [
+                        "id" => "domicilio_calle",
+                        "titulo" => "Calle",
+                        "maximo" => 100,
+                        "ancho" => true
+                    ],
+                    [
+                        "id" => "domicilio_altura",
+                        "titulo" => "Altura",
+                        "maximo" => 15
+                    ],
+                    [
+                        "id" => "domicilio_piso_depto",
+                        "titulo" => "Piso / departamento (opcional)",
+                        "maximo" => 30
+                    ],
+                    [
+                        "id" => "domicilio_localidad",
+                        "titulo" => "Ciudad / localidad",
+                        "maximo" => 100
+                    ],
+                    [
+                        "id" => "domicilio_provincia",
+                        "titulo" => "Provincia / región",
+                        "maximo" => 100
+                    ],
+                    [
+                        "id" => "domicilio_codigo_postal",
+                        "titulo" => "Código postal",
+                        "maximo" => 15
+                    ],
+                    [
+                        "id" => "domicilio_pais",
+                        "titulo" => "País",
+                        "maximo" => 100
+                    ]
+                ];
 
-                <div class="campo-domicilio">
-                    <label for="domicilio_altura">
-                        Altura
-                    </label>
+                ?>
 
-                    <input
-                        type="text"
-                        id="domicilio_altura"
-                        name="domicilio_altura"
-                        maxlength="15"
-                        value="<?php
-                            echo escapar(
-                                $paciente["domicilio_altura"] ?? ""
-                            );
-                        ?>"
-                    >
-                </div>
+                <?php foreach ($camposDomicilio as $campo) { ?>
 
-                <div class="campo-domicilio">
-                    <label for="domicilio_piso_depto">
-                        Piso / departamento (opcional)
-                    </label>
+                    <div class="campo-domicilio <?php
+                        echo !empty($campo["ancho"])
+                            ? "campo-ancho"
+                            : "";
+                    ?>">
 
-                    <input
-                        type="text"
-                        id="domicilio_piso_depto"
-                        name="domicilio_piso_depto"
-                        maxlength="30"
-                        value="<?php
-                            echo escapar(
-                                $paciente["domicilio_piso_depto"] ?? ""
-                            );
-                        ?>"
-                    >
-                </div>
+                        <label for="<?php
+                            echo escapar($campo["id"]);
+                        ?>">
+                            <?php echo escapar($campo["titulo"]); ?>
+                        </label>
 
-                <div class="campo-domicilio">
-                    <label for="domicilio_localidad">
-                        Ciudad / localidad
-                    </label>
+                        <input
+                            type="text"
+                            id="<?php echo escapar($campo["id"]); ?>"
+                            name="<?php echo escapar($campo["id"]); ?>"
+                            maxlength="<?php echo (int)$campo["maximo"]; ?>"
+                            value="<?php
+                                echo escapar(
+                                    $paciente[$campo["id"]] ?? ""
+                                );
+                            ?>"
+                        >
 
-                    <input
-                        type="text"
-                        id="domicilio_localidad"
-                        name="domicilio_localidad"
-                        maxlength="100"
-                        value="<?php
-                            echo escapar(
-                                $paciente["domicilio_localidad"] ?? ""
-                            );
-                        ?>"
-                    >
-                </div>
+                    </div>
 
-                <div class="campo-domicilio">
-                    <label for="domicilio_provincia">
-                        Provincia / región
-                    </label>
-
-                    <input
-                        type="text"
-                        id="domicilio_provincia"
-                        name="domicilio_provincia"
-                        maxlength="100"
-                        value="<?php
-                            echo escapar(
-                                $paciente["domicilio_provincia"] ?? ""
-                            );
-                        ?>"
-                    >
-                </div>
-
-                <div class="campo-domicilio">
-                    <label for="domicilio_codigo_postal">
-                        Código postal
-                    </label>
-
-                    <input
-                        type="text"
-                        id="domicilio_codigo_postal"
-                        name="domicilio_codigo_postal"
-                        maxlength="15"
-                        value="<?php
-                            echo escapar(
-                                $paciente["domicilio_codigo_postal"] ?? ""
-                            );
-                        ?>"
-                    >
-                </div>
-
-                <div class="campo-domicilio">
-                    <label for="domicilio_pais">
-                        País
-                    </label>
-
-                    <input
-                        type="text"
-                        id="domicilio_pais"
-                        name="domicilio_pais"
-                        maxlength="100"
-                        placeholder="Ej. Argentina"
-                        value="<?php
-                            echo escapar(
-                                $paciente["domicilio_pais"] ?? ""
-                            );
-                        ?>"
-                    >
-                </div>
+                <?php } ?>
 
             </div>
 
@@ -673,43 +685,34 @@ mysqli_close($conexion);
                 maxlength="100"
                 autocomplete="off"
                 required
-                value="<?php
-                    echo escapar($nombreObraActual);
-                ?>"
+                value="<?php echo escapar($nombreObraActual); ?>"
                 placeholder="Buscar obra social..."
             >
 
             <datalist id="lista_obras_sociales">
 
-                <option
-                    value="Particular / Sin obra social"
-                ></option>
+                <option value="Particular / Sin obra social"></option>
 
                 <?php foreach ($obrasSociales as $obra) { ?>
 
                     <option
-                        value="<?php
-                            echo escapar($obra["nombre_os"]);
-                        ?>"
+                        value="<?php echo escapar($obra["nombre_os"]); ?>"
                     ></option>
 
                 <?php } ?>
 
             </datalist>
 
-            <p
-                id="mensaje_obra"
-                class="ayuda"
-            ></p>
+            <p id="mensaje_obra" class="ayuda"></p>
 
             <p>
-                <!-- Administrar obra social -->
-<button
-    type="button"
-    class="btn-administrar"
-    onclick="window.location.href='../Obra%20Social/listar.php'">
-    Administrar obras sociales
-</button>
+                <button
+                    type="button"
+                    class="btn-administrar"
+                    onclick="window.location.href='../Obra%20Social/listar.php'"
+                >
+                    Administrar obras sociales
+                </button>
             </p>
 
             <hr>
@@ -731,9 +734,7 @@ mysqli_close($conexion);
                 list="lista_trabajos"
                 maxlength="50"
                 autocomplete="off"
-                value="<?php
-                    echo escapar($nombreTrabajoActual);
-                ?>"
+                value="<?php echo escapar($nombreTrabajoActual); ?>"
                 placeholder="Buscar trabajo..."
             >
 
@@ -742,9 +743,7 @@ mysqli_close($conexion);
                 <?php foreach ($trabajos as $trabajo) { ?>
 
                     <option
-                        value="<?php
-                            echo escapar($trabajo["nombre_t"]);
-                        ?>"
+                        value="<?php echo escapar($trabajo["nombre_t"]); ?>"
                     ></option>
 
                 <?php } ?>
@@ -763,25 +762,28 @@ mysqli_close($conexion);
                 </a>
             </p>
 
+            <!-- GUARDAR Y CANCELAR -->
+
             <div class="acciones-finales">
 
                 <button type="submit">
                     Guardar cambios
                 </button>
 
-                <!-- Cancelar -->
-<button
-    type="button"
-    class="btn-cancelar-paciente"
-    onclick="window.location.href='listar.php'">
-    Cancelar
-</button>
+                <button
+                    type="button"
+                    class="btn-cancelar-paciente"
+                    onclick="window.location.href='listar.php'"
+                >
+                    Cancelar
+                </button>
 
             </div>
 
         </form>
 
     </section>
+
 </main>
 
 <script>
@@ -823,6 +825,7 @@ function normalizar(texto) {
 // =========================================
 
 function formatoCUIL(texto) {
+
     const n = String(texto)
         .replace(/\D/g, "")
         .slice(0, 11);
@@ -843,11 +846,10 @@ function formatoCUIL(texto) {
 
 const campoCUIL = document.getElementById("cuil");
 
-campoCUIL.value = formatoCUIL(
-    campoCUIL.value
-);
+campoCUIL.value = formatoCUIL(campoCUIL.value);
 
 campoCUIL.addEventListener("input", function () {
+
     const posicion =
         this.selectionStart ?? this.value.length;
 
@@ -870,7 +872,6 @@ campoCUIL.addEventListener("input", function () {
         if (/\d/.test(nuevo[indice])) {
             digitos++;
         }
-
         indice++;
     }
 
@@ -894,27 +895,23 @@ const telefonosPaises = [
     ["593", "ECU", "Ecuador"]
 ];
 
-const telefonoCodigo = document.getElementById(
-    "telefono_codigo"
-);
+const telefonoCodigo =
+    document.getElementById("telefono_codigo");
 
-const telefonoCampo = document.getElementById(
-    "telefono"
-);
+const telefonoCampo =
+    document.getElementById("telefono");
 
-const telefonoBoton = document.getElementById(
-    "telefono_pais"
-);
+const telefonoBoton =
+    document.getElementById("telefono_pais");
 
-const telefonoLista = document.getElementById(
-    "telefono_lista"
-);
+const telefonoLista =
+    document.getElementById("telefono_lista");
 
-const telefonoAyuda = document.getElementById(
-    "telefono_ayuda"
-);
+const telefonoAyuda =
+    document.getElementById("telefono_ayuda");
 
 function telefonoFormateado(valor) {
+
     const n = String(valor).replace(/\D/g, "");
 
     if (telefonoCodigo.value !== "54") {
@@ -949,6 +946,7 @@ function telefonoFormateado(valor) {
 }
 
 function configurarPaisTelefono(codigo) {
+
     const pais = telefonosPaises.find(
         p => p[0] === codigo
     ) || telefonosPaises[0];
@@ -981,6 +979,7 @@ function configurarPaisTelefono(codigo) {
 }
 
 for (const pais of telefonosPaises) {
+
     const opcion = document.createElement("button");
 
     opcion.type = "button";
@@ -990,6 +989,7 @@ for (const pais of telefonosPaises) {
         pais[2] + " (+" + pais[0] + ")";
 
     opcion.addEventListener("click", () => {
+
         telefonoCampo.value = "";
 
         configurarPaisTelefono(pais[0]);
@@ -1004,6 +1004,7 @@ for (const pais of telefonosPaises) {
 }
 
 telefonoBoton.addEventListener("click", () => {
+
     telefonoLista.hidden = !telefonoLista.hidden;
 
     telefonoBoton.setAttribute(
@@ -1013,7 +1014,9 @@ telefonoBoton.addEventListener("click", () => {
 });
 
 document.addEventListener("click", evento => {
+
     if (!evento.target.closest(".telefono-ducca")) {
+
         telefonoLista.hidden = true;
 
         telefonoBoton.setAttribute(
@@ -1024,6 +1027,7 @@ document.addEventListener("click", evento => {
 });
 
 telefonoCampo.addEventListener("input", () => {
+
     const maximo =
         telefonoCodigo.value === "54" ? 10 : 12;
 
@@ -1049,6 +1053,7 @@ const telefonoGuardado = <?php echo json_encode(
 ); ?>;
 
 function cargarTelefonoAnterior() {
+
     const limpio = telefonoGuardado.replace(
         /[^\d+]/g,
         ""
@@ -1071,6 +1076,7 @@ function cargarTelefonoAnterior() {
             );
 
         if (pais) {
+
             codigo = pais[0];
 
             numero = limpio
@@ -1078,6 +1084,7 @@ function cargarTelefonoAnterior() {
                 .replace(/\D/g, "");
 
             if (codigo === "54") {
+
                 if (
                     numero.length === 11 &&
                     numero.startsWith("9")
@@ -1087,6 +1094,7 @@ function cargarTelefonoAnterior() {
                     necesitaRevision = true;
                 }
             }
+
         } else {
             necesitaRevision = true;
         }
@@ -1095,6 +1103,7 @@ function cargarTelefonoAnterior() {
         numero.startsWith("549") &&
         numero.length === 13
     ) {
+
         codigo = "54";
         numero = numero.slice(3);
 
@@ -1102,6 +1111,7 @@ function cargarTelefonoAnterior() {
         numero.startsWith("54") &&
         numero.length === 12
     ) {
+
         codigo = "54";
         numero = numero.slice(2);
         necesitaRevision = true;
@@ -1130,6 +1140,7 @@ cargarTelefonoAnterior();
 // =========================================
 
 function validarTelefono() {
+
     const numeros = telefonoCampo.value.replace(
         /\D/g,
         ""
@@ -1139,6 +1150,7 @@ function validarTelefono() {
         telefonoCodigo.value === "54" &&
         numeros.length !== 10
     ) {
+
         alert(
             "El celular argentino debe tener " +
             "10 dígitos nacionales."
@@ -1157,6 +1169,7 @@ function validarTelefono() {
                 numeros.length > 15
         )
     ) {
+
         alert("Revisá la longitud del teléfono.");
 
         telefonoCampo.focus();
@@ -1164,6 +1177,7 @@ function validarTelefono() {
     }
 
     telefonoCampo.value = numeros;
+
     return true;
 }
 
@@ -1180,6 +1194,7 @@ const mensajeObra = document.getElementById(
 );
 
 function actualizarObra() {
+
     const nombre = normalizar(campoObra.value);
 
     const existente = [
@@ -1190,13 +1205,16 @@ function actualizarObra() {
     );
 
     if (!nombre) {
+
         mensajeObra.textContent = "";
 
     } else if (existente) {
+
         mensajeObra.textContent =
             "Obra social seleccionada: " + existente;
 
     } else {
+
         mensajeObra.textContent =
             "Obra social nueva. Se registrará al guardar.";
     }
@@ -1222,6 +1240,7 @@ const mensajeTrabajo = document.getElementById(
 );
 
 function actualizarTrabajo() {
+
     const nombre = normalizar(campoTrabajo.value);
 
     const existente = trabajos.find(
@@ -1229,14 +1248,17 @@ function actualizarTrabajo() {
     );
 
     if (!nombre) {
+
         mensajeTrabajo.textContent =
             "Sin trabajo seleccionado.";
 
     } else if (existente) {
+
         mensajeTrabajo.textContent =
             "Trabajo seleccionado: " + existente.nombre_t;
 
     } else {
+
         mensajeTrabajo.textContent =
             "Trabajo nuevo. Se registrará al guardar.";
     }
@@ -1260,6 +1282,7 @@ document.getElementById("formPaciente")
         campoTrabajo.value = limpiar(campoTrabajo.value);
 
         if (!campoObra.value) {
+
             evento.preventDefault();
 
             alert(
@@ -1277,6 +1300,7 @@ document.getElementById("formPaciente")
             cuilNumeros !== "" &&
             !/^[0-9]{11}$/.test(cuilNumeros)
         ) {
+
             evento.preventDefault();
 
             alert("El CUIL debe tener 11 números.");
@@ -1286,6 +1310,7 @@ document.getElementById("formPaciente")
         }
 
         if (!validarTelefono()) {
+
             evento.preventDefault();
             return;
         }
@@ -1296,8 +1321,8 @@ document.getElementById("formPaciente")
 </script>
 
 <script src="../general/script.js"></script>
-    <script src="../general/modooscuro.js"></script>
-    <script src="../general/animaciones.js"></script>
+<script src="../general/modooscuro.js"></script>
+<script src="../general/animaciones.js"></script>
 
 </body>
 </html>

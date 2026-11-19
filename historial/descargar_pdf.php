@@ -1,6 +1,11 @@
 
 <?php
 
+// =========================================
+// DUCCA - DESCARGAR HISTORIAL EN PDF
+// =========================================
+
+require_once __DIR__ . "/../inicio sesion/verificar_sesion.php";
 require_once __DIR__ . "/../Pacientes/conexion.php";
 require_once __DIR__ . "/../vendor/autoload.php";
 
@@ -11,19 +16,158 @@ use Dompdf\Options;
 
 date_default_timezone_set("America/Argentina/Salta");
 
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
+header("X-Content-Type-Options: nosniff");
+
+// =========================================
+// FUNCIONES
+// =========================================
+
+function escapar($valor) {
+    return htmlspecialchars(
+        (string)($valor ?? ""),
+        ENT_QUOTES,
+        "UTF-8"
+    );
+}
+
+function consultar($conexion, $sql, $dni) {
+    $stmt = mysqli_prepare($conexion, $sql);
+
+    if (!$stmt) {
+        throw new Exception("Error al preparar la consulta.");
+    }
+
+    mysqli_stmt_bind_param($stmt, "i", $dni);
+    mysqli_stmt_execute($stmt);
+
+    $resultado = mysqli_stmt_get_result($stmt);
+    $filas = mysqli_fetch_all($resultado, MYSQLI_ASSOC);
+
+    mysqli_stmt_close($stmt);
+    return $filas;
+}
+
+function fechaBonita($fecha) {
+    if (empty($fecha)) {
+        return "-";
+    }
+
+    return date("d/m/Y", strtotime($fecha));
+}
+
+function textoConSaltos($texto) {
+    return nl2br(escapar($texto));
+}
+
+// =========================================
+// VALIDAR PARÁMETROS
+// =========================================
+
+if ($_SERVER["REQUEST_METHOD"] !== "GET") {
+    http_response_code(405);
+    header("Allow: GET");
+    exit("Método no permitido.");
+}
+
+$dni = filter_input(
+    INPUT_GET,
+    "dni_p",
+    FILTER_VALIDATE_INT
+);
+
+$tipo = (string)($_GET["tipo"] ?? "");
+
+if (!$dni || $dni <= 0) {
+    http_response_code(400);
+    exit("DNI no válido.");
+}
+
+if (!in_array($tipo, ["interno", "paciente"], true)) {
+    http_response_code(400);
+    exit("Tipo de informe no válido.");
+}
+
+$esInterno = ($tipo === "interno");
+
+// =========================================
+// CONSULTAR PACIENTE Y ESTADO
+// =========================================
+
+$filas = consultar(
+    $conexion,
+    "SELECT
+        dni_p,
+        nombre_p,
+        apellido,
+        cuil,
+        telefono,
+        mail,
+        estado
+     FROM paciente
+     WHERE dni_p = ?",
+    $dni
+);
+
+if (!$filas) {
+    http_response_code(404);
+    exit("No se encontró el paciente.");
+}
+
+$paciente = $filas[0];
+
+$esArchivado = (
+    $paciente["estado"] === "archivado"
+);
+
+// =========================================
+// PROTEGER PACIENTES ARCHIVADOS
+// =========================================
+
+if ($esArchivado) {
+
+    $dniSesion = (string)(
+        $_SESSION["dni"] ?? ""
+    );
+
+    $dniAutorizado = (string)(
+        $_SESSION["acceso_archivados_dni"] ?? ""
+    );
+
+    $accesoHasta = (int)(
+        $_SESSION["acceso_archivados_hasta"] ?? 0
+    );
+
+    $accesoValido = (
+        $dniSesion !== "" &&
+        $dniAutorizado === $dniSesion &&
+        $accesoHasta > time()
+    );
+
+    if (!$accesoValido) {
+
+        mysqli_close($conexion);
+
+        // No generar el PDF sin autorización.
+
+        http_response_code(403);
+
+        exit(
+            "El paciente está archivado. " .
+            "Primero debés ingresar a Pacientes archivados " .
+            "y verificar tu contraseña."
+        );
+    }
+}
+
 // =========================================
 // CONFIGURACIÓN DE DUCCA
 // =========================================
 
 $consultorio = "DUCCA";
 
-// Por ahora no mostramos datos profesionales
-// reales ni matrículas ficticias.
-
 $subtituloConsultorio = "Consultorio profesional";
-
-// Logo de DUCCA
-// Se encuentra en la carpeta general.
 
 $rutaLogo = __DIR__ .
     "/../general/Logo minimalista DUCCA con hojas orgánicas.png";
@@ -35,143 +179,11 @@ if (is_file($rutaLogo) && is_readable($rutaLogo)) {
     $contenidoLogo = file_get_contents($rutaLogo);
 
     if ($contenidoLogo !== false) {
-
         $logoBase64 =
             "data:image/png;base64," .
             base64_encode($contenidoLogo);
     }
 }
-
-// IMPORTANTE:
-// Antes de usar datos clínicos reales,
-// este archivo debe verificar la sesión
-// de la profesional autorizada.
-
-// =========================================
-// FUNCIONES
-// =========================================
-
-function escapar($valor) {
-
-    return htmlspecialchars(
-        (string)($valor ?? ""),
-        ENT_QUOTES,
-        "UTF-8"
-    );
-}
-
-function consultar($conexion, $sql, $dni) {
-
-    $stmt = mysqli_prepare($conexion, $sql);
-
-    if (!$stmt) {
-        throw new Exception(
-            "No se pudo preparar la consulta."
-        );
-    }
-
-    mysqli_stmt_bind_param($stmt, "i", $dni);
-
-    if (!mysqli_stmt_execute($stmt)) {
-
-        mysqli_stmt_close($stmt);
-
-        throw new Exception(
-            "No se pudo ejecutar la consulta."
-        );
-    }
-
-    $resultado = mysqli_stmt_get_result($stmt);
-
-    $filas = mysqli_fetch_all(
-        $resultado,
-        MYSQLI_ASSOC
-    );
-
-    mysqli_stmt_close($stmt);
-
-    return $filas;
-}
-
-function fechaBonita($fecha) {
-
-    if (empty($fecha)) {
-        return "-";
-    }
-
-    return date(
-        "d/m/Y",
-        strtotime($fecha)
-    );
-}
-
-function textoConSaltos($texto) {
-
-    return nl2br(
-        escapar($texto)
-    );
-}
-
-// =========================================
-// VALIDAR PARÁMETROS
-// =========================================
-
-$dni = filter_input(
-    INPUT_GET,
-    "dni_p",
-    FILTER_VALIDATE_INT
-);
-
-$tipo = (string)($_GET["tipo"] ?? "");
-
-if (!$dni || $dni <= 0) {
-
-    http_response_code(400);
-
-    exit("DNI no válido.");
-}
-
-if (!in_array(
-    $tipo,
-    ["interno", "paciente"],
-    true
-)) {
-
-    http_response_code(400);
-
-    exit("Tipo de informe no válido.");
-}
-
-$esInterno = ($tipo === "interno");
-
-// =========================================
-// CONSULTAR PACIENTE
-// =========================================
-
-$filas = consultar(
-    $conexion,
-    "SELECT
-        dni_p,
-        nombre_p,
-        apellido,
-        cuil,
-        telefono,
-        mail
-
-     FROM paciente
-
-     WHERE dni_p = ?",
-    $dni
-);
-
-if (!$filas) {
-
-    http_response_code(404);
-
-    exit("No se encontró el paciente.");
-}
-
-$paciente = $filas[0];
 
 // =========================================
 // ESTUDIOS INDICADOS
@@ -182,14 +194,10 @@ $estudios = consultar(
     "SELECT
         e.nombre_es,
         pe.estado
-
      FROM paciente_estudio pe
-
      INNER JOIN estudio e
         ON pe.id_estudio = e.id_estudio
-
      WHERE pe.dni_paciente = ?
-
      ORDER BY e.nombre_es",
     $dni
 );
@@ -206,22 +214,16 @@ $historial = consultar(
         h.observaciones,
         h.archivo,
         e.nombre_es
-
      FROM historial_medico h
-
      INNER JOIN estudio e
         ON h.id_estudio = e.id_estudio
-
      WHERE h.dni_paciente = ?
-
-     ORDER BY
-        h.fecha DESC,
-        h.id_historial DESC",
+     ORDER BY h.fecha DESC, h.id_historial DESC",
     $dni
 );
 
 // =========================================
-// INFORMACIÓN PARA USO INTERNO
+// DATOS SOLO PARA USO INTERNO
 // =========================================
 
 $exposiciones = [];
@@ -229,25 +231,19 @@ $turnos = [];
 
 if ($esInterno) {
 
-    // Exposiciones del paciente
-
     $exposiciones = consultar(
         $conexion,
-        "SELECT
-            e.nombre_ex
-
+        "SELECT e.nombre_ex
          FROM paciente_exposicion pe
-
          INNER JOIN exposicion e
             ON pe.id_exposicion = e.id_exposicion
-
          WHERE pe.dni_paciente = ?
-
          ORDER BY e.nombre_ex",
         $dni
     );
 
-    // Todos los turnos registrados
+    // Todos los turnos, sin excluir
+    // realizados, cancelados o ausentes.
 
     $turnos = consultar(
         $conexion,
@@ -257,11 +253,8 @@ if ($esInterno) {
             motivo,
             estado,
             observaciones
-
          FROM turno
-
          WHERE dni_paciente = ?
-
          ORDER BY fecha DESC, hora DESC",
         $dni
     );
@@ -284,7 +277,7 @@ $subtitulo = $esInterno
 $fechaEmision = date("d/m/Y");
 
 // =========================================
-// ARMAR CONTENIDO DEL PDF
+// CREAR HTML DEL PDF
 // =========================================
 
 ob_start();
@@ -295,188 +288,169 @@ ob_start();
 <html lang="es">
 
 <head>
+    <meta charset="UTF-8">
 
-<meta charset="UTF-8">
+    <style>
 
-<style>
+        @page {
+            margin: 38px 42px 46px;
+        }
 
-    @page {
-        margin: 38px 42px 46px;
-    }
+        body {
+            font-family: "DejaVu Sans", sans-serif;
+            font-size: 10px;
+            line-height: 1.55;
+            color: #304456;
+        }
 
-    body {
-        font-family: "DejaVu Sans", sans-serif;
-        font-size: 10px;
-        line-height: 1.55;
-        color: #304456;
-    }
+        .encabezado {
+            border-bottom: 3px solid #486d88;
+            padding-bottom: 14px;
+            margin-bottom: 22px;
+        }
 
-    /* ENCABEZADO */
+        .tabla-encabezado {
+            width: 100%;
+            border: none;
+            border-collapse: collapse;
+            margin: 0;
+            padding: 0;
+        }
 
-    .encabezado {
-        border-bottom: 3px solid #486d88;
-        padding-bottom: 14px;
-        margin-bottom: 22px;
-    }
+        .tabla-encabezado td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
 
-    .tabla-encabezado {
-        width: 100%;
-        border: none;
-        border-collapse: collapse;
-        margin: 0;
-        padding: 0;
-    }
+        .celda-logo {
+            width: 105px;
+        }
 
-    .tabla-encabezado td {
-        border: none;
-        padding: 0;
-        vertical-align: middle;
-    }
+        .logo {
+            width: 90px;
+            height: auto;
+        }
 
-    .celda-logo {
-        width: 105px;
-    }
+        .celda-consultorio {
+            padding-left: 15px !important;
+        }
 
-    .logo {
-        width: 90px;
-        height: auto;
-    }
+        .nombre-consultorio {
+            font-size: 24px;
+            font-weight: bold;
+            color: #25445d;
+            margin-bottom: 4px;
+        }
 
-    .celda-consultorio {
-        padding-left: 15px !important;
-    }
+        .subtitulo-consultorio {
+            font-size: 10px;
+            color: #64798b;
+        }
 
-    .nombre-consultorio {
-        font-size: 24px;
-        font-weight: bold;
-        color: #25445d;
-        margin-bottom: 4px;
-    }
+        .titulo {
+            font-size: 20px;
+            color: #25445d;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
 
-    .subtitulo-consultorio {
-        font-size: 10px;
-        color: #64798b;
-    }
+        .subtitulo {
+            color: #687c8d;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
 
-    /* TÍTULO */
+        .fecha-emision {
+            color: #64798b;
+            font-size: 9px;
+            margin-bottom: 20px;
+        }
 
-    .titulo {
-        font-size: 20px;
-        color: #25445d;
-        font-weight: bold;
-        margin-bottom: 4px;
-    }
+        .datos-paciente {
+            background: #f0f5f9;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
 
-    .subtitulo {
-        color: #687c8d;
-        font-size: 9px;
-        letter-spacing: 0.5px;
-        margin-bottom: 12px;
-    }
+        .datos-paciente p {
+            margin: 3px 0;
+        }
 
-    .fecha-emision {
-        color: #64798b;
-        font-size: 9px;
-        margin-bottom: 20px;
-    }
+        h2 {
+            color: #25445d;
+            font-size: 13px;
+            border-bottom: 1px solid #cddbe5;
+            padding-bottom: 6px;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
 
-    /* DATOS DEL PACIENTE */
+        .tabla-datos {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 18px;
+            table-layout: fixed;
+        }
 
-    .datos-paciente {
-        background: #f0f5f9;
-        padding: 14px;
-        margin-bottom: 20px;
-    }
+        .tabla-datos th {
+            text-align: left;
+            background: #e8f0f6;
+            color: #25445d;
+            padding: 9px;
+            border: 1px solid #d2dee8;
+        }
 
-    .datos-paciente p {
-        margin: 3px 0;
-    }
+        .tabla-datos td {
+            border: 1px solid #d2dee8;
+            padding: 9px;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
 
-    /* SECCIONES */
+        .tabla-datos tr {
+            page-break-inside: avoid;
+        }
 
-    h2 {
-        color: #25445d;
-        font-size: 13px;
-        border-bottom: 1px solid #cddbe5;
-        padding-bottom: 6px;
-        margin-top: 25px;
-        margin-bottom: 10px;
-    }
+        ul {
+            padding-left: 19px;
+        }
 
-    /* TABLAS */
+        li {
+            margin-bottom: 7px;
+        }
 
-    .tabla-datos {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        margin-bottom: 18px;
-        table-layout: fixed;
-    }
+        .sin-datos {
+            color: #748494;
+            font-style: italic;
+        }
 
-    .tabla-datos th {
-        text-align: left;
-        background: #e8f0f6;
-        color: #25445d;
-        padding: 9px;
-        border: 1px solid #d2dee8;
-    }
+        .aviso-final {
+            border-top: 1px solid #cddbe5;
+            padding-top: 12px;
+            margin-top: 30px;
+            color: #64798b;
+            font-size: 9px;
+        }
 
-    .tabla-datos td {
-        border: 1px solid #d2dee8;
-        padding: 9px;
-        vertical-align: top;
-        word-wrap: break-word;
-    }
+        .pie {
+            color: #8794a1;
+            font-size: 8px;
+            margin-top: 12px;
+        }
 
-    .tabla-datos tr {
-        page-break-inside: avoid;
-    }
-
-    /* LISTAS */
-
-    ul {
-        padding-left: 19px;
-    }
-
-    li {
-        margin-bottom: 7px;
-    }
-
-    .sin-datos {
-        color: #748494;
-        font-style: italic;
-    }
-
-    /* PIE DEL DOCUMENTO */
-
-    .aviso-final {
-        border-top: 1px solid #cddbe5;
-        padding-top: 12px;
-        margin-top: 30px;
-        color: #64798b;
-        font-size: 9px;
-    }
-
-    .pie {
-        color: #8794a1;
-        font-size: 8px;
-        margin-top: 12px;
-    }
-
-</style>
-
+    </style>
 </head>
 
 <body>
 
-<!-- ================================= -->
-<!-- ENCABEZADO DUCCA -->
-<!-- ================================= -->
+<!-- ENCABEZADO -->
 
 <div class="encabezado">
 
     <table class="tabla-encabezado">
-
         <tr>
 
             <td class="celda-logo">
@@ -501,23 +475,18 @@ ob_start();
 
                 <div class="subtitulo-consultorio">
                     <?php
-                        echo escapar(
-                            $subtituloConsultorio
-                        );
+                    echo escapar($subtituloConsultorio);
                     ?>
                 </div>
 
             </td>
 
         </tr>
-
     </table>
 
 </div>
 
-<!-- ================================= -->
-<!-- TÍTULO DEL INFORME -->
-<!-- ================================= -->
+<!-- TÍTULO -->
 
 <div class="titulo">
     <?php echo escapar($titulo); ?>
@@ -532,37 +501,25 @@ ob_start();
     <?php echo escapar($fechaEmision); ?>
 </div>
 
-<!-- ================================= -->
 <!-- DATOS DEL PACIENTE -->
-<!-- ================================= -->
 
 <div class="datos-paciente">
 
     <strong>DATOS DEL PACIENTE</strong>
 
     <p>
-
         <strong>Nombre y apellido:</strong>
-
         <?php
-            echo escapar(
-                $paciente["nombre_p"] . " " .
-                $paciente["apellido"]
-            );
+        echo escapar(
+            $paciente["nombre_p"] . " " .
+            $paciente["apellido"]
+        );
         ?>
-
     </p>
 
     <p>
-
         <strong>DNI:</strong>
-
-        <?php
-            echo escapar(
-                $paciente["dni_p"]
-            );
-        ?>
-
+        <?php echo escapar($paciente["dni_p"]); ?>
     </p>
 
     <?php if ($esInterno) { ?>
@@ -586,9 +543,7 @@ ob_start();
 
 </div>
 
-<!-- ================================= -->
 <!-- ESTUDIOS INDICADOS -->
-<!-- ================================= -->
 
 <h2>Estudios indicados</h2>
 
@@ -617,17 +572,13 @@ ob_start();
 
                     <td>
                         <?php
-                            echo escapar(
-                                $estudio["nombre_es"]
-                            );
+                        echo escapar($estudio["nombre_es"]);
                         ?>
                     </td>
 
                     <td>
                         <?php
-                            echo escapar(
-                                $estudio["estado"]
-                            );
+                        echo escapar($estudio["estado"]);
                         ?>
                     </td>
 
@@ -636,14 +587,11 @@ ob_start();
             <?php } ?>
 
         </tbody>
-
     </table>
 
 <?php } ?>
 
-<!-- ================================= -->
-<!-- EXPOSICIONES: SOLO INTERNO -->
-<!-- ================================= -->
+<!-- CONTENIDO EXCLUSIVO DEL PDF INTERNO -->
 
 <?php if ($esInterno) { ?>
 
@@ -663,9 +611,7 @@ ob_start();
 
                 <li>
                     <?php
-                        echo escapar(
-                            $exposicion["nombre_ex"]
-                        );
+                    echo escapar($exposicion["nombre_ex"]);
                     ?>
                 </li>
 
@@ -675,7 +621,7 @@ ob_start();
 
     <?php } ?>
 
-    <!-- TURNOS INTERNOS -->
+    <!-- TODOS LOS TURNOS -->
 
     <h2>Turnos registrados</h2>
 
@@ -690,7 +636,6 @@ ob_start();
         <table class="tabla-datos">
 
             <thead>
-
                 <tr>
                     <th>Fecha</th>
                     <th>Hora</th>
@@ -698,7 +643,6 @@ ob_start();
                     <th>Estado</th>
                     <th>Observaciones</th>
                 </tr>
-
             </thead>
 
             <tbody>
@@ -709,47 +653,37 @@ ob_start();
 
                         <td>
                             <?php
-                                echo escapar(
-                                    fechaBonita(
-                                        $turno["fecha"]
-                                    )
-                                );
+                            echo escapar(
+                                fechaBonita($turno["fecha"])
+                            );
                             ?>
                         </td>
 
                         <td>
                             <?php
-                                echo escapar(
-                                    substr(
-                                        $turno["hora"],
-                                        0,
-                                        5
-                                    )
-                                );
+                            echo escapar(
+                                substr($turno["hora"], 0, 5)
+                            );
                             ?>
                         </td>
 
                         <td>
                             <?php
-                                echo escapar(
-                                    $turno["motivo"]
-                                );
+                            echo escapar($turno["motivo"]);
                             ?>
                         </td>
 
                         <td>
                             <?php
-                                echo escapar(
-                                    $turno["estado"]
-                                );
+                            echo escapar($turno["estado"]);
                             ?>
                         </td>
 
                         <td>
                             <?php
-                                echo textoConSaltos(
-                                    $turno["observaciones"]
-                                );
+                            echo textoConSaltos(
+                                $turno["observaciones"]
+                            );
                             ?>
                         </td>
 
@@ -765,9 +699,7 @@ ob_start();
 
 <?php } ?>
 
-<!-- ================================= -->
-<!-- REGISTROS DE ESTUDIOS -->
-<!-- ================================= -->
+<!-- REGISTROS MÉDICOS -->
 
 <h2>Registros de estudios</h2>
 
@@ -789,10 +721,8 @@ ob_start();
                 <th>Estado</th>
 
                 <?php if ($esInterno) { ?>
-
                     <th>Observaciones</th>
                     <th>Archivo</th>
-
                 <?php } ?>
 
             </tr>
@@ -807,27 +737,21 @@ ob_start();
 
                     <td>
                         <?php
-                            echo escapar(
-                                $registro["nombre_es"]
-                            );
+                        echo escapar($registro["nombre_es"]);
                         ?>
                     </td>
 
                     <td>
                         <?php
-                            echo escapar(
-                                fechaBonita(
-                                    $registro["fecha"]
-                                )
-                            );
+                        echo escapar(
+                            fechaBonita($registro["fecha"])
+                        );
                         ?>
                     </td>
 
                     <td>
                         <?php
-                            echo escapar(
-                                $registro["estado"]
-                            );
+                        echo escapar($registro["estado"]);
                         ?>
                     </td>
 
@@ -835,17 +759,17 @@ ob_start();
 
                         <td>
                             <?php
-                                echo textoConSaltos(
-                                    $registro["observaciones"]
-                                );
+                            echo textoConSaltos(
+                                $registro["observaciones"]
+                            );
                             ?>
                         </td>
 
                         <td>
                             <?php
-                                echo !empty($registro["archivo"])
-                                    ? "Archivo adjunto registrado"
-                                    : "Sin archivo";
+                            echo !empty($registro["archivo"])
+                                ? "Archivo adjunto registrado"
+                                : "Sin archivo";
                             ?>
                         </td>
 
@@ -861,9 +785,7 @@ ob_start();
 
 <?php } ?>
 
-<!-- ================================= -->
-<!-- ACLARACIONES DEL DOCUMENTO -->
-<!-- ================================= -->
+<!-- ACLARACIONES -->
 
 <div class="aviso-final">
 
@@ -907,11 +829,11 @@ ob_start();
 
 <?php
 
-$html = ob_get_clean();
+// =========================================
+// GENERAR PDF
+// =========================================
 
-// =========================================
-// GENERAR Y DESCARGAR PDF
-// =========================================
+$html = ob_get_clean();
 
 $options = new Options();
 
@@ -925,7 +847,6 @@ $options->set(
     false
 );
 
-// Permitir archivos locales del proyecto
 $options->setChroot(
     realpath(__DIR__ . "/..")
 );
@@ -944,6 +865,10 @@ $dompdf->setPaper(
 
 $dompdf->render();
 
+// =========================================
+// DESCARGAR DOCUMENTO
+// =========================================
+
 $nombreArchivo = $esInterno
     ? "DUCCA_historial_interno_" . $dni . ".pdf"
     : "DUCCA_informe_paciente_" . $dni . ".pdf";
@@ -954,4 +879,5 @@ $dompdf->stream(
 );
 
 exit;
+
 ?>

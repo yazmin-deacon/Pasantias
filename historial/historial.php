@@ -1,14 +1,11 @@
 
 <?php
-
 // =========================================
 // DUCCA - HISTORIAL MÉDICO
 // =========================================
 
 require_once __DIR__ . "/../inicio sesion/verificar_sesion.php";
 require_once __DIR__ . "/../Pacientes/conexion.php";
-
-/** @var mysqli $conexion */
 
 date_default_timezone_set("America/Argentina/Salta");
 
@@ -29,20 +26,13 @@ function escapar($valor) {
 
 function formatoDNI($dni) {
     $dni = preg_replace('/\D/', '', (string)$dni);
-
-    return preg_replace(
-        '/\B(?=(\d{3})+(?!\d))/',
-        '.',
-        $dni
-    );
+    return preg_replace('/\B(?=(\d{3})+(?!\d))/', '.', $dni);
 }
 
 function consultar($conexion, $sql, $dni) {
-
     $stmt = mysqli_prepare($conexion, $sql);
 
     if (!$stmt) {
-        error_log(mysqli_error($conexion));
         http_response_code(500);
         exit("No se pudo preparar la consulta.");
     }
@@ -57,35 +47,21 @@ function consultar($conexion, $sql, $dni) {
     }
 
     $resultado = mysqli_stmt_get_result($stmt);
-
-    $filas = mysqli_fetch_all(
-        $resultado,
-        MYSQLI_ASSOC
-    );
-
+    $filas = mysqli_fetch_all($resultado, MYSQLI_ASSOC);
     mysqli_stmt_close($stmt);
 
     return $filas;
 }
 
 function avisoTurno($fecha, $estado) {
-
-    if (
-        !in_array(
-            $estado,
-            ["Pendiente", "Confirmado"],
-            true
-        )
-    ) {
+    if (!in_array($estado, ["Pendiente", "Confirmado"], true)) {
         return $estado;
     }
 
     $hoy = new DateTimeImmutable("today");
     $diaTurno = new DateTimeImmutable($fecha);
 
-    $dias = (int)$hoy->diff(
-        $diaTurno
-    )->format("%r%a");
+    $dias = (int)$hoy->diff($diaTurno)->format("%r%a");
 
     if ($dias < 0) {
         return "Vencido hace " . abs($dias) . " día(s)";
@@ -118,16 +94,12 @@ if (!$dni_p || $dni_p <= 0) {
 }
 
 // =========================================
-// BUSCAR PACIENTE Y ESTADO
+// CONSULTAR PACIENTE
 // =========================================
 
 $filasPaciente = consultar(
     $conexion,
-    "SELECT
-        dni_p,
-        nombre_p,
-        apellido,
-        estado
+    "SELECT dni_p, nombre_p, apellido, estado
      FROM paciente
      WHERE dni_p = ?",
     $dni_p
@@ -140,19 +112,15 @@ if (!$filasPaciente) {
 
 $paciente = $filasPaciente[0];
 
-$esArchivado = (
-    $paciente["estado"] === "archivado"
-);
+$esArchivado = $paciente["estado"] === "archivado";
 
 // =========================================
-// PROTEGER HISTORIALES ARCHIVADOS
+// PROTEGER PACIENTES ARCHIVADOS
 // =========================================
 
 if ($esArchivado) {
 
-    $dniSesion = (string)(
-        $_SESSION["dni"] ?? ""
-    );
+    $dniSesion = (string)($_SESSION["dni"] ?? "");
 
     $accesoDni = (string)(
         $_SESSION["acceso_archivados_dni"] ?? ""
@@ -169,7 +137,6 @@ if ($esArchivado) {
     );
 
     if (!$tieneAcceso) {
-
         mysqli_close($conexion);
 
         header(
@@ -190,14 +157,10 @@ $estudios = consultar(
         e.id_estudio,
         e.nombre_es,
         pe.estado
-
      FROM paciente_estudio pe
-
      INNER JOIN estudio e
         ON pe.id_estudio = e.id_estudio
-
      WHERE pe.dni_paciente = ?
-
      ORDER BY e.nombre_es",
     $dni_p
 );
@@ -211,21 +174,24 @@ $exposiciones = consultar(
     "SELECT
         e.id_exposicion,
         e.nombre_ex
-
      FROM paciente_exposicion pe
-
      INNER JOIN exposicion e
         ON pe.id_exposicion = e.id_exposicion
-
      WHERE pe.dni_paciente = ?
-
      ORDER BY e.nombre_ex",
     $dni_p
 );
 
 // =========================================
-// TURNOS PENDIENTES O CONFIRMADOS
+// TURNOS DEL PACIENTE
 // =========================================
+
+// Activos: pendientes y confirmados.
+// Archivados: todos los estados, incluso anteriores.
+
+$filtroTurnos = $esArchivado
+    ? ""
+    : "AND estado IN ('Pendiente', 'Confirmado')";
 
 $turnos = consultar(
     $conexion,
@@ -236,12 +202,9 @@ $turnos = consultar(
         motivo,
         estado,
         observaciones
-
      FROM turno
-
      WHERE dni_paciente = ?
-       AND estado IN ('Pendiente', 'Confirmado')
-
+     {$filtroTurnos}
      ORDER BY fecha ASC, hora ASC",
     $dni_p
 );
@@ -259,17 +222,11 @@ $historial = consultar(
         h.observaciones,
         h.archivo,
         e.nombre_es
-
      FROM historial_medico h
-
      INNER JOIN estudio e
         ON h.id_estudio = e.id_estudio
-
      WHERE h.dni_paciente = ?
-
-     ORDER BY
-        h.fecha DESC,
-        h.id_historial DESC",
+     ORDER BY h.fecha DESC, h.id_historial DESC",
     $dni_p
 );
 
@@ -281,7 +238,6 @@ mysqli_close($conexion);
 <html lang="es">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -291,13 +247,9 @@ mysqli_close($conexion);
 
     <title>Historial médico - DUCCA</title>
 
-    <link
-        rel="stylesheet"
-        href="../general/estilos.css"
-    >
+    <link rel="stylesheet" href="../general/estilos.css">
 
     <style>
-
         .lista-datos {
             padding-left: 20px;
         }
@@ -330,12 +282,18 @@ mysqli_close($conexion);
             color: #174a9c;
         }
 
+        .estado-otro {
+            background: #e9edf0;
+            color: #394550;
+        }
+
         .enlace-administrar {
             display: inline-block;
             margin: 10px 0 15px;
         }
 
-        .acciones-historial a {
+        .acciones-historial a,
+        .acciones-turnos a {
             display: inline-block;
             margin: 3px;
         }
@@ -363,11 +321,6 @@ mysqli_close($conexion);
 
         .aviso-turno {
             font-weight: 600;
-        }
-
-        .acciones-turnos a {
-            display: inline-block;
-            margin: 3px;
         }
 
         .aviso-archivado {
@@ -402,7 +355,6 @@ mysqli_close($conexion);
             display: inline-block;
             margin: 6px 0;
         }
-
     </style>
 
 </head>
@@ -411,9 +363,7 @@ mysqli_close($conexion);
 
 <main class="gestion-contenido">
 
-    <!-- =====================================
-         DATOS DEL PACIENTE
-    ===================================== -->
+    <!-- DATOS DEL PACIENTE -->
 
     <section class="bienvenida">
 
@@ -430,11 +380,7 @@ mysqli_close($conexion);
 
         <p>
             DNI:
-            <?php
-            echo escapar(
-                formatoDNI($paciente["dni_p"])
-            );
-            ?>
+            <?php echo escapar(formatoDNI($paciente["dni_p"])); ?>
         </p>
 
         <?php if ($esArchivado) { ?>
@@ -451,12 +397,12 @@ mysqli_close($conexion);
 
                 <p>
                     Este paciente se encuentra archivado.
-                    Podés consultar sus estudios,
-                    exposiciones, turnos y registros médicos.
+                    Podés consultar sus estudios, exposiciones,
+                    turnos y registros médicos.
                 </p>
 
                 <p>
-                    Para volver a modificar su información,
+                    Para modificar nuevamente su información,
                     primero deberás reactivarlo desde
                     Pacientes archivados.
                 </p>
@@ -464,11 +410,7 @@ mysqli_close($conexion);
             </div>
 
             <p>
-                <a
-                    href="../Pacientes/antiguos.php?dni_p=<?php
-                        echo urlencode($dni_p);
-                    ?>"
-                >
+                <a href="../Pacientes/antiguos.php?dni_p=<?php echo urlencode($dni_p); ?>">
                     Volver a la ficha archivada
                 </a>
             </p>
@@ -485,55 +427,31 @@ mysqli_close($conexion);
 
     </section>
 
-    <!-- =====================================
-         DESCARGAS DEL HISTORIAL
-    ===================================== -->
+    <!-- DOCUMENTACIÓN -->
 
     <section class="tarjeta">
 
         <h2>Documentación del paciente</h2>
 
-        <?php if (!$esArchivado) { ?>
+        <div class="enlaces-descarga">
 
-            <div class="enlaces-descarga">
-
-                <p>
-                    <a
-                        href="descargar_pdf.php?dni_p=<?php
-                            echo urlencode($dni_p);
-                        ?>&tipo=interno"
-                    >
-                        Descargar historial completo (PDF)
-                    </a>
-                </p>
-
-                <p>
-                    <a
-                        href="descargar_pdf.php?dni_p=<?php
-                            echo urlencode($dni_p);
-                        ?>&tipo=paciente"
-                    >
-                        Descargar informe para el paciente (PDF)
-                    </a>
-                </p>
-
-            </div>
-
-        <?php } else { ?>
-
-            <p class="mensaje-proteccion">
-                La descarga de PDF para pacientes archivados
-                estará disponible cuando protejamos
-                también descargar_pdf.php.
+            <p>
+                <a href="descargar_pdf.php?dni_p=<?php echo urlencode($dni_p); ?>&tipo=interno">
+                    Descargar historial completo (PDF)
+                </a>
             </p>
 
-        <?php } ?>
+            <p>
+                <a href="descargar_pdf.php?dni_p=<?php echo urlencode($dni_p); ?>&tipo=paciente">
+                    Descargar informe para el paciente (PDF)
+                </a>
+            </p>
+
+        </div>
 
     </section>
 
-    <!-- =====================================
-         ESTUDIOS INDICADOS
-    ===================================== -->
+    <!-- ESTUDIOS INDICADOS -->
 
     <section class="tarjeta">
 
@@ -544,9 +462,7 @@ mysqli_close($conexion);
             <p>
                 <a
                     class="enlace-administrar"
-                    href="administrar_estudios.php?dni_p=<?php
-                        echo urlencode($dni_p);
-                    ?>"
+                    href="administrar_estudios.php?dni_p=<?php echo urlencode($dni_p); ?>"
                 >
                     Administrar estudios indicados
                 </a>
@@ -556,9 +472,7 @@ mysqli_close($conexion);
 
         <?php if (!$estudios) { ?>
 
-            <p>
-                Este paciente no tiene estudios indicados.
-            </p>
+            <p>Este paciente no tiene estudios indicados.</p>
 
         <?php } else { ?>
 
@@ -568,15 +482,10 @@ mysqli_close($conexion);
 
                     <li>
 
-                        <?php
-                        echo escapar(
-                            $estudio["nombre_es"]
-                        );
-                        ?>
+                        <?php echo escapar($estudio["nombre_es"]); ?>
 
                         <?php
-                        $realizado =
-                            $estudio["estado"] === "Realizado";
+                        $realizado = $estudio["estado"] === "Realizado";
                         ?>
 
                         <span class="estado <?php
@@ -585,11 +494,7 @@ mysqli_close($conexion);
                                 : "estado-pendiente";
                         ?>">
 
-                            <?php
-                            echo escapar(
-                                $estudio["estado"]
-                            );
-                            ?>
+                            <?php echo escapar($estudio["estado"]); ?>
 
                         </span>
 
@@ -603,9 +508,7 @@ mysqli_close($conexion);
 
     </section>
 
-    <!-- =====================================
-         EXPOSICIONES
-    ===================================== -->
+    <!-- EXPOSICIONES -->
 
     <section class="tarjeta">
 
@@ -616,9 +519,7 @@ mysqli_close($conexion);
             <p>
                 <a
                     class="enlace-administrar"
-                    href="administrar_exposiciones.php?dni_p=<?php
-                        echo urlencode($dni_p);
-                    ?>"
+                    href="administrar_exposiciones.php?dni_p=<?php echo urlencode($dni_p); ?>"
                 >
                     Administrar exposiciones
                 </a>
@@ -639,11 +540,7 @@ mysqli_close($conexion);
                 <?php foreach ($exposiciones as $exposicion) { ?>
 
                     <li>
-                        <?php
-                        echo escapar(
-                            $exposicion["nombre_ex"]
-                        );
-                        ?>
+                        <?php echo escapar($exposicion["nombre_ex"]); ?>
                     </li>
 
                 <?php } ?>
@@ -654,33 +551,31 @@ mysqli_close($conexion);
 
     </section>
 
-    <!-- =====================================
-         TURNOS PENDIENTES
-    ===================================== -->
+    <!-- TURNOS -->
 
     <section class="tarjeta">
 
-        <h2>Turnos pendientes</h2>
+        <h2>
+            <?php
+            echo $esArchivado
+                ? "Historial de turnos"
+                : "Turnos pendientes";
+            ?>
+        </h2>
 
         <?php if (!$esArchivado) { ?>
 
             <p>
                 <a
                     class="enlace-administrar"
-                    href="../turnos/formulario.php?dni_p=<?php
-                        echo urlencode($dni_p);
-                    ?>"
+                    href="../turnos/formulario.php?dni_p=<?php echo urlencode($dni_p); ?>"
                 >
                     Registrar nuevo turno
                 </a>
             </p>
 
             <p>
-                <a
-                    href="../turnos/listar.php?dni_p=<?php
-                        echo urlencode($dni_p);
-                    ?>&estado=Todos"
-                >
+                <a href="../turnos/listar.php?dni_p=<?php echo urlencode($dni_p); ?>&estado=Todos">
                     Ver todos los turnos de este paciente
                 </a>
             </p>
@@ -690,14 +585,18 @@ mysqli_close($conexion);
         <?php if (!$turnos) { ?>
 
             <p>
-                Este paciente no tiene turnos
-                pendientes ni confirmados.
+                <?php
+                echo $esArchivado
+                    ? "Este paciente no tiene turnos registrados."
+                    : "Este paciente no tiene turnos pendientes ni confirmados.";
+                ?>
             </p>
 
         <?php } else { ?>
 
             <p>
-                Turnos activos:
+                <?php echo $esArchivado ? "Turnos registrados:" : "Turnos activos:"; ?>
+
                 <strong>
                     <?php echo count($turnos); ?>
                 </strong>
@@ -708,7 +607,6 @@ mysqli_close($conexion);
                 <table class="tabla-gestion">
 
                     <thead>
-
                         <tr>
                             <th>Fecha</th>
                             <th>Hora</th>
@@ -720,9 +618,7 @@ mysqli_close($conexion);
                             <?php if (!$esArchivado) { ?>
                                 <th>Acciones</th>
                             <?php } ?>
-
                         </tr>
-
                     </thead>
 
                     <tbody>
@@ -736,9 +632,7 @@ mysqli_close($conexion);
                                     echo escapar(
                                         date(
                                             "d/m/Y",
-                                            strtotime(
-                                                $turno["fecha"]
-                                            )
+                                            strtotime($turno["fecha"])
                                         )
                                     );
                                     ?>
@@ -747,37 +641,29 @@ mysqli_close($conexion);
                                 <td>
                                     <?php
                                     echo escapar(
-                                        substr(
-                                            $turno["hora"],
-                                            0,
-                                            5
-                                        )
+                                        substr($turno["hora"], 0, 5)
                                     );
                                     ?>
                                 </td>
 
                                 <td>
+                                    <?php echo escapar($turno["motivo"]); ?>
+                                </td>
+
+                                <td>
+
                                     <?php
-                                    echo escapar(
-                                        $turno["motivo"]
-                                    );
+                                    $claseEstado = "estado-otro";
+
+                                    if ($turno["estado"] === "Confirmado") {
+                                        $claseEstado = "estado-confirmado";
+                                    } elseif ($turno["estado"] === "Pendiente") {
+                                        $claseEstado = "estado-pendiente";
+                                    }
                                     ?>
-                                </td>
 
-                                <td>
-
-                                    <span class="estado <?php
-                                        echo $turno["estado"] === "Confirmado"
-                                            ? "estado-confirmado"
-                                            : "estado-pendiente";
-                                    ?>">
-
-                                        <?php
-                                        echo escapar(
-                                            $turno["estado"]
-                                        );
-                                        ?>
-
+                                    <span class="estado <?php echo $claseEstado; ?>">
+                                        <?php echo escapar($turno["estado"]); ?>
                                     </span>
 
                                 </td>
@@ -796,9 +682,7 @@ mysqli_close($conexion);
                                 <td>
                                     <?php
                                     echo nl2br(
-                                        escapar(
-                                            $turno["observaciones"]
-                                        )
+                                        escapar($turno["observaciones"])
                                     );
                                     ?>
                                 </td>
@@ -807,11 +691,7 @@ mysqli_close($conexion);
 
                                     <td class="acciones-turnos">
 
-                                        <a
-                                            href="../turnos/formulario.php?id_turno=<?php
-                                                echo (int)$turno["id_turno"];
-                                            ?>"
-                                        >
+                                        <a href="../turnos/formulario.php?id_turno=<?php echo (int)$turno["id_turno"]; ?>">
                                             Editar turno
                                         </a>
 
@@ -833,9 +713,7 @@ mysqli_close($conexion);
 
     </section>
 
-    <!-- =====================================
-         REGISTROS DEL HISTORIAL
-    ===================================== -->
+    <!-- REGISTROS DEL HISTORIAL -->
 
     <section class="tarjeta">
 
@@ -844,11 +722,7 @@ mysqli_close($conexion);
         <?php if (!$esArchivado) { ?>
 
             <p>
-                <a
-                    href="agregar_historial.php?dni_p=<?php
-                        echo urlencode($dni_p);
-                    ?>"
-                >
+                <a href="agregar_historial.php?dni_p=<?php echo urlencode($dni_p); ?>">
                     Registrar nuevo estudio
                 </a>
             </p>
@@ -858,8 +732,7 @@ mysqli_close($conexion);
         <?php if (!$historial) { ?>
 
             <p>
-                Todavía no hay estudios registrados
-                en el historial.
+                Todavía no hay estudios registrados en el historial.
             </p>
 
         <?php } else { ?>
@@ -869,7 +742,6 @@ mysqli_close($conexion);
                 <table class="tabla-gestion">
 
                     <thead>
-
                         <tr>
                             <th>Estudio</th>
                             <th>Fecha</th>
@@ -880,9 +752,7 @@ mysqli_close($conexion);
                             <?php if (!$esArchivado) { ?>
                                 <th>Acciones</th>
                             <?php } ?>
-
                         </tr>
-
                     </thead>
 
                     <tbody>
@@ -892,19 +762,11 @@ mysqli_close($conexion);
                             <tr>
 
                                 <td>
-                                    <?php
-                                    echo escapar(
-                                        $fila["nombre_es"]
-                                    );
-                                    ?>
+                                    <?php echo escapar($fila["nombre_es"]); ?>
                                 </td>
 
                                 <td>
-                                    <?php
-                                    echo escapar(
-                                        $fila["fecha"]
-                                    );
-                                    ?>
+                                    <?php echo escapar($fila["fecha"]); ?>
                                 </td>
 
                                 <td>
@@ -919,13 +781,7 @@ mysqli_close($conexion);
                                             ? "estado-realizado"
                                             : "estado-pendiente";
                                     ?>">
-
-                                        <?php
-                                        echo escapar(
-                                            $fila["estado"]
-                                        );
-                                        ?>
-
+                                        <?php echo escapar($fila["estado"]); ?>
                                     </span>
 
                                 </td>
@@ -933,9 +789,7 @@ mysqli_close($conexion);
                                 <td>
                                     <?php
                                     echo nl2br(
-                                        escapar(
-                                            $fila["observaciones"]
-                                        )
+                                        escapar($fila["observaciones"])
                                     );
                                     ?>
                                 </td>
@@ -949,9 +803,7 @@ mysqli_close($conexion);
                                             <a
                                                 href="../archivos/<?php
                                                     echo rawurlencode(
-                                                        basename(
-                                                            $fila["archivo"]
-                                                        )
+                                                        basename($fila["archivo"])
                                                     );
                                                 ?>"
                                                 target="_blank"
@@ -981,18 +833,12 @@ mysqli_close($conexion);
 
                                     <td class="acciones-historial">
 
-                                        <a
-                                            href="editar_historial.php?id_historial=<?php
-                                                echo (int)$fila["id_historial"];
-                                            ?>"
-                                        >
+                                        <a href="editar_historial.php?id_historial=<?php echo (int)$fila["id_historial"]; ?>">
                                             Editar
                                         </a>
 
                                         <a
-                                            href="eliminar_historial.php?id_historial=<?php
-                                                echo (int)$fila["id_historial"];
-                                            ?>"
+                                            href="eliminar_historial.php?id_historial=<?php echo (int)$fila["id_historial"]; ?>"
                                             class="btn-eliminar"
                                             onclick="return confirm('¿Estás seguro de eliminar este registro?');"
                                         >

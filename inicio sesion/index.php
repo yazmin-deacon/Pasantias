@@ -1,4 +1,3 @@
-
 <?php
 
 // ==========================================
@@ -21,7 +20,7 @@ date_default_timezone_set("America/Argentina/Salta");
 function escapar($valor)
 {
     return htmlspecialchars(
-        (string)($valor ?? ""),
+        (string) ($valor ?? ""),
         ENT_QUOTES,
         "UTF-8"
     );
@@ -37,7 +36,7 @@ if (isset($_GET["buscar_ajax"])) {
     header("Cache-Control: no-store");
 
     $busqueda = trim(
-        (string)$_GET["buscar_ajax"]
+        (string) $_GET["buscar_ajax"]
     );
 
     $busqueda = mb_substr(
@@ -225,20 +224,13 @@ mysqli_close($conexion);
 
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Menú Principal - DUCCA</title>
 
-    <link
-        rel="stylesheet"
-        href="../general/estilos.css"
-    >
+    <link rel="stylesheet" href="../general/estilos.css">
 
     <style>
-
         /* ====================================
            BUSCADOR DEL MENÚ PRINCIPAL
         ==================================== */
@@ -425,7 +417,6 @@ mysqli_close($conexion);
             display: block;
             margin-top: auto;
         }
-
     </style>
 
 </head>
@@ -440,13 +431,8 @@ mysqli_close($conexion);
 
         <div class="logo">
 
-            <img
-                id="logo"
-                src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
-                alt="Logo DUCCA"
-                height="150"
-                width="175"
-            >
+            <img id="logo" src="../general/Logo minimalista DUCCA con hojas orgánicas.png" alt="Logo DUCCA" height="150"
+                width="175">
 
         </div>
 
@@ -472,30 +458,17 @@ mysqli_close($conexion);
 
             <div class="contenedor-configuracion">
 
-                <button
-                    type="button"
-                    id="btn-configuracion"
-                    aria-label="Abrir configuración"
-                    aria-expanded="false"
-                >
+                <button type="button" id="btn-configuracion" aria-label="Abrir configuración" aria-expanded="false">
                     ⚙
                 </button>
 
-                <div
-                    id="menu-configuracion"
-                    class="menu-configuracion"
-                    hidden
-                >
+                <div id="menu-configuracion" class="menu-configuracion" hidden>
 
                     <p class="titulo-menu">
                         Administración
                     </p>
 
-                    <button
-                        type="button"
-                        id="btn-tema"
-                        class="opcion-configuracion"
-                    >
+                    <button type="button" id="btn-tema" class="opcion-configuracion">
                         ☽ Modo oscuro
                     </button>
 
@@ -515,14 +488,21 @@ mysqli_close($conexion);
 
                     <!-- NUEVA OPCIÓN -->
 
+
+                    <!-- PACIENTES ARCHIVADOS -->
+
                     <a href="../Pacientes/acceso_archivados.php">
                         Pacientes archivados
                     </a>
 
-                    <a
-                        href="cerrar_sesion.php"
-                        class="cerrar-sesion-menu"
-                    >
+                    <!-- ESTUDIOS PENDIENTES POR PACIENTE -->
+
+                    <a href="../Estudios/pendientes_paciente.php">
+                        Estudios pendientes
+                    </a>
+
+
+                    <a href="cerrar_sesion.php" class="cerrar-sesion-menu">
                         Cerrar sesión
                     </a>
 
@@ -556,15 +536,8 @@ mysqli_close($conexion);
                         DNI, nombre o apellido:
                     </label>
 
-                    <input
-                        type="text"
-                        id="buscar-paciente"
-                        name="buscar"
-                        placeholder="Buscar paciente..."
-                        autocomplete="off"
-                        maxlength="60"
-                        required
-                    >
+                    <input type="text" id="buscar-paciente" name="buscar" placeholder="Buscar paciente..."
+                        autocomplete="off" maxlength="60" required>
 
                     <button type="submit">
                         BUSCAR
@@ -574,27 +547,14 @@ mysqli_close($conexion);
 
                 <!-- SUGERENCIAS -->
 
-                <ul
-                    id="resultados-pacientes"
-                    class="resultados-buscador"
-                    aria-label="Pacientes encontrados"
-                    hidden
-                ></ul>
+                <ul id="resultados-pacientes" class="resultados-buscador" aria-label="Pacientes encontrados" hidden>
+                </ul>
 
-                <p
-                    id="mensaje-busqueda"
-                    class="mensaje-busqueda"
-                    aria-live="polite"
-                    hidden
-                ></p>
+                <p id="mensaje-busqueda" class="mensaje-busqueda" aria-live="polite" hidden></p>
 
                 <!-- PACIENTE SELECCIONADO -->
 
-                <div
-                    id="paciente-encontrado"
-                    class="paciente-encontrado"
-                    hidden
-                >
+                <div id="paciente-encontrado" class="paciente-encontrado" hidden>
 
                     <h3 id="nombre-encontrado"></h3>
 
@@ -619,10 +579,7 @@ mysqli_close($conexion);
 
                 <h2>TURNOS PENDIENTES</h2>
 
-                <ul
-                    class="lista-turnos"
-                    id="lista-turnos-db"
-                >
+                <ul class="lista-turnos" id="lista-turnos-db">
 
                     <?php if ($errorTurnos) { ?>
 
@@ -688,12 +645,12 @@ mysqli_close($conexion);
                                 <?php
                                 $claseEstado =
                                     $turno["estado"] === "Confirmado"
-                                        ? "estado-confirmado"
-                                        : "estado-pendiente";
+                                    ? "estado-confirmado"
+                                    : "estado-pendiente";
                                 ?>
 
                                 <span class="turno-estado <?php
-                                    echo $claseEstado;
+                                echo $claseEstado;
                                 ?>">
 
                                     <?php
@@ -704,14 +661,11 @@ mysqli_close($conexion);
 
                                 </span>
 
-                                <a
-                                    class="turno-historial"
-                                    href="../historial/historial.php?dni_p=<?php
-                                        echo urlencode(
-                                            $turno["dni_paciente"]
-                                        );
-                                    ?>"
-                                >
+                                <a class="turno-historial" href="../historial/historial.php?dni_p=<?php
+                                echo urlencode(
+                                    $turno["dni_paciente"]
+                                );
+                                ?>">
                                     Ver historial del paciente
                                 </a>
 
@@ -723,10 +677,7 @@ mysqli_close($conexion);
 
                 </ul>
 
-                <a
-                    href="../turnos/listar.php"
-                    class="ver-turnos"
-                >
+                <a href="../turnos/listar.php" class="ver-turnos">
                     Ver todos los turnos →
                 </a>
 
@@ -744,10 +695,7 @@ mysqli_close($conexion);
 
                 <!-- CARGAR PACIENTE -->
 
-                <a
-                    href="../Pacientes/alta.php"
-                    class="tarjeta opcion-menu"
-                >
+                <a href="../Pacientes/alta.php" class="tarjeta opcion-menu">
 
                     <div class="icono-menu"></div>
 
@@ -765,10 +713,7 @@ mysqli_close($conexion);
 
                 <!-- VER PACIENTES -->
 
-                <a
-                    href="../Pacientes/listar.php"
-                    class="tarjeta opcion-menu"
-                >
+                <a href="../Pacientes/listar.php" class="tarjeta opcion-menu">
 
                     <div class="icono-menu"></div>
 
@@ -786,10 +731,7 @@ mysqli_close($conexion);
 
                 <!-- ESTUDIOS -->
 
-                <a
-                    href="../Estudios/estudios.php"
-                    class="tarjeta opcion-menu"
-                >
+                <a href="../Estudios/estudios.php" class="tarjeta opcion-menu">
 
                     <div class="icono-menu"></div>
 
@@ -1131,4 +1073,5 @@ mysqli_close($conexion);
     <script src="../general/configuracion.js"></script>
 
 </body>
+
 </html>

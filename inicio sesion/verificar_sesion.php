@@ -1,13 +1,17 @@
 
 <?php
 
-return [
+// =========================================
+// DUCCA - VERIFICAR SESIÓN
+// =========================================
 
-    // Variable de sesión utilizada por DUCCA
-    "sesion_clave" => "dni",
+// Iniciar la sesión si todavía no está iniciada.
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-    // Contraseña especial de archivado.
-    // Todavía falta generar y colocar su hash.
-    "password_hash" => ""
-
-];
+// Comprobar que el usuario inició sesión.
+if (!isset($_SESSION["dni"])) {
+    header("Location: /pasantias/inicio%20sesion/login.html");
+    exit();
+}

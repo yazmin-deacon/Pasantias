@@ -1,8 +1,19 @@
 
 <?php
+
+// =========================================
+// DUCCA - ACTUALIZAR PACIENTE
+// =========================================
+
+require_once __DIR__ . "/../inicio sesion/verificar_sesion.php";
 require_once __DIR__ . "/conexion.php";
 
 /** @var mysqli $conexion */
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+header("Cache-Control: no-store, no-cache, must-revalidate");
+header("Pragma: no-cache");
 
 // =========================================
 // FUNCIONES
@@ -21,12 +32,42 @@ function normalizarNombre($texto) {
     );
 }
 
+function escapar($texto) {
+    return htmlspecialchars(
+        (string)($texto ?? ""),
+        ENT_QUOTES,
+        "UTF-8"
+    );
+}
+
 function ejecutar($stmt) {
-    if (!mysqli_stmt_execute($stmt)) {
-        throw new Exception(
-            mysqli_stmt_error($stmt)
-        );
-    }
+    mysqli_stmt_execute($stmt);
+}
+
+function mostrarError($mensaje, $codigo = 400) {
+    http_response_code($codigo);
+
+    echo '<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Error - DUCCA</title>
+        <link rel="stylesheet" href="../general/estilos.css">
+    </head>
+    <body>
+        <main class="gestion-contenido">
+            <section class="tarjeta">
+                <h2>No se pudo actualizar el paciente</h2>
+                <p>' . escapar($mensaje) . '</p>
+                <a href="listar.php">
+                    Volver al listado de pacientes
+                </a>
+            </section>
+        </main>
+    </body>
+    </html>';
+
+    exit;
 }
 
 // =========================================
@@ -42,22 +83,20 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
     }
 
     if (mb_strlen($nombre, "UTF-8") > 50) {
-        throw new Exception(
+        throw new InvalidArgumentException(
             "El nombre del trabajo es demasiado largo."
         );
     }
 
-    $sql = "SELECT id_trabajo, nombre_t
-            FROM trabajo
-            FOR UPDATE";
-
-    $resultado = mysqli_query($conexion, $sql);
-
-    if (!$resultado) {
-        throw new Exception(mysqli_error($conexion));
-    }
+    $resultado = mysqli_query(
+        $conexion,
+        "SELECT id_trabajo, nombre_t
+         FROM trabajo
+         FOR UPDATE"
+    );
 
     while ($fila = mysqli_fetch_assoc($resultado)) {
+
         if (
             normalizarNombre($fila["nombre_t"]) ===
             normalizarNombre($nombre)
@@ -73,12 +112,9 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
 
     $stmt = mysqli_prepare(
         $conexion,
-        "INSERT INTO trabajo (nombre_t) VALUES (?)"
+        "INSERT INTO trabajo (nombre_t)
+         VALUES (?)"
     );
-
-    if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
-    }
 
     mysqli_stmt_bind_param(
         $stmt,
@@ -89,6 +125,7 @@ function obtenerOCrearTrabajo($conexion, $nombre) {
     ejecutar($stmt);
 
     $id = mysqli_insert_id($conexion);
+
     mysqli_stmt_close($stmt);
 
     return $id;
@@ -103,10 +140,11 @@ function resolverObraSocial(
     $nombre,
     $idObraAnterior
 ) {
+
     $nombre = limpiarNombre($nombre);
 
     if ($nombre === "") {
-        throw new Exception(
+        throw new InvalidArgumentException(
             "Tenés que ingresar una obra social."
         );
     }
@@ -119,29 +157,28 @@ function resolverObraSocial(
     }
 
     if (mb_strlen($nombre, "UTF-8") > 100) {
-        throw new Exception(
+        throw new InvalidArgumentException(
             "El nombre de la obra social es demasiado largo."
         );
     }
 
-    $sql = "SELECT
-                id_obra_social,
-                nombre_os,
-                activa
-            FROM obra_social
-            FOR UPDATE";
-
-    $resultado = mysqli_query($conexion, $sql);
-
-    if (!$resultado) {
-        throw new Exception(mysqli_error($conexion));
-    }
+    $resultado = mysqli_query(
+        $conexion,
+        "SELECT
+            id_obra_social,
+            nombre_os,
+            activa
+         FROM obra_social
+         FOR UPDATE"
+    );
 
     while ($fila = mysqli_fetch_assoc($resultado)) {
+
         if (
             normalizarNombre($fila["nombre_os"]) ===
             normalizarNombre($nombre)
         ) {
+
             $id = (int)$fila["id_obra_social"];
             $activa = (int)$fila["activa"];
 
@@ -151,7 +188,7 @@ function resolverObraSocial(
                 !$activa &&
                 $id !== $idObraAnterior
             ) {
-                throw new Exception(
+                throw new InvalidArgumentException(
                     "Esa obra social está inactiva."
                 );
             }
@@ -169,10 +206,6 @@ function resolverObraSocial(
          VALUES (?, 1)"
     );
 
-    if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
-    }
-
     mysqli_stmt_bind_param(
         $stmt,
         "s",
@@ -182,22 +215,61 @@ function resolverObraSocial(
     ejecutar($stmt);
 
     $id = mysqli_insert_id($conexion);
+
     mysqli_stmt_close($stmt);
 
     return $id;
 }
 
 // =========================================
-// COMPROBAR MÉTODO
+// 1. COMPROBAR MÉTODO POST
 // =========================================
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    http_response_code(405);
-    exit("Método no permitido.");
+
+    header("Allow: POST");
+
+    mostrarError(
+        "Método no permitido.",
+        405
+    );
 }
 
 // =========================================
-// DATOS PERSONALES
+// 2. VALIDAR TOKEN CSRF
+// =========================================
+
+// Este token se genera en editar.php.
+// Debe coincidir con el token del formulario.
+
+$tokenGuardado = (string)(
+    $_SESSION["csrf_editar_paciente"] ?? ""
+);
+
+$tokenEnviado = (string)(
+    $_POST["csrf_token"] ?? ""
+);
+
+
+
+if (
+    $tokenGuardado === "" ||
+    $tokenEnviado === "" ||
+    !hash_equals(
+        $tokenGuardado,
+        $tokenEnviado
+    )
+) {
+
+    mostrarError(
+        "La solicitud no es válida. " .
+        "Volvé a editar el paciente e intentá nuevamente.",
+        403
+    );
+}
+
+// =========================================
+// 3. RECIBIR DATOS PERSONALES
 // =========================================
 
 $dni = preg_replace(
@@ -225,7 +297,7 @@ $mail = trim(
 );
 
 // =========================================
-// TELÉFONO INTERNACIONAL
+// 4. TELÉFONO INTERNACIONAL
 // =========================================
 
 $codigosPermitidos = [
@@ -250,14 +322,16 @@ if (
         true
     )
 ) {
-    die("El país del teléfono no es válido.");
+    mostrarError(
+        "El país del teléfono no es válido."
+    );
 }
 
 if (
     $codigoTelefono === "54" &&
     strlen($telefonoNacional) !== 10
 ) {
-    die(
+    mostrarError(
         "El celular argentino debe contener " .
         "10 dígitos nacionales."
     );
@@ -268,10 +342,14 @@ if (
     (
         strlen($telefonoNacional) < 6 ||
         strlen($telefonoNacional) > 12 ||
-        strlen($codigoTelefono . $telefonoNacional) > 15
+        strlen(
+            $codigoTelefono . $telefonoNacional
+        ) > 15
     )
 ) {
-    die("La longitud del teléfono no es válida.");
+    mostrarError(
+        "La longitud del teléfono no es válida."
+    );
 }
 
 $telefono = "+" .
@@ -280,7 +358,7 @@ $telefono = "+" .
     $telefonoNacional;
 
 // =========================================
-// DOMICILIO
+// 5. DOMICILIO
 // =========================================
 
 $domicilioCalle = limpiarNombre(
@@ -312,7 +390,7 @@ $domicilioPais = limpiarNombre(
 );
 
 // =========================================
-// OTROS DATOS
+// 6. OBRA SOCIAL Y TRABAJO
 // =========================================
 
 $obraNombre = limpiarNombre(
@@ -324,7 +402,7 @@ $trabajoNombre = limpiarNombre(
 );
 
 // =========================================
-// VALIDACIONES
+// 7. VALIDACIONES GENERALES
 // =========================================
 
 if (
@@ -332,14 +410,18 @@ if (
     strlen($dni) > 8 ||
     (int)$dni <= 0
 ) {
-    die("El DNI no es válido.");
+    mostrarError(
+        "El DNI no es válido."
+    );
 }
 
 if (
     $cuil !== "" &&
     !preg_match('/^[0-9]{11}$/', $cuil)
 ) {
-    die("El CUIL debe contener 11 números.");
+    mostrarError(
+        "El CUIL debe contener 11 números."
+    );
 }
 
 if (
@@ -348,11 +430,15 @@ if (
     $mail === "" ||
     $obraNombre === ""
 ) {
-    die("Faltan datos obligatorios.");
+    mostrarError(
+        "Faltan datos obligatorios."
+    );
 }
 
 if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
-    die("El correo electrónico no es válido.");
+    mostrarError(
+        "El correo electrónico no es válido."
+    );
 }
 
 if (
@@ -369,12 +455,18 @@ if (
     mb_strlen($domicilioCodigoPostal, "UTF-8") > 15 ||
     mb_strlen($domicilioPais, "UTF-8") > 100
 ) {
-    die("Alguno de los datos supera el tamaño permitido.");
+    mostrarError(
+        "Alguno de los datos supera el tamaño permitido."
+    );
 }
 
-// Se permiten direcciones antiguas vacías.
-// Si se comienza a cargar un domicilio,
-// deben completarse sus campos principales.
+// =========================================
+// 8. VALIDAR DOMICILIO
+// =========================================
+
+// Los domicilios antiguos pueden estar vacíos.
+// Si se comienza a completar uno,
+// los campos principales serán obligatorios.
 
 $domicilioIniciado =
     $domicilioCalle !== "" ||
@@ -396,7 +488,7 @@ if (
         $domicilioPais === ""
     )
 ) {
-    die(
+    mostrarError(
         "Si cargás un domicilio, completá calle, " .
         "altura, localidad, provincia, código postal y país."
     );
@@ -405,26 +497,29 @@ if (
 $dniNumero = (int)$dni;
 
 // =========================================
-// ACTUALIZAR PACIENTE
+// 9. ACTUALIZAR PACIENTE
 // =========================================
+
+$transaccionIniciada = false;
 
 try {
 
     mysqli_begin_transaction($conexion);
+    $transaccionIniciada = true;
 
-    // 1. VERIFICAR PACIENTE
+    // =====================================
+    // 10. BLOQUEAR FILA DEL PACIENTE
+    // =====================================
 
     $stmt = mysqli_prepare(
         $conexion,
-        "SELECT id_obra_social
+        "SELECT
+            id_obra_social,
+            estado
          FROM paciente
          WHERE dni_p = ?
          FOR UPDATE"
     );
-
-    if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
-    }
 
     mysqli_stmt_bind_param(
         $stmt,
@@ -440,8 +535,22 @@ try {
     mysqli_stmt_close($stmt);
 
     if (!$pacienteActual) {
-        throw new Exception(
-            "No se encontró el paciente."
+        throw new RuntimeException(
+            "No se encontró el paciente.",
+            404
+        );
+    }
+
+    // =====================================
+    // 11. PROTEGER PACIENTES ARCHIVADOS
+    // =====================================
+
+    if ($pacienteActual["estado"] !== "activo") {
+        throw new RuntimeException(
+            "Este paciente está archivado. " .
+            "No se pueden modificar sus datos. " .
+            "Primero debés reactivarlo.",
+            403
         );
     }
 
@@ -449,7 +558,9 @@ try {
         $pacienteActual["id_obra_social"] ?? 0
     );
 
-    // 2. OBRA SOCIAL
+    // =====================================
+    // 12. RESOLVER OBRA SOCIAL
+    // =====================================
 
     $idObraSocial = resolverObraSocial(
         $conexion,
@@ -457,14 +568,18 @@ try {
         $idObraAnterior
     );
 
-    // 3. TRABAJO
+    // =====================================
+    // 13. RESOLVER TRABAJO
+    // =====================================
 
     $idTrabajo = obtenerOCrearTrabajo(
         $conexion,
         $trabajoNombre
     );
 
-    // 4. ACTUALIZAR DATOS Y DOMICILIO
+    // =====================================
+    // 14. ACTUALIZAR DATOS
+    // =====================================
 
     $sql = "UPDATE paciente
 
@@ -484,13 +599,13 @@ try {
                 domicilio_codigo_postal = ?,
                 domicilio_pais = ?
 
-            WHERE dni_p = ?";
+            WHERE dni_p = ?
+              AND estado = 'activo'";
 
-    $stmt = mysqli_prepare($conexion, $sql);
-
-    if (!$stmt) {
-        throw new Exception(mysqli_error($conexion));
-    }
+    $stmt = mysqli_prepare(
+        $conexion,
+        $sql
+    );
 
     mysqli_stmt_bind_param(
         $stmt,
@@ -513,38 +628,75 @@ try {
     );
 
     ejecutar($stmt);
+
     mysqli_stmt_close($stmt);
 
-    // No modificar los datos médicos:
+    // =====================================
+    // 15. CONSERVAR DATOS MÉDICOS
+    // =====================================
+
+    // No se modifican:
+    //
     // paciente_estudio
     // paciente_exposicion
     // historial_medico
+    // turno
 
-    // 5. CONFIRMAR CAMBIOS
+    // =====================================
+    // 16. CONFIRMAR CAMBIOS
+    // =====================================
 
     mysqli_commit($conexion);
+    $transaccionIniciada = false;
+
+    // Renovar el token para una próxima edición.
+    $_SESSION["csrf_editar_paciente"] =
+        bin2hex(random_bytes(32));
+
+    mysqli_close($conexion);
 
     header("Location: listar.php");
     exit;
 
 } catch (Throwable $e) {
 
-    mysqli_rollback($conexion);
+    if ($transaccionIniciada) {
+        try {
+            mysqli_rollback($conexion);
+        } catch (Throwable $errorRollback) {
+            error_log(
+                "DUCCA - Error rollback paciente: " .
+                $errorRollback->getMessage()
+            );
+        }
+    }
 
-    http_response_code(400);
+    $codigo = (int)$e->getCode();
 
-    echo "<h2>No se pudo actualizar el paciente</h2>";
+    if ($codigo === 403 || $codigo === 404) {
+        mostrarError(
+            $e->getMessage(),
+            $codigo
+        );
+    }
 
-    echo "<p>" . htmlspecialchars(
-        $e->getMessage(),
-        ENT_QUOTES,
-        "UTF-8"
-    ) . "</p>";
+    if ($e instanceof InvalidArgumentException) {
+        mostrarError(
+            $e->getMessage(),
+            400
+        );
+    }
 
-    echo '<p><a href="listar.php">
-        Volver al listado de pacientes
-    </a></p>';
+    error_log(
+        "DUCCA - Error al actualizar paciente: " .
+        $e->getMessage()
+    );
+
+    mostrarError(
+        "No se pudieron guardar los cambios. " .
+        "No se confirmó la actualización.",
+        500
+    );
 }
 
-mysqli_close($conexion);
 ?>
