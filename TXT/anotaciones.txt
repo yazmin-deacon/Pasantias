@@ -1,11 +1,5 @@
 BD:
 
-arreglar limite de nunmeros de telefono al agregar un paciente
-agregar direccion cuando se carga al paciente
-arreglar la pagina de administrar estudios porque esta todo junto, hay que hacer 2 paginas diferentes, 
-una para cargarles y verles el estado de los estudios a los pacientes, y otra
-para tener administracion de que estudios se pueden asignar y cuales hay que eliminar y asi
-
 
 
 

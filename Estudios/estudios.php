@@ -1,13 +1,18 @@
 
 <?php
+
 // =========================================
-// DUCCA - CRUD GENERAL DE ESTUDIOS
+// DUCCA - ADMINISTRAR ESTUDIOS
+// Un solo buscador para agregar y buscar
 // =========================================
 
 require_once __DIR__ . "/../inicio sesion/verificar_sesion.php";
 require_once __DIR__ . "/../Pacientes/conexion.php";
 
+/** @var mysqli $conexion */
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+mysqli_set_charset($conexion, "utf8mb4");
 
 header("Cache-Control: no-store, no-cache, must-revalidate");
 header("Pragma: no-cache");
@@ -45,6 +50,14 @@ function redirigir($mensaje) {
     exit;
 }
 
+function obtenerId($valor) {
+    $id = filter_var($valor, FILTER_VALIDATE_INT);
+
+    return ($id !== false && $id > 0)
+        ? $id
+        : null;
+}
+
 // =========================================
 // SEGURIDAD CSRF
 // =========================================
@@ -57,7 +70,7 @@ if (empty($_SESSION["token_estudios"])) {
 $tokenEstudios = $_SESSION["token_estudios"];
 
 // =========================================
-// PROCESAR ACCIONES DEL CRUD
+// PROCESAR FORMULARIOS
 // =========================================
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -97,18 +110,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
             }
 
-            // Comprobar si ya existe.
+            // Evitar estudios repetidos.
+
             $resultado = mysqli_query(
                 $conexion,
                 "SELECT nombre_es FROM estudio"
             );
 
             while ($fila = mysqli_fetch_assoc($resultado)) {
+
                 if (
                     normalizarNombre($fila["nombre_es"]) ===
                     normalizarNombre($nombre)
                 ) {
-                    redirigir("Ese estudio ya está registrado.");
+                    mysqli_free_result($resultado);
+
+                    redirigir(
+                        "Ese estudio ya está registrado."
+                    );
                 }
             }
 
@@ -116,7 +135,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $stmt = mysqli_prepare(
                 $conexion,
-                "INSERT INTO estudio (nombre_es) VALUES (?)"
+                "INSERT INTO estudio (nombre_es)
+                 VALUES (?)"
             );
 
             mysqli_stmt_bind_param(
@@ -137,17 +157,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($accion === "editar") {
 
-            $idEstudio = filter_var(
-                $_POST["id_estudio"] ?? null,
-                FILTER_VALIDATE_INT
+            $idEstudio = obtenerId(
+                $_POST["id_estudio"] ?? null
             );
 
             $nombre = limpiarNombre(
                 $_POST["nombre_es"] ?? ""
             );
 
-            if (!$idEstudio || $idEstudio <= 0) {
-                redirigir("El estudio seleccionado no es válido.");
+            if (!$idEstudio) {
+                redirigir(
+                    "El estudio seleccionado no es válido."
+                );
             }
 
             if (
@@ -160,9 +181,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             // Evitar nombres duplicados.
+
             $resultado = mysqli_query(
                 $conexion,
-                "SELECT id_estudio, nombre_es FROM estudio"
+                "SELECT id_estudio, nombre_es
+                 FROM estudio"
             );
 
             while ($fila = mysqli_fetch_assoc($resultado)) {
@@ -172,6 +195,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     normalizarNombre($fila["nombre_es"]) ===
                     normalizarNombre($nombre)
                 ) {
+                    mysqli_free_result($resultado);
+
                     redirigir(
                         "Ya existe otro estudio con ese nombre."
                     );
@@ -195,9 +220,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             );
 
             mysqli_stmt_execute($stmt);
+
+            $filasAfectadas = mysqli_stmt_affected_rows($stmt);
+
             mysqli_stmt_close($stmt);
 
-            redirigir("Estudio actualizado correctamente.");
+            redirigir(
+                $filasAfectadas > 0
+                    ? "Estudio actualizado correctamente."
+                    : "No hubo cambios en el estudio."
+            );
         }
 
         // =====================================
@@ -206,20 +238,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($accion === "eliminar") {
 
-            $idEstudio = filter_var(
-                $_POST["id_estudio"] ?? null,
-                FILTER_VALIDATE_INT
+            $idEstudio = obtenerId(
+                $_POST["id_estudio"] ?? null
             );
 
-            if (!$idEstudio || $idEstudio <= 0) {
-                redirigir("El estudio seleccionado no es válido.");
+            if (!$idEstudio) {
+                redirigir(
+                    "El estudio seleccionado no es válido."
+                );
             }
 
             mysqli_begin_transaction($conexion);
 
             try {
 
-                // Bloquear el estudio durante la operación.
+                // Bloquear el estudio mientras
+                // se comprueban sus relaciones.
+
                 $stmt = mysqli_prepare(
                     $conexion,
                     "SELECT id_estudio
@@ -246,12 +281,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     redirigir("El estudio no existe.");
                 }
 
-                // Comprobar relaciones existentes.
+                // Comprobar si está asociado
+                // a pacientes, trabajos o historiales.
+
                 $tablas = [
                     "paciente_estudio",
                     "trabajo_estudio",
                     "historial_medico"
                 ];
+
+                $tieneRelaciones = false;
 
                 foreach ($tablas as $tabla) {
 
@@ -276,14 +315,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     mysqli_stmt_close($stmt);
 
                     if ((int)$fila["total"] > 0) {
-                        mysqli_rollback($conexion);
-
-                        redirigir(
-                            "No se puede eliminar este estudio " .
-                            "porque tiene relaciones o registros médicos. " .
-                            "Primero deben conservarse o resolverse esas referencias."
-                        );
+                        $tieneRelaciones = true;
+                        break;
                     }
+                }
+
+                if ($tieneRelaciones) {
+
+                    mysqli_rollback($conexion);
+
+                    redirigir(
+                        "No se puede eliminar este estudio " .
+                        "porque tiene relaciones o registros médicos."
+                    );
                 }
 
                 $stmt = mysqli_prepare(
@@ -303,7 +347,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                 mysqli_commit($conexion);
 
-                redirigir("Estudio eliminado correctamente.");
+                redirigir(
+                    "Estudio eliminado correctamente."
+                );
 
             } catch (Throwable $e) {
 
@@ -318,19 +364,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } catch (Throwable $e) {
 
         error_log(
-            "DUCCA - Error CRUD Estudios: " .
+            "DUCCA - Error Estudios: " .
             $e->getMessage()
         );
 
         redirigir(
             "No se pudo completar la operación. " .
-            "Comprobá que el estudio no tenga relaciones asociadas."
+            "Verificá los datos e intentá nuevamente."
         );
     }
 }
 
 // =========================================
-// CONSULTAR CATÁLOGO
+// CONSULTAR ESTUDIOS REGISTRADOS
 // =========================================
 
 try {
@@ -354,6 +400,7 @@ try {
     error_log($e->getMessage());
 
     http_response_code(500);
+
     exit("No se pudieron consultar los estudios.");
 }
 
@@ -363,7 +410,12 @@ if (
     isset($_GET["mensaje"]) &&
     is_string($_GET["mensaje"])
 ) {
-    $mensaje = $_GET["mensaje"];
+    $mensaje = mb_substr(
+        $_GET["mensaje"],
+        0,
+        200,
+        "UTF-8"
+    );
 }
 
 mysqli_close($conexion);
@@ -373,6 +425,7 @@ mysqli_close($conexion);
 <html lang="es">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -382,12 +435,24 @@ mysqli_close($conexion);
 
     <title>Estudios - DUCCA</title>
 
-    <link rel="stylesheet" href="../general/estilos.css">
+    <link
+        rel="stylesheet"
+        href="../general/estilos.css"
+    >
 
     <style>
+
+        /* =====================================
+           BUSCADOR ÚNICO
+        ===================================== */
+
+        .contenedor-buscador-estudios {
+            width: 100%;
+            max-width: 650px;
+        }
+
         .buscador-estudio {
             width: 100%;
-            max-width: 450px;
             padding: 12px;
             box-sizing: border-box;
             border: 1px solid #b9c7ce;
@@ -395,58 +460,56 @@ mysqli_close($conexion);
             font-size: 16px;
         }
 
-        .form-agregar {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-            margin-top: 15px;
+        .ayuda-estudio {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.85;
         }
 
-        .form-agregar input {
-            flex: 1;
-            min-width: 180px;
-            padding: 12px;
+        .sugerencias-estudios {
+            display: none;
+            width: 100%;
+            max-height: 220px;
+            overflow-y: auto;
+            margin-top: 6px;
             border: 1px solid #b9c7ce;
             border-radius: 8px;
-            font-size: 15px;
+            box-sizing: border-box;
         }
 
-        .btn-agregar,
-        .btn-guardar,
-        .btn-eliminar-estudio {
-            padding: 10px 15px;
+        .sugerencia-estudio {
+            display: block;
+            width: 100%;
+            padding: 11px 12px;
             border: 0;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
+            border-bottom: 1px solid #ddd;
+            background: transparent;
+            color: inherit;
             font-family: inherit;
+            font-size: 14px;
+            text-align: left;
             cursor: pointer;
         }
 
-        .btn-agregar {
-            background: #287b99;
+        .sugerencia-estudio:hover {
+            background: rgba(180, 120, 150, 0.14);
         }
 
-        .btn-agregar:hover {
-            background: #195d77;
+        .sugerencia-estudio:last-child {
+            border-bottom: none;
         }
 
-        .btn-guardar {
-            background: #28845b;
+        .mensaje-resultado {
+            padding: 13px;
+            border-radius: 8px;
+            background: rgba(40, 132, 91, 0.10);
+            border: 1px solid #8dbca3;
+            margin-bottom: 15px;
         }
 
-        .btn-guardar:hover {
-            background: #1e6545;
-        }
-
-        .btn-eliminar-estudio {
-            background: #c94b4b;
-        }
-
-        .btn-eliminar-estudio:hover {
-            background: #aa3535;
-        }
+        /* =====================================
+           TABLA DE ESTUDIOS
+        ===================================== */
 
         .tabla-contenedor {
             overflow-x: auto;
@@ -487,29 +550,66 @@ mysqli_close($conexion);
             margin: 0;
         }
 
-        .mensaje-resultado {
-            padding: 13px;
+        .btn-guardar,
+        .btn-eliminar-estudio {
+            padding: 10px 15px;
+            border: 0;
             border-radius: 8px;
-            background: rgba(40, 132, 91, 0.10);
-            border: 1px solid #8dbca3;
-            margin-bottom: 15px;
+            color: white;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
         }
 
-        .ayuda-estudio {
-            margin-top: 10px;
-            font-size: 14px;
-            opacity: 0.85;
+        .btn-guardar {
+            background: #28845b;
+        }
+
+        .btn-guardar:hover {
+            background: #1e6545;
+        }
+
+        .btn-eliminar-estudio {
+            background: #c94b4b;
+        }
+
+        .btn-eliminar-estudio:hover {
+            background: #aa3535;
         }
 
         .sin-resultados {
             display: none;
             margin-top: 15px;
         }
+
+        .fila-destacada {
+            outline: 2px solid #28845b;
+            outline-offset: -2px;
+        }
+
+        @media (max-width: 600px) {
+
+            .tabla-gestion th,
+            .tabla-gestion td {
+                padding: 8px;
+            }
+
+            .acciones-estudio {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+        }
+
     </style>
 
 </head>
 
 <body>
+
+<!-- =====================================
+     ENCABEZADO
+===================================== -->
 
 <header>
 
@@ -527,6 +627,7 @@ mysqli_close($conexion);
     </a>
 
     <div class="logo">
+
         <img
             id="logo"
             src="../general/Logo minimalista DUCCA con hojas orgánicas.png"
@@ -534,9 +635,11 @@ mysqli_close($conexion);
             height="150"
             width="175"
         >
+
     </div>
 
     <nav>
+
         <a href="../inicio%20sesion/index.php">
             Menú principal
         </a>
@@ -556,6 +659,7 @@ mysqli_close($conexion);
         <a href="../Relaciones/listar.php">
             Relaciones
         </a>
+
     </nav>
 
     <button type="button" id="btn-tema">
@@ -564,6 +668,10 @@ mysqli_close($conexion);
 
 </header>
 
+<!-- =====================================
+     CONTENIDO
+===================================== -->
+
 <main class="gestion-contenido">
 
     <section class="bienvenida">
@@ -571,8 +679,8 @@ mysqli_close($conexion);
         <h1>Administrar estudios</h1>
 
         <p>
-            Agregá, buscá, editá y eliminá
-            los estudios del catálogo general de DUCCA.
+            Buscá, agregá, editá y eliminá los estudios
+            del catálogo general de DUCCA.
         </p>
 
     </section>
@@ -590,82 +698,71 @@ mysqli_close($conexion);
     <?php } ?>
 
     <!-- =====================================
-         AGREGAR ESTUDIO
+         ÚNICA BARRA PARA BUSCAR Y AGREGAR
     ===================================== -->
 
     <section class="tarjeta">
 
-        <h2>Agregar estudio</h2>
+        <h2>Buscar o agregar estudio</h2>
 
         <p>
-            Registrá un nuevo tipo de estudio
-            para que pueda utilizarse en el sistema.
+            Escribí el nombre de un estudio.
+            Los similares aparecerán automáticamente.
+            Si no existe, presioná Enter para registrarlo.
         </p>
 
-        <form
-            action="estudios.php"
-            method="POST"
-            class="form-agregar"
-        >
+        <div class="contenedor-buscador-estudios">
 
-            <input
-                type="hidden"
-                name="token"
-                value="<?php echo escapar($tokenEstudios); ?>"
+            <form
+                id="form-estudio"
+                action="estudios.php"
+                method="POST"
+                autocomplete="off"
             >
 
-            <input
-                type="hidden"
-                name="accion"
-                value="agregar"
-            >
+                <input
+                    type="hidden"
+                    name="token"
+                    value="<?php echo escapar($tokenEstudios); ?>"
+                >
 
-            <input
-                type="text"
-                name="nombre_es"
-                maxlength="50"
-                placeholder="Nombre del nuevo estudio..."
-                required
-            >
+                <input
+                    type="hidden"
+                    name="accion"
+                    value="agregar"
+                >
 
-            <button type="submit" class="btn-agregar">
-                Agregar estudio
-            </button>
+                <input
+                    type="text"
+                    id="buscar_estudio"
+                    name="nombre_es"
+                    class="buscador-estudio"
+                    maxlength="50"
+                    placeholder="Buscar o escribir nuevo estudio..."
+                    autocomplete="off"
+                    required
+                >
 
-        </form>
+            </form>
+
+            <div
+                id="sugerencias_estudios"
+                class="sugerencias-estudios"
+                aria-label="Estudios similares"
+            ></div>
+
+            <p
+                id="mensaje_buscador"
+                class="ayuda-estudio"
+                aria-live="polite"
+            ></p>
+
+        </div>
 
     </section>
 
     <!-- =====================================
-         BUSCAR ESTUDIO
-    ===================================== -->
-
-    <section class="tarjeta">
-
-        <h2>Buscar estudio</h2>
-
-        <p>
-            Escribí el nombre del estudio
-            para encontrarlo en el catálogo.
-        </p>
-
-        <input
-            type="search"
-            id="buscar_estudio"
-            class="buscador-estudio"
-            placeholder="Buscar estudio..."
-            autocomplete="off"
-        >
-
-        <p class="ayuda-estudio">
-            El buscador filtra los estudios registrados
-            sin modificar la base de datos.
-        </p>
-
-    </section>
-
-    <!-- =====================================
-         CATÁLOGO GENERAL
+         ESTUDIOS REGISTRADOS
     ===================================== -->
 
     <section class="tarjeta">
@@ -674,6 +771,7 @@ mysqli_close($conexion);
 
         <p>
             Total de estudios:
+
             <strong>
                 <?php echo count($catalogo); ?>
             </strong>
@@ -681,6 +779,7 @@ mysqli_close($conexion);
 
         <p>
             Resultados encontrados:
+
             <strong id="cantidad_encontrados">
                 <?php echo count($catalogo); ?>
             </strong>
@@ -690,6 +789,8 @@ mysqli_close($conexion);
 
             <p>
                 Todavía no hay estudios registrados.
+                Escribí el nombre de uno arriba
+                y presioná Enter para agregarlo.
             </p>
 
         <?php } else { ?>
@@ -710,14 +811,15 @@ mysqli_close($conexion);
                         <?php foreach ($catalogo as $estudio) { ?>
 
                             <?php
-                            $id = (int)$estudio["id_estudio"];
-                            $nombre = (string)$estudio["nombre_es"];
+                                $id = (int)$estudio["id_estudio"];
+                                $nombre = (string)$estudio["nombre_es"];
 
-                            $idFormulario = "editar_estudio_" . $id;
+                                $idFormulario = "editar_estudio_" . $id;
                             ?>
 
                             <tr
                                 class="fila-estudio"
+                                data-id="<?php echo $id; ?>"
                                 data-nombre="<?php echo escapar($nombre); ?>"
                             >
 
@@ -776,7 +878,7 @@ mysqli_close($conexion);
                                         <form
                                             action="estudios.php"
                                             method="POST"
-                                            onsubmit="return confirm('¿Seguro que querés eliminar este estudio del catálogo? Solo se eliminará si no tiene relaciones ni registros médicos.');"
+                                            onsubmit="return confirm('¿Seguro que querés eliminar este estudio? No se eliminará si tiene relaciones o registros médicos.');"
                                         >
 
                                             <input
@@ -820,16 +922,19 @@ mysqli_close($conexion);
 
             </div>
 
-            <p id="sin_resultados" class="sin-resultados">
+            <p
+                id="sin_resultados"
+                class="sin-resultados"
+            >
                 No se encontraron estudios con ese nombre.
             </p>
 
         <?php } ?>
 
         <p class="ayuda-estudio">
-            Para proteger la información clínica,
-            los estudios que tengan relaciones o registros
-            médicos asociados no podrán eliminarse.
+            Los estudios que tengan relaciones
+            con pacientes, trabajos o registros médicos
+            no podrán eliminarse.
         </p>
 
     </section>
@@ -856,33 +961,75 @@ mysqli_close($conexion);
     <span>Administración de estudios</span>
 </footer>
 
+<!-- =====================================
+     BUSCADOR INTELIGENTE
+===================================== -->
+
 <script>
 
-// =========================================
-// BUSCADOR EN TIEMPO REAL
-// =========================================
+// Estudios existentes en MySQL.
 
-const buscador = document.getElementById("buscar_estudio");
-const filas = document.querySelectorAll(".fila-estudio");
-const contador = document.getElementById("cantidad_encontrados");
-const sinResultados = document.getElementById("sin_resultados");
+const estudios = <?php echo json_encode(
+    $catalogo,
+    JSON_UNESCAPED_UNICODE |
+    JSON_HEX_TAG |
+    JSON_HEX_AMP |
+    JSON_HEX_APOS |
+    JSON_HEX_QUOT
+); ?>;
 
-function normalizarBusqueda(texto) {
+const buscador = document.getElementById(
+    "buscar_estudio"
+);
+
+const formulario = document.getElementById(
+    "form-estudio"
+);
+
+const sugerencias = document.getElementById(
+    "sugerencias_estudios"
+);
+
+const mensaje = document.getElementById(
+    "mensaje_buscador"
+);
+
+const filas = document.querySelectorAll(
+    ".fila-estudio"
+);
+
+const contador = document.getElementById(
+    "cantidad_encontrados"
+);
+
+const sinResultados = document.getElementById(
+    "sin_resultados"
+);
+
+// =====================================
+// NORMALIZAR TEXTO
+// =====================================
+
+function normalizar(texto) {
     return String(texto)
         .trim()
         .replace(/\s+/g, " ")
         .toLocaleLowerCase("es");
 }
 
-function filtrarEstudios() {
+// =====================================
+// BUSCAR Y FILTRAR
+// =====================================
 
-    const texto = normalizarBusqueda(buscador.value);
+function actualizarBusqueda() {
+
+    const texto = normalizar(buscador.value);
 
     let encontrados = 0;
 
     filas.forEach(fila => {
 
-        const nombre = normalizarBusqueda(
+        const nombre = normalizar(
             fila.dataset.nombre
         );
 
@@ -893,6 +1040,8 @@ function filtrarEstudios() {
         if (coincide) {
             encontrados++;
         }
+
+        fila.classList.remove("fila-destacada");
     });
 
     if (contador) {
@@ -901,13 +1050,177 @@ function filtrarEstudios() {
 
     if (sinResultados) {
         sinResultados.style.display =
-            encontrados === 0 && filas.length > 0
+            texto !== "" && encontrados === 0
                 ? "block"
                 : "none";
     }
+
+    sugerencias.replaceChildren();
+    sugerencias.style.display = "none";
+
+    if (!texto) {
+        mensaje.textContent =
+            "Escribí para buscar. Presioná Enter para agregar un estudio nuevo.";
+
+        return;
+    }
+
+    // Estudios similares.
+
+    const similares = estudios.filter(estudio =>
+        normalizar(estudio.nombre_es).includes(texto)
+    );
+
+    const exacto = estudios.find(estudio =>
+        normalizar(estudio.nombre_es) === texto
+    );
+
+    // Mostrar hasta 8 sugerencias.
+
+    similares.slice(0, 8).forEach(estudio => {
+
+        const boton = document.createElement(
+            "button"
+        );
+
+        boton.type = "button";
+        boton.className = "sugerencia-estudio";
+
+        boton.textContent = estudio.nombre_es;
+
+        boton.addEventListener("click", () => {
+            seleccionarEstudio(estudio);
+        });
+
+        sugerencias.appendChild(boton);
+    });
+
+    if (similares.length > 0) {
+        sugerencias.style.display = "block";
+    }
+
+    if (exacto) {
+
+        mensaje.textContent =
+            "Este estudio ya existe. Presioná Enter para seleccionarlo.";
+
+    } else if (similares.length > 0) {
+
+        mensaje.textContent =
+            "Hay estudios similares. Elegí uno o presioná Enter para agregar uno nuevo.";
+
+    } else {
+
+        mensaje.textContent =
+            "Estudio nuevo. Presioná Enter para guardarlo automáticamente.";
+    }
 }
 
-buscador.addEventListener("input", filtrarEstudios);
+// =====================================
+// SELECCIONAR ESTUDIO EXISTENTE
+// =====================================
+
+function seleccionarEstudio(estudio) {
+
+    buscador.value = estudio.nombre_es;
+
+    actualizarBusqueda();
+
+    sugerencias.style.display = "none";
+
+    const fila = Array.from(filas).find(
+        elemento =>
+            Number(elemento.dataset.id) ===
+            Number(estudio.id_estudio)
+    );
+
+    if (fila) {
+
+        fila.classList.add("fila-destacada");
+
+        fila.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
+
+    mensaje.textContent =
+        "Estudio seleccionado. Podés editarlo o eliminarlo desde el listado.";
+}
+
+// =====================================
+// ESCRIBIR EN EL BUSCADOR
+// =====================================
+
+buscador.addEventListener(
+    "input",
+    actualizarBusqueda
+);
+
+// =====================================
+// ENTER: AGREGAR O SELECCIONAR
+// =====================================
+
+formulario.addEventListener(
+    "submit",
+    function(evento) {
+
+        const nombre = buscador.value
+            .trim()
+            .replace(/\s+/g, " ");
+
+        if (!nombre) {
+            evento.preventDefault();
+            mensaje.textContent =
+                "Ingresá el nombre de un estudio.";
+            return;
+        }
+
+        const exacto = estudios.find(
+            estudio =>
+                normalizar(estudio.nombre_es) ===
+                normalizar(nombre)
+        );
+
+        if (exacto) {
+
+            // Ya existe: no enviamos el formulario
+            // y no generamos duplicados.
+
+            evento.preventDefault();
+
+            seleccionarEstudio(exacto);
+
+            return;
+        }
+
+        // No existe: enviar el formulario
+        // para guardarlo en MySQL.
+
+        buscador.value = nombre;
+    }
+);
+
+// =====================================
+// CERRAR SUGERENCIAS AL HACER CLIC FUERA
+// =====================================
+
+document.addEventListener(
+    "click",
+    function(evento) {
+
+        if (
+            evento.target !== buscador &&
+            !sugerencias.contains(evento.target)
+        ) {
+            sugerencias.style.display = "none";
+        }
+    }
+);
+
+// Inicializar.
+
+actualizarBusqueda();
 
 </script>
 
